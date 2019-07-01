@@ -100,3 +100,6 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Ignore MacOS DS_Store system files
+.DS_Store
