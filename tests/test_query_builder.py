@@ -11,26 +11,31 @@ def query():
 
 @pytest.fixture
 def complex_query():
+        source = dg.ComplexField(
+            field='source',
+            subfields=['title_de']
+        )
+
         statistic1 = dg.ComplexField(
-            statistic='WAHL09',
-            filters={'year': 2017},
-            fields=['value', 'PART04'])
+            field='WAHL09',
+            args={'year': 2017},
+            subfields=['value', 'PART04', source])
 
         statistic2 = dg.ComplexField(
-            statistic='BEV001',
-            filters={'statistics': 'R12612'},
-            fields=['value', 'year'])
+            field='BEV001',
+            args={'statistics': 'R12612'},
+            subfields=['value', 'year'])
 
         return dg.QueryBuilder(
             region='09',
             fields=['id', 'name', statistic1, statistic2])
 
 
-def test_create_query_class_with_args_instance(query):
+def test_create_query_class_with_field_instance(query):
     assert isinstance(query, dg.QueryBuilder)
 
 
-def test_create_query_class_without_args_throws_error():
+def test_create_query_class_without_field_throws_error():
     with pytest.raises(TypeError):
         dg.QueryBuilder()
 
@@ -47,26 +52,41 @@ def test_basic_graphql_string(query):
 
 
 def test_get_fields_to_query():
-    statistic = dg.ComplexField(
-            statistic='WAHL09',
-            filters={'year': 2017},
-            fields=['value', 'PART04'])
-    query = dg.QueryBuilder(region='09', fields=[statistic])
-    fields_string = query._get_fields_to_query()
-    assert fields_string == "WAHL09(year: 2017){value PART04} "
+    field = dg.ComplexField(
+            field='WAHL09',
+            args={'year': 2017},
+            subfields=['value', 'PART04'])
+    query = dg.QueryBuilder(region='09', fields=[field])
+    subfields_string = query._get_fields_to_query()
+    assert subfields_string == "WAHL09(year: 2017){value PART04 } "
 
 
 def test_get_complex_graphql_string():
-        statistic = dg.ComplexField(
-            statistic='WAHL09',
-            filters={'year': 2017},
-            fields=['value', 'PART04'])
-        query = dg.QueryBuilder(region='09', fields=['id', 'name', statistic])
+        field = dg.ComplexField(
+            field='WAHL09',
+            args={'year': 2017},
+            subfields=['value', 'PART04'])
+        query = dg.QueryBuilder(region='09', fields=['id', 'name', field])
         graphql_query = query.get_graphql_query()
         assert graphql_query == """
                 {
                     region(id: "09") {
-                        id name WAHL09(year: 2017){value PART04} 
+                        id name WAHL09(year: 2017){value PART04 } 
+                    }
+                }
+                """
+
+
+def test_get_complex_graphql_string_without_filter():
+        field = dg.ComplexField(
+            field='WAHL09',
+            subfields=['value'])
+        query = dg.QueryBuilder(region='09', fields=['id', 'name', field])
+        graphql_query = query.get_graphql_query()
+        assert graphql_query == """
+                {
+                    region(id: "09") {
+                        id name WAHL09{value } 
                     }
                 }
                 """
@@ -78,26 +98,26 @@ def test_get_multiple_stats(complex_query):
         assert graphql_query == """
                 {
                     region(id: "09") {
-                        id name WAHL09(year: 2017){value PART04} BEV001(statistics: R12612){value year} 
+                        id name WAHL09(year: 2017){value PART04 source{title_de } } BEV001(statistics: R12612){value year } 
                     }
                 }
                 """
 
 
-def test_get_fields(query):
+def test_get_subfields(query):
     assert query.get_fields() == ['BEV001']
 
 
-def test_get_fields_complex():
+def test_get_subfields_complex():
     statistic1 = dg.ComplexField(
-            statistic='WAHL09',
-            filters={'year': 2017},
-            fields=['value', 'PART04'])
+            field='WAHL09',
+            args={'year': 2017},
+            subfields=['value', 'PART04'])
 
     statistic2 = dg.ComplexField(
-            statistic='BEV001',
-            filters={'statistics': 'R12612'},
-            fields=['value', 'year'])
+            field='BEV001',
+            args={'statistics': 'R12612'},
+            subfields=['value', 'year'])
 
     query = dg.QueryBuilder(
             region='09',
