@@ -39,6 +39,10 @@ class QueryBuilder():
                 }
                 """    
 
+    def get_fields(self) -> list:
+        return self.fields
+
+
 class ComplexField():
 
     def __init__(self, statistic, fields: list, filters: dict = None):

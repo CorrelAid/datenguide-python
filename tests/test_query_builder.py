@@ -6,17 +6,27 @@ import datenguide_python as dg
 
 
 @pytest.fixture
-def args():
-    """Sample pytest fixture.
-    See more at: http://doc.pytest.org/en/latest/fixture.html
-    """
+def query():
+    return dg.QueryBuilder(region='09', fields=['BEV001'])
 
-    # set arguments
-    pass
+@pytest.fixture
+def complex_query():
+        statistic1 = dg.ComplexField(
+            statistic='WAHL09',
+            filters={'year': 2017},
+            fields=['value', 'PART04'])
+
+        statistic2 = dg.ComplexField(
+            statistic='BEV001',
+            filters={'statistics': 'R12612'},
+            fields=['value', 'year'])
+
+        return dg.QueryBuilder(
+            region='09',
+            fields=['id', 'name', statistic1, statistic2])
 
 
-def test_create_query_class_with_args_instance():
-    query = dg.QueryBuilder(region='09', fields=['BEV001'])
+def test_create_query_class_with_args_instance(query):
     assert isinstance(query, dg.QueryBuilder)
 
 
@@ -25,8 +35,7 @@ def test_create_query_class_without_args_throws_error():
         dg.QueryBuilder()
 
 
-def test_basic_graphql_string():
-    query = dg.QueryBuilder(region='09', fields=['BEV001'])
+def test_basic_graphql_string(query):
     graphql_query = query.get_graphql_query()
     assert graphql_query == """
                 {
@@ -63,21 +72,9 @@ def test_get_complex_graphql_string():
                 """
 
 
-def test_get_multiple_stats():
-        statistic1 = dg.ComplexField(
-            statistic='WAHL09',
-            filters={'year': 2017},
-            fields=['value', 'PART04'])
+def test_get_multiple_stats(complex_query):
 
-        statistic2 = dg.ComplexField(
-            statistic='BEV001',
-            filters={'statistics': 'R12612'},
-            fields=['value', 'year'])
-
-        query = dg.QueryBuilder(
-            region='09',
-            fields=['id', 'name', statistic1, statistic2])
-        graphql_query = query.get_graphql_query()
+        graphql_query = complex_query.get_graphql_query()
         assert graphql_query == """
                 {
                     region(id: "09") {
@@ -85,3 +82,24 @@ def test_get_multiple_stats():
                     }
                 }
                 """
+
+
+def test_get_fields(query):
+    assert query.get_fields() == ['BEV001']
+
+
+def test_get_fields_complex():
+    statistic1 = dg.ComplexField(
+            statistic='WAHL09',
+            filters={'year': 2017},
+            fields=['value', 'PART04'])
+
+    statistic2 = dg.ComplexField(
+            statistic='BEV001',
+            filters={'statistics': 'R12612'},
+            fields=['value', 'year'])
+
+    query = dg.QueryBuilder(
+            region='09',
+            fields=['id', 'name', statistic1, statistic2])
+    assert query.get_fields() == ['id', 'name', statistic1, statistic2]
