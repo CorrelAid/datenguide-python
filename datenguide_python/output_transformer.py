@@ -22,13 +22,28 @@ class QueryOutputTransformer:
     def build_and_merge_data(self, dic, lis):
         data = pd.DataFrame()
         for d in lis:
-            if data.empty == True:
-                data = json_normalize(dic[d][0])
-                data.columns = [d, 'year']
-            else:
-                temp = json_normalize(dic[d][0])
-                temp.columns = [d, 'year']
-                data = data.merge(temp, on='year', how='outer')
+            try:
+                if data.empty == True:
+                    data = json_normalize(dic[d][0])
+                    data.columns = [d, 'year']
+                else:
+                    temp = json_normalize(dic[d][0])
+                    temp.columns = [d, 'year']
+                    data = data.merge(temp, on='year', how='outer')
+                print('no type variable')
+            except:
+                if data.empty == True:
+                    data = json_normalize(dic[d][0])
+                    newcolname = data.values[0][0] + '_' + d
+                    data = data.iloc[:,1:]
+                    data.columns = [newcolname, 'year']
+                else:
+                    temp = json_normalize(dic[d][0])
+                    newcolname = temp.values[0][0] + '_' + d
+                    temp = temp.iloc[:,1:]
+                    temp.columns = [newcolname, 'year']
+                    data = data.merge(temp, on='year', how='outer')
+                print('type variable')
         newcol = [x.replace('data.region.', '') for x in data.columns]
         data.columns = newcol
         data['id'] = dic['data.region.id'][0]

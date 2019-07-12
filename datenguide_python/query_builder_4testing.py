@@ -13,6 +13,11 @@ class QueryBuilder:
               region(id: "05911") {
                 id
                 name
+                BEVZ20(statistics: R12111, filter: { GES: { in: ["GESM", "GESM"]} }) {
+                type: GES
+                year
+                value
+                }
                 AI0101 {
                 value
                 year
