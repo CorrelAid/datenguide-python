@@ -5,7 +5,8 @@ import requests
 
 class QueryExecutioner:
     def __init__(self):
-        print("hi")
+        pass
+    
     def runQuery(self,queryString):
         post_json = dict()
         post_json["query"] = queryString

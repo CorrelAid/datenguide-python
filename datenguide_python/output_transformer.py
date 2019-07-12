@@ -2,53 +2,58 @@ import requests
 import pandas as pd
 import pprint
 import requests
+from pandas.io.json import json_normalize
 
 class QueryOutputTransformer:
-    """ source: https://github.com/KonradUdoHannes/datenguide-spike/blob/master/scribble.ipynb, 
-     this version slightly adapted """
-
     def __init__(self):
-        print(" in progress ")
+        pass
     
-    def countDataFrames(self, dic):
-        n_dfs = 0
-        for value in dic.values():
-            if type(value) == pd.DataFrame:
-                n_dfs += 1
-        return n_dfs
+    def flatten_query(self, dic):
+        flat = json_normalize(dic)
+        return flat
 
-    def findDataFrame(self, dic):
-        for (key,value) in dic.items():
-            if type(value) == pd.DataFrame:
-                return value
+    def get_col_list(self, df):
+        c = list(df.columns)
+        c.remove('data.region.id')
+        c.remove('data.region.name')
+        return c
 
-    def addDictScalarsToDf(self, dic, df):
-        for (key,value) in dic.items():
-            if type(value) != pd.DataFrame:
-                df[key] = value
+    def build_and_merge_data(self, dic, lis):
+        data = pd.DataFrame()
+        for d in lis:
+            if data.empty == True:
+                data = json_normalize(dic[d][0])
+                data.columns = [d, 'year']
             else:
-                df = df.rename(columns = {'value':key})
-        return df
+                temp = json_normalize(dic[d][0])
+                temp.columns = [d, 'year']
+                data = data.merge(temp, on='year', how='outer')
+        newcol = [x.replace('data.region.', '') for x in data.columns]
+        data.columns = newcol
+        data['id'] = dic['data.region.id'][0]
+        data['name'] = dic['data.region.name'][0]
+        return data
 
-    def dicToDf(self, dic):
-        n_df = self.countDataFrames(dic)
-        if n_df == 0:
-            return pd.DataFrame(dic,index=[0])
-        else:
-            df = self.findDataFrame(dic)
-            return self.addDictScalarsToDf(dic, df)
+    def drop_duplicates(self, df):
+        data = df.drop_duplicates()
+        return data
+    
+    def sort_by_year(self, df):
+        data = df.sort_values('year')
+        return data
 
-    def convertHirachy(self, dic):
-        new_dic = dict()
-        for key,value in dic.items():
-            if type(value) == dict:
-                new_dic[key] = self.convertHirachy(value)
-            elif type(value) == list:
-                new_dic[key] = pd.concat(list(map(self.convertHirachy,value)))
-            else:
-                new_dic[key] = value
-        return self.dicToDf(new_dic)
+    def order_cols(self, df):
+        c=list(df.columns)
+        for i in ['year', 'id', 'name']: c.remove(i)
+        cnew = ['id','name','year'] + c
+        data = df[cnew]
+        return data
     
     def transform(self, dic):
-        output = self.convertHirachy(dic)
+        flat = self.flatten_query(dic)
+        c = self.get_col_list(flat)
+        output = self.build_and_merge_data(flat, c)
+        output = self.drop_duplicates(output)
+        output = self.sort_by_year(output)
+        output = self.order_cols(output)
         return output

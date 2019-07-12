@@ -49,3 +49,7 @@ def test_output_transformer():
     assert len(data_transformed.drop_duplicates()) == len(
         data_transformed
     ), "transformed data contain duplicates"
+    
+    # check year ranges
+    assert data_transformed.year.min() > 1900, "transformed data contain data from 1900 or before"
+    assert data_transformed.year.max() < 2050, "transformed data contain data from after 2050"
