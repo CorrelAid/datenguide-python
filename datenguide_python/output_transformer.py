@@ -5,6 +5,7 @@ import requests
 from pandas.io.json import json_normalize
 
 class QueryOutputTransformer:
+    # test only region query
     def __init__(self):
         pass
     
