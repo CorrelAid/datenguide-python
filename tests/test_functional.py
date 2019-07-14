@@ -1,10 +1,48 @@
 from unittest.mock import Mock
+from collections import namedtuple
+import pytest
 
 
 from datenguide_python.query_execution import QueryExecutioner
 
 
-def test_QueryExecutionerWorkflow():
+@pytest.fixture
+def sample_queries():
+    q1 = Mock()
+    q1.get_graphql_str.return_value = """
+    {
+        region(id:"05911") {
+            id
+            name
+            BEVMK3 {
+                value
+                year
+            }
+        }
+    }
+    """
+
+    mq1 = Mock()
+    mq1.get_graphql_str.return_value = """
+    {
+      __type(name: "Region") {
+        name
+        fields {
+          name
+          description
+          type {
+            name
+            kind
+          }
+        }
+      }
+    }
+    """
+    SampleQueries = namedtuple("SampleQueries", "data_query1 meta_query1")
+    return SampleQueries(q1, mq1)
+
+
+def test_QueryExecutionerWorkflow(sample_queries):
     """Functional test for the query executioner"""
 
     # Ira (W. Cotton, probably the first person to use the term API) want to
@@ -28,8 +66,7 @@ def test_QueryExecutionerWorkflow():
     # now wants to execute one of his queries to see that he gets some return
     # values.
 
-    query1 = Mock()
-    res_query1 = qExec.run_query(query1)
+    res_query1 = qExec.run_query(sample_queries.data_query1)
     assert res_query1 is not None, "query did not return results"
 
     # He wants to have a closer look at the raw return query results and
