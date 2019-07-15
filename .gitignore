@@ -1,5 +1,41 @@
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# dotenv
+.env
+
+# virtualenv
+.venv
+venv/
+ENV/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+
+# Ignore MacOS DS_Store system files
+.DS_Store
+
+# vim .swp recovery files
 *.swp
-venv
-__pycache__
-.mypy_cache
+
+# notebook checkpoints
 .ipynb_checkpoints
+
+# python interpreter chache files
+__pycache__
