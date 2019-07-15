@@ -74,7 +74,7 @@ class QueryExecutioner(object):
     @staticmethod
     def _process_stat_meta_data(raw_response: Json) -> List[Json]:
         def contains_statistic(args: List[Json]):
-            any(arg["name"] == "statistics" for arg in args)
+            return any(arg["name"] == "statistics" for arg in args)
 
         return [
             field
