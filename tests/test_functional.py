@@ -9,7 +9,7 @@ from datenguide_python.query_execution import QueryExecutioner
 @pytest.fixture
 def sample_queries():
     q1 = Mock()
-    q1.get_graphql_str.return_value = """
+    q1.get_graphql_query.return_value = """
     {
         region(id:"05911") {
             id
@@ -21,9 +21,10 @@ def sample_queries():
         }
     }
     """
+    q1.get_fields.return_value = ["region", "id", "name", "BEVMK3", "value", ".year"]
 
     mq1 = Mock()
-    mq1.get_graphql_str.return_value = """
+    mq1.get_graphql_query.return_value = """
     {
       __type(name: "Region") {
         name
@@ -79,9 +80,20 @@ def test_QueryExecutionerWorkflow(sample_queries):
 
     # Ira remembers that he read about the executioners functionality to
     # return metadata along with the query results. So he wants to check
-    # whether this metadata is actually present.
+    # whether this metadata is actually present. And that it only contains
+    # meta data related to his query
 
-    assert 0, "Implement test"
+    assert type(res_query1.meta_data) == dict, "meta data not a dict"
+    assert len(res_query1.meta_data) > 0, "meta data absent"
+    assert len(res_query1.meta_data) == 1, "too much meta data"
+
+    # In particular Ira would like to have a more human readable description
+    # of the statistic he asked for.
+
+    assert "BEVMK3" in res_query1.meta_data, "statistic absend"
+    assert (
+        res_query1.meta_data["BEVMK3"] != "NO DESCRIPTION FOUND"
+    ), "descrption was not obtained"
 
     # Being satisfied with the results he obtained for his simple query
     # he actually wants to try a larger one across several regions. He heard
