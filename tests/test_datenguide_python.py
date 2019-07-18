@@ -7,7 +7,7 @@ import pytest
 
 from click.testing import CliRunner
 
-from datenguide_python import datenguide_python
+# from datenguide_python import datenguide_python
 from datenguide_python import cli
 
 
@@ -32,7 +32,7 @@ def test_command_line_interface():
     runner = CliRunner()
     result = runner.invoke(cli.main)
     assert result.exit_code == 0
-    assert 'datenguide_python.cli.main' in result.output
-    help_result = runner.invoke(cli.main, ['--help'])
+    assert "datenguide_python.cli.main" in result.output
+    help_result = runner.invoke(cli.main, ["--help"])
     assert help_result.exit_code == 0
-    assert '--help  Show this message and exit.' in help_result.output
+    assert "--help  Show this message and exit." in help_result.output

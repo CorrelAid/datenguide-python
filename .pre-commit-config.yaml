@@ -1,0 +1,14 @@
+repos:
+-   repo: https://github.com/python/black
+    rev: 19.3b0 
+    hooks:
+    - id: black
+      language_version: python3.7
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.2.3
+    hooks:
+    - id: flake8
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: '8af02ed80df134f7495b27c9c1d052cb84611c77'  # Use the sha / tag you want to point at
+    hooks:
+    -   id: mypy
