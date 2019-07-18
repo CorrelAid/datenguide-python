@@ -1,3 +1,6 @@
+from typing import NamedTuple, Optional
+
+
 class QueryBuilder:
     def __init__(self, fields: list, region: str = None, parent: str = None):
         if region:
@@ -80,8 +83,7 @@ class QueryBuilder:
         return self.fields
 
 
-class ComplexField:
-    def __init__(self, field, subfields: list, args: dict = None):
-        self.field = field
-        self.subfields = subfields
-        self.args = args
+class ComplexField(NamedTuple):
+    field: str
+    subfields: list
+    args: Optional[dict] = None
