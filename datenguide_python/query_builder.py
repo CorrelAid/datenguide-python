@@ -12,7 +12,12 @@ class Field(NamedTuple):
         name {str} -- Name of Field or statistic
         subfields {list} -- desired output fields (e.g. value or year)
         args Optional[Dict[str, Union[str, List[str]]]] --
-        Filters for the desired field (e.g. year = 2017)
+        Filters for the desired field (e.g. year = 2017).
+        If "ALL" is passed as a value,
+        then results are returned for all possible subgroups.
+        (e.g. for gender GES = "ALL" the data for male,
+        female and summed for both is returned.
+        If the filter is not set, then only the summed result is returned.)
     """
 
     name: str
@@ -81,8 +86,11 @@ class QueryBuilder:
             if field.args:
                 filters = []
                 for key, value in field.args.items():
-                    # delete quotation marks for query arguments
-                    filters.append(key + ": " + str(value).replace("'", ""))
+                    if value == "ALL":
+                        filters.append("filter:{ " + key + ": { nin: []}}")
+                    else:
+                        # delete quotation marks for query arguments
+                        filters.append(key + ": " + str(value).replace("'", ""))
                 substring += "(" + ", ".join(filters) + ")"
 
             substring += "{"

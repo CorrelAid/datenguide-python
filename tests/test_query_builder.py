@@ -249,3 +249,27 @@ def test_lau():
             "\n", ""
         ),
     )
+
+
+def test_filter_for_all(query):
+    field = dg.Field(
+        name="WAHL09",
+        args={"year": 2017, "PART04": "ALL"},
+        subfields=["value", "PART04"],
+    )
+    query = dg.QueryBuilder(region="09", fields=["id", "name", field])
+    graphql_query = query.get_graphql_query()
+    assert re.sub(" +", " ", graphql_query.replace("\n", "")) == re.sub(
+        " +",
+        " ",
+        """
+            { region(id: "09") {
+                id
+                name
+                WAHL09(year: 2017, filter:{ PART04: { nin: []}}){value PART04 }
+                }
+            }
+                    """.replace(
+            "\n", ""
+        ),
+    )
