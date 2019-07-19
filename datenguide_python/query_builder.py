@@ -9,10 +9,7 @@ class Field(NamedTuple):
 
 class QueryBuilder:
     def __init__(
-        self,
-        fields: List[Union[str, Field]],
-        region: str = None,
-        parent: str = None,  # noqa: E501
+        self, fields: List[Union[str, Field]], region: str = None, parent: str = None
     ):
         if region:
             self.region = region

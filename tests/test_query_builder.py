@@ -15,20 +15,14 @@ def complex_query():
     source = dg.Field(name="source", subfields=["title_de"])
 
     statistic1 = dg.Field(
-        name="WAHL09",
-        args={"year": 2017},
-        subfields=["value", "PART04", source],  # noqa: E501
+        name="WAHL09", args={"year": 2017}, subfields=["value", "PART04", source]
     )
 
     statistic2 = dg.Field(
-        name="BEV001",
-        args={"statistics": "R12612"},
-        subfields=["value", "year"],  # noqa: E501
+        name="BEV001", args={"statistics": "R12612"}, subfields=["value", "year"]
     )
 
-    return dg.QueryBuilder(
-        region="09", fields=["id", "name", statistic1, statistic2]
-    )  # noqa: E501
+    return dg.QueryBuilder(region="09", fields=["id", "name", statistic1, statistic2])
 
 
 def test_create_query_class_with_field_instance(query):
@@ -58,18 +52,14 @@ def test_basic_graphql_string(query):
 
 
 def test_get_fields_to_query():
-    field = dg.Field(
-        name="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
-    )  # noqa: E501
+    field = dg.Field(name="WAHL09", args={"year": 2017}, subfields=["value", "PART04"])
     query = dg.QueryBuilder(region="09", fields=[field])
     subfields_string = query._get_fields_to_query()
     assert subfields_string == "WAHL09(year: 2017){value PART04 }"
 
 
 def test_get_complex_graphql_string():
-    field = dg.Field(
-        name="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
-    )  # noqa: E501
+    field = dg.Field(name="WAHL09", args={"year": 2017}, subfields=["value", "PART04"])
     query = dg.QueryBuilder(region="09", fields=["id", "name", field])
     graphql_query = query.get_graphql_query()
     assert re.sub(" +", " ", graphql_query.replace("\n", " ")) == re.sub(
@@ -135,14 +125,10 @@ def test_get_subfields_complex():
     )
 
     statistic2 = dg.Field(
-        name="BEV001",
-        args={"statistics": "R12612"},
-        subfields=["value", "year"],  # noqa: E501
+        name="BEV001", args={"statistics": "R12612"}, subfields=["value", "year"]
     )
 
-    query = dg.QueryBuilder(
-        region="09", fields=["id", "name", statistic1, statistic2]
-    )  # noqa: E501
+    query = dg.QueryBuilder(region="09", fields=["id", "name", statistic1, statistic2])
     assert query.get_fields() == ["id", "name", statistic1, statistic2]
 
 
