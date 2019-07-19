@@ -2,6 +2,19 @@ from typing import NamedTuple, Optional, Union, List, Dict
 
 
 class Field(NamedTuple):
+    """A field of a query that specifies a statistic or
+    (another information, e.g. source) to query.
+    The name of the field (mostly statistic), the filters (specified with args)
+    and the desired output information (subfields)
+    are specified.
+
+    Arguments:
+        name {str} -- Name of Field or statistic
+        subfields {list} -- desired output fields (e.g. value or year)
+        args Optional[Dict[str, Union[str, List[str]]]] --
+        Filters for the desired field (e.g. year = 2017)
+    """
+
     name: str
     subfields: list
     args: Optional[Dict[str, Union[str, List[str]]]] = None
@@ -16,6 +29,31 @@ class QueryBuilder:
         nuts: int = None,
         lau: int = None,
     ):
+        """Initialize the QueryBuilder either with a region or a parent region.
+
+        Arguments:
+            fields {List[Union[str, Field]]} -- all fields that shall be returned
+            for that region. Can either be simple fields (e.g. name)
+            or fields with nested fields.
+
+        Keyword Arguments:
+            region {str} -- The region the statistics shall be queried for.
+            (default: {None})
+            parent {str} -- The parent region the statistics shall be queried for.
+            (default: {None})
+            nuts {int} -- [The administration level: 1 – Bundesländer
+            2 – Regierungsbezirke / statistische Regionen
+            3 – Kreise / kreisfreie Städte.
+            Default None returns results for all levels. (default: {None})
+            lau {int} -- The administration level: 1 - Verwaltungsgemeinschaften
+            2 - Gemeinden.
+            Default returns results for all levels. (default: {None})
+
+        Raises:
+            TypeError: Region or parent must be defined.
+            Raises TypeError if neither region or parent is specified.
+        """
+
         if region:
             self.region = region
         elif parent:
@@ -56,6 +94,12 @@ class QueryBuilder:
         return substring
 
     def get_graphql_query(self) -> str:
+        """Formats the QueryBuilder into a String that can be queried from the Datenguide API.
+
+        Returns:
+            str -- the Query as a String.
+        """
+
         if hasattr(self, "region"):
             return (
                 """
@@ -102,4 +146,9 @@ class QueryBuilder:
             raise TypeError("region or parent must be defined.")
 
     def get_fields(self) -> List[Union[str, Field]]:
+        """Get all fields of a query.
+
+        Returns:
+            List[Union[str, Field]] -- a list of strings and / or Fields
+        """
         return self.fields
