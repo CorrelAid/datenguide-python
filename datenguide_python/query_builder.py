@@ -9,7 +9,12 @@ class Field(NamedTuple):
 
 class QueryBuilder:
     def __init__(
-        self, fields: List[Union[str, Field]], region: str = None, parent: str = None
+        self,
+        fields: List[Union[str, Field]],
+        region: str = None,
+        parent: str = None,
+        nuts: int = None,
+        lau: int = None,
     ):
         if region:
             self.region = region
@@ -17,8 +22,9 @@ class QueryBuilder:
             self.parent = parent
         else:
             raise TypeError("region or parent must be defined.")
-        # TODO: add nuts
-        # self.nuts =
+
+        self.nuts = nuts if nuts else None
+        self.lau = lau if lau else None
         self.fields = fields
 
     def _get_fields_to_query(self) -> str:
@@ -65,13 +71,22 @@ class QueryBuilder:
                 """
             )
         elif hasattr(self, "parent"):
+            nuts = ""
+            lau = ""
+            if self.nuts:
+                nuts = ", nuts: " + str(self.nuts)
+            if self.lau:
+                lau = ", lau: " + str(self.lau)
             return (
                 """
                     {
                         allRegions(page: $page, itemsPerPage:$itemsPerPage) {
                             regions(parent: \""""
                 + self.parent
-                + """\") {
+                + '"'
+                + nuts
+                + lau
+                + """) {
                                  """
                 + self._get_fields_to_query()
                 + """

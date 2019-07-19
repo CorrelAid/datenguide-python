@@ -189,3 +189,63 @@ def test_all_regions():
             "\n", ""
         ),
     )
+
+
+def test_nuts():
+    statistic1 = dg.Field(
+        name="WAHL09",
+        args={"year": 2017, "PART04": "B90_GRUENE"},
+        subfields=["value", "year", "PART04"],
+    )
+
+    query = dg.QueryBuilder(parent="11", nuts=3, fields=["id", "name", statistic1])
+    graphql_query = query.get_graphql_query()
+    assert re.sub(" +", " ", graphql_query.replace("\n", "")) == re.sub(
+        " +",
+        " ",
+        """
+                {
+                    allRegions(page: $page, itemsPerPage:$itemsPerPage) {
+                        regions(parent: "11", nuts: 3) {
+                            id name WAHL09(year: 2017, PART04:
+                            B90_GRUENE){value year PART04 }
+                        }
+                        page
+                        itemsPerPage
+                        total
+                    }
+                }
+                """.replace(
+            "\n", ""
+        ),
+    )
+
+
+def test_lau():
+    statistic1 = dg.Field(
+        name="WAHL09",
+        args={"year": 2017, "PART04": "B90_GRUENE"},
+        subfields=["value", "year", "PART04"],
+    )
+
+    query = dg.QueryBuilder(parent="11", lau=3, fields=["id", "name", statistic1])
+    graphql_query = query.get_graphql_query()
+    assert re.sub(" +", " ", graphql_query.replace("\n", "")) == re.sub(
+        " +",
+        " ",
+        """
+                {
+                    allRegions(page: $page, itemsPerPage:$itemsPerPage) {
+                        regions(parent: "11", lau: 3) {
+                            id name WAHL09(year: 2017, PART04:
+                            B90_GRUENE){value year PART04 }
+                        }
+                        page
+                        itemsPerPage
+                        total
+                    }
+                }
+                """.replace(
+            "\n", ""
+        ),
+    )
