@@ -12,16 +12,16 @@ def query():
 
 @pytest.fixture
 def complex_query():
-    source = dg.ComplexField(field="source", subfields=["title_de"])
+    source = dg.Field(name="source", subfields=["title_de"])
 
-    statistic1 = dg.ComplexField(
-        field="WAHL09",
+    statistic1 = dg.Field(
+        name="WAHL09",
         args={"year": 2017},
         subfields=["value", "PART04", source],  # noqa: E501
     )
 
-    statistic2 = dg.ComplexField(
-        field="BEV001",
+    statistic2 = dg.Field(
+        name="BEV001",
         args={"statistics": "R12612"},
         subfields=["value", "year"],  # noqa: E501
     )
@@ -58,18 +58,18 @@ def test_basic_graphql_string(query):
 
 
 def test_get_fields_to_query():
-    field = dg.ComplexField(
-        field="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
-    )
+    field = dg.Field(
+        name="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
+    )  # noqa: E501
     query = dg.QueryBuilder(region="09", fields=[field])
     subfields_string = query._get_fields_to_query()
     assert subfields_string == "WAHL09(year: 2017){value PART04 }"
 
 
 def test_get_complex_graphql_string():
-    field = dg.ComplexField(
-        field="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
-    )
+    field = dg.Field(
+        name="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
+    )  # noqa: E501
     query = dg.QueryBuilder(region="09", fields=["id", "name", field])
     graphql_query = query.get_graphql_query()
     assert re.sub(" +", " ", graphql_query.replace("\n", " ")) == re.sub(
@@ -88,7 +88,7 @@ def test_get_complex_graphql_string():
 
 
 def test_get_complex_graphql_string_without_filter():
-    field = dg.ComplexField(field="WAHL09", subfields=["value"])
+    field = dg.Field(name="WAHL09", subfields=["value"])
     query = dg.QueryBuilder(region="09", fields=["id", "name", field])
     graphql_query = query.get_graphql_query()
     assert re.sub(" +", " ", graphql_query.replace("\n", " ")) == re.sub(
@@ -130,12 +130,12 @@ def test_get_subfields(query):
 
 
 def test_get_subfields_complex():
-    statistic1 = dg.ComplexField(
-        field="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
+    statistic1 = dg.Field(
+        name="WAHL09", args={"year": 2017}, subfields=["value", "PART04"]
     )
 
-    statistic2 = dg.ComplexField(
-        field="BEV001",
+    statistic2 = dg.Field(
+        name="BEV001",
         args={"statistics": "R12612"},
         subfields=["value", "year"],  # noqa: E501
     )
@@ -147,8 +147,8 @@ def test_get_subfields_complex():
 
 
 def test_multiple_filter_args():
-    statistic1 = dg.ComplexField(
-        field="BETR09",
+    statistic1 = dg.Field(
+        name="BETR09",
         args={"FRUNW2": ["FRUART0111", "FRUART0112"]},
         subfields=["FRUNW2", "value", "year"],
     )
@@ -176,8 +176,8 @@ def test_filter_for_all_subtypes():
 
 
 def test_all_regions():
-    statistic1 = dg.ComplexField(
-        field="WAHL09",
+    statistic1 = dg.Field(
+        name="WAHL09",
         args={"year": 2017, "PART04": "B90_GRUENE"},
         subfields=["value", "year", "PART04"],
     )

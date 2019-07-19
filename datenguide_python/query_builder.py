@@ -1,31 +1,41 @@
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Union, List, Dict
+
+
+class Field(NamedTuple):
+    name: str
+    subfields: list
+    args: Optional[Dict[str, Union[str, List[str]]]] = None
 
 
 class QueryBuilder:
-    def __init__(self, fields: list, region: str = None, parent: str = None):
+    def __init__(
+        self,
+        fields: List[Union[str, Field]],
+        region: str = None,
+        parent: str = None,  # noqa: E501
+    ):
         if region:
             self.region = region
         elif parent:
             self.parent = parent
         else:
             raise TypeError("region or parent must be defined.")
+        # TODO: add nuts
         # self.nuts =
         self.fields = fields
-        # self.__dict__.update(kwargs)
 
     def _get_fields_to_query(self) -> str:
         fields_string = ""
         for field in self.fields:
             fields_string += self._get_fields_helper(field)
-            # fields_string += "{" + " ".join(field.subfields) + "} "
         return fields_string.strip()
 
     def _get_fields_helper(self, field) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
-        elif isinstance(field, ComplexField):
-            substring += field.field
+        elif isinstance(field, Field):
+            substring += field.name
 
             if field.args:
                 filters = []
@@ -79,11 +89,5 @@ class QueryBuilder:
         else:
             raise TypeError("region or parent must be defined.")
 
-    def get_fields(self) -> list:
+    def get_fields(self) -> List[Union[str, Field]]:
         return self.fields
-
-
-class ComplexField(NamedTuple):
-    field: str
-    subfields: list
-    args: Optional[dict] = None
