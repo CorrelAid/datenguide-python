@@ -1,0 +1,8 @@
+-install requirements_dev.txt
+-run "pre-commit install" in the root directory
+-run "pre-commit run" in the root directory
+    This should fetch all the repositories for pre-commit so if it runs
+    through pre-commit installation works correctly. Other than that this
+    command will skip all steps as no files are specified.
+-optionally run " pre-commit run --all-files" to actually run the tools on the files
+    Tools will also run now on every "git commit"
