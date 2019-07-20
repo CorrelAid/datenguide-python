@@ -10,9 +10,19 @@ class ExecutionResults(NamedTuple):
     meta_data: Json
 
 
+class FieldMetaDict(dict):
+    def get_return_type(self):
+        if self["type"]["kind"] == "LIST":
+            return self["type"]["ofType"]["name"]
+        else:
+            return self["type"]["name"]
+
+
 class QueryExecutioner(object):
     REQUEST_HEADER: Dict[str, str] = {"Content-Type": "application/json"}
     endpoint: str = "https://api-next.datengui.de/graphql"
+
+    _META_DATA_CACHE: Json = dict()
 
     _meta_data_query_json: Dict[str, str] = {
         "query": r"""{
@@ -27,6 +37,37 @@ class QueryExecutioner(object):
           }
         }"""
     }
+
+    _meta_type_info = """
+        query TypeInfo($type: String!) {
+      __type(name: $type) {
+        fields {
+          name
+          type {
+            ofType {
+              name
+            }
+            kind
+            name
+            description
+          }
+          description
+          args {
+            name
+            type {
+              kind
+              name
+              ofType {
+                name
+                description
+                kind
+              }
+            }
+          }
+        }
+      }
+    }
+    """
 
     def __init__(self, alternative_endpoint: Optional[str] = None) -> None:
         if alternative_endpoint:
@@ -52,10 +93,31 @@ class QueryExecutioner(object):
         else:
             return None
 
+    def _get_type_info(self, type):
+        if type in self.__class__._META_DATA_CACHE:
+            return self.__class__._META_DATA_CACHE[type]
+        variables = {"type": type}
+        query_json = {}
+        query_json["query"] = self._meta_type_info
+        query_json["variables"] = variables
+        info = self._send_request(query_json)
+        if info:
+            type_meta = {
+                f["name"]: FieldMetaDict(f) for f in info["data"]["__type"]["fields"]
+            }
+            self.__class__._META_DATA_CACHE[type] = type_meta
+            return type_meta
+        else:
+            None
+
     @staticmethod
-    def _generate_post_json(query) -> Dict[str, str]:
+    def _generate_post_json(
+        query, variables=Optional[Dict[str, str]]
+    ) -> Dict[str, str]:
         post_json = dict()
         post_json["query"] = query.get_graphql_query()
+        if variables:
+            post_json["variables"] = cast(Dict[str, str], variables)
         return post_json
 
     def _send_request(self, query_json: Dict[str, str]) -> Optional[Json]:
