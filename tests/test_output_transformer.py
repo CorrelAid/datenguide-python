@@ -1,5 +1,3 @@
-import pytest
-
 import pandas
 
 from datenguide_python.output_transformer import QueryOutputTransformer
@@ -7,6 +5,7 @@ from datenguide_python.output_transformer import QueryOutputTransformer
 from datenguide_python.query_executioner_4testing import QueryExecutioner
 
 from datenguide_python.query_builder_4testing import QueryBuilder
+
 
 def test_output_transformer():
 
@@ -49,7 +48,11 @@ def test_output_transformer():
     assert len(data_transformed.drop_duplicates()) == len(
         data_transformed
     ), "transformed data contain duplicates"
-    
+
     # check year ranges
-    assert data_transformed.year.min() > 1900, "transformed data contain data from 1900 or before"
-    assert data_transformed.year.max() < 2050, "transformed data contain data from after 2050"
+    assert (
+        data_transformed.year.min() > 1900
+    ), "transformed data contain data from 1900 or before"
+    assert (
+        data_transformed.year.max() < 2050
+    ), "transformed data contain data from after 2050"
