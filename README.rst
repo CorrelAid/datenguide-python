@@ -28,6 +28,15 @@ Features
 
 * TODO
 
+## Create a Query
+
+A query is created with the QueryBuilder. 
+According to the Datenguide API it either needs a region or a parent region specified. 
+Also, at least one desired field must be defined. 
+Optionally, a filter can be applied with args. 
+Optionally, the administration level the statstics shall be returned from can be specified with nuts and lau. 
+See for full documentation of the API: https://github.com/datenguide/datenguide-api
+
 Credits
 -------
 
