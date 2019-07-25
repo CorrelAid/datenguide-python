@@ -51,8 +51,8 @@ def test_output_transformer():
 
     # check year ranges
     assert (
-        data_transformed.year.min() > 1900
+        data_transformed["year"].min() > 1900
     ), "transformed data contain data from 1900 or before"
     assert (
-        data_transformed.year.max() < 2050
+        data_transformed["year"].max() < 2050
     ), "transformed data contain data from after 2050"
