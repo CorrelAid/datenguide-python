@@ -1,4 +1,8 @@
-from datenguide_python.query_execution import QueryExecutioner
+from datenguide_python.query_execution import (
+    QueryExecutioner,
+    FieldMetaDict,
+    TypeMetaData,
+)
 
 import pytest
 from unittest.mock import Mock
@@ -43,26 +47,106 @@ def sample_queries():
 
 
 @pytest.fixture
-def sample_stat_meta_response():
-    return {
+def type_request_response():
+    request = Mock()
+    expected_type_info = TypeMetaData(
+        kind="ENUM",
+        fields=None,
+        enum_values={"R12631": "Statistik rechtskräftiger Urteile in Ehesachen"},
+    )
+    request.return_value = {
         "data": {
             "__type": {
-                "fields": [
-                    {"name": "id", "description": "Regionalschlüssel", "args": []},
-                    {"name": "name", "description": "Name", "args": []},
+                "kind": "ENUM",
+                "name": "BEVMK3Statistics",
+                "enumValues": [
                     {
-                        "name": "AENW01",
-                        "description": "**Description 1** long additional description",
-                        "args": [{"name": "year"}, {"name": "statistics"}],
-                    },
-                    {
-                        "name": "AENW02",
-                        "description": "Description 2",
-                        "args": [{"name": "year"}, {"name": "statistics"}],
-                    },
-                ]
+                        "name": "R12631",
+                        "description": "Statistik rechtskräftiger Urteile in Ehesachen",
+                    }
+                ],
+                "fields": None,
             }
         }
+    }
+    return request, expected_type_info
+
+
+@pytest.fixture
+def sample_stat_meta_response():
+    return {
+        "id": FieldMetaDict(
+            {"name": "id", "description": "Regionalschlüssel", "args": []}
+        ),
+        "name": FieldMetaDict({"name": "name", "description": "Name", "args": []}),
+        "AENW01": FieldMetaDict(
+            {
+                "name": "AENW01",
+                "description": "**Description 1** long additional description",
+                "args": [
+                    {
+                        "name": "year",
+                        "defaultValue": None,
+                        "type": {
+                            "kind": "LIST",
+                            "name": None,
+                            "ofType": {
+                                "name": "Int",
+                                "description": "LONG DESCRIPTION",
+                                "kind": "SCALAR",
+                            },
+                        },
+                    },
+                    {
+                        "name": "statistics",
+                        "defaultValue": None,
+                        "type": {
+                            "kind": "LIST",
+                            "name": None,
+                            "ofType": {
+                                "name": "AENW01Statistics",
+                                "description": "",
+                                "kind": "ENUM",
+                            },
+                        },
+                    },
+                ],
+            }
+        ),
+        "AENW02": FieldMetaDict(
+            {
+                "name": "AENW02",
+                "description": "Description 2",
+                "args": [
+                    {
+                        "name": "year",
+                        "defaultValue": None,
+                        "type": {
+                            "kind": "LIST",
+                            "name": None,
+                            "ofType": {
+                                "name": "Int",
+                                "description": "LONG DESCRIPTION",
+                                "kind": "SCALAR",
+                            },
+                        },
+                    },
+                    {
+                        "name": "statistics",
+                        "defaultValue": None,
+                        "type": {
+                            "kind": "LIST",
+                            "name": None,
+                            "ofType": {
+                                "name": "AENW02Statistics",
+                                "description": "",
+                                "kind": "ENUM",
+                            },
+                        },
+                    },
+                ],
+            }
+        ),
     }
 
 
@@ -109,3 +193,38 @@ def test_create_stat_desc_dic(sample_stat_meta_response):
     desc_dict = QueryExecutioner._create_stat_desc_dic(sample_stat_meta_response)
     assert desc_dict["AENW01"] == "Description 1", "first dict entry is wrong"
     assert desc_dict["AENW02"] == "NO DESCRIPTION FOUND", "second dict entry is wrong"
+
+
+def test_get_args(sample_stat_meta_response):
+    args = sample_stat_meta_response["AENW01"].get_arguments()
+    assert "year" in args, "year argument missing for AENW01"
+    assert "statistics" in args, "statistic missing for AEW01"
+    assert args["year"] == ("LIST", None, "SCALAR", "Int")
+    assert args["statistics"] == ("LIST", None, "ENUM", "AENW01Statistics")
+
+
+def test_get_type_info_caches_results(type_request_response):
+    req_mock, expected_result = type_request_response
+    qe = QueryExecutioner()
+    qe._send_request = req_mock
+    qe.__class__._META_DATA_CACHE = dict()  # clear cache
+    assert (
+        "BEVMK3Statistics" not in qe.__class__._META_DATA_CACHE
+    ), "statistics should not be in cache"
+    res = qe.get_type_info("BEVMK3Statistics")
+    assert res == expected_result, "incorrect response processing"
+    qe._send_request.assert_called_once()
+    assert "BEVMK3Statistics" in qe.__class__._META_DATA_CACHE
+    assert (
+        qe.__class__._META_DATA_CACHE["BEVMK3Statistics"] == expected_result
+    ), "cache results are wrong"
+
+
+def test_get_type_info_uses_cached_resutls(type_request_response):
+    req_mock, expected_result = type_request_response
+    qe = QueryExecutioner()
+    qe._send_request = req_mock
+    qe.__class__._META_DATA_CACHE = {"BEVMK3Statistics": expected_result}
+    res = qe.get_type_info("BEVMK3Statistics")
+    assert res == expected_result
+    qe._send_request.assert_not_called()
