@@ -99,3 +99,32 @@ def test_QueryExecutionerWorkflow(sample_queries):
     # he actually wants to try a larger one across several regions. He heard
     # that this might be an issue for the server in general, but that the
     # executioner takes care of addressing this issue by itself.
+
+    # IMPLEMENT ON QUERY BUILDER SIDE?
+
+    # so far everything has been quite nice but Ira feels a little
+    # lost with all the types and arguments. But he knows that the
+    # executioner can actually give information on types and Ira
+    # happens to know that the type of region queries is "Region"
+    # and he tries to gen info on it.
+
+    info = qExec.get_type_info("Region")
+    assert info.kind == "OBJECT", "Region should be an object"
+    assert info.enum_values is None, "Region doesn't have enum values"
+    assert type(info.fields) == dict, "Fields should be a dict"
+
+    # Since this is a lot of information Ira would particularly
+    # like to drill down on the arguments that are allowed for his
+    # favorite statistic BEVMK3
+
+    stat_args = info.fields["BEVMK3"].get_arguments()
+    assert len(stat_args) > 0
+    assert "statistics" in stat_args
+
+    # Although this is already really helpfull Ira notices that
+    # one of the arguments is an ENUM and he would like to know
+    # the possible values that he can use for it.
+
+    enum_vals = qExec.get_type_info("BEVMK3Statistics").enum_values
+    assert type(enum_vals) == dict, "Enum values should be dict"
+    assert len(enum_vals) > 0, "Enums should have values"
