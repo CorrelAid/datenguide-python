@@ -1,7 +1,8 @@
-from typing import NamedTuple, Optional, Union, List, Dict
+from __future__ import annotations
+from typing import Optional, Union, List, Dict
 
 
-class Field(NamedTuple):
+class Field:
     """A field of a query that specifies a statistic or
     (another information, e.g. source) to query.
     The name of the field (mostly statistic), the filters (specified with args)
@@ -20,21 +21,49 @@ class Field(NamedTuple):
         If the filter is not set, then only the summed result is returned.)
     """
 
-    name: str
-    subfields: list
-    args: Optional[Dict[str, Union[str, List[str]]]] = None
-
-
-class QueryBuilder:
     def __init__(
         self,
-        fields: List[Union[str, Field]],
+        name: str,
+        fields: List[Union[str, Field]] = [],
+        args: Optional[Dict[str, Union[str, List[str]]]] = None,
+    ):
+
+        self.name = name
+        self.fields = fields
+        self.args = args
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def add_field(self, field: Union[str, "Field"]) -> Field:
+        if isinstance(field, str):
+            added_field = Field(name=field)
+        else:
+            added_field = field
+
+        if self.fields:
+            self.fields.append(added_field)
+        else:
+            self.fields = [added_field]
+        return added_field
+
+    def add_args(self, args: dict):
+        if self.args:
+            self.args.update(args)
+        else:
+            self.args = args
+
+
+class Query:
+    def __init__(
+        self,
+        fields: List[Union[str, Field]] = [],
         region: str = None,
         parent: str = None,
         nuts: int = None,
         lau: int = None,
     ):
-        """Initialize the QueryBuilder either with a region or a parent region.
+        """Initialize the Query either with a region or a parent region.
 
         Arguments:
             fields {List[Union[str, Field]]} -- all fields that shall be returned
@@ -66,9 +95,21 @@ class QueryBuilder:
         else:
             raise TypeError("region or parent must be defined.")
 
-        self.nuts = nuts if nuts else None
-        self.lau = lau if lau else None
+        self.nuts = nuts
+        self.lau = lau
         self.fields = fields
+
+    def add_field(self, field: Union[str, Field]) -> Field:
+        if isinstance(field, str):
+            added_field = Field(name=field)
+        else:
+            added_field = field
+
+        if self.fields:
+            self.fields.append(added_field)
+        else:
+            self.fields = [added_field]
+        return added_field
 
     def _get_fields_to_query(self) -> str:
         fields_string = ""
@@ -76,7 +117,7 @@ class QueryBuilder:
             fields_string += self._get_fields_helper(field)
         return fields_string.strip()
 
-    def _get_fields_helper(self, field) -> str:
+    def _get_fields_helper(self, field: Union[str, Field]) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
@@ -93,13 +134,17 @@ class QueryBuilder:
                         filters.append(key + ": " + str(value).replace("'", ""))
                 substring += "(" + ", ".join(filters) + ")"
 
-            substring += "{"
-            for subfield in field.subfields:
-                substring += self._get_fields_helper(subfield)
-            substring += "} "
+            if field.fields:
+                substring += "{"
+                for subfield in field.fields:
+                    substring += self._get_fields_helper(subfield)
+                substring += "} "
         else:
             raise TypeError
         return substring
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
     def get_graphql_query(self) -> str:
         """Formats the QueryBuilder into a String that can be queried from the Datenguide API.
