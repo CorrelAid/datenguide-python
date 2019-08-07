@@ -1,3 +1,10 @@
+import pandas as pd
+
+import numpy as np
+
+from pandas.io.json import json_normalize
+
+
 class QueryOutputTransformer:
     """ IN PROGRESS only region query to do: DOKU """
 
@@ -5,78 +12,84 @@ class QueryOutputTransformer:
         pass
 
     @staticmethod
-    def flatten_query(dic):
-        from pandas.io.json import json_normalize
-
+    def flatten_query_result(dic):
         flat = json_normalize(dic)
         return flat
 
     @staticmethod
     def get_col_list(df):
         c = list(df.columns)
-        c.remove("data.region.id")
-        c.remove("data.region.name")
+        try:
+            c.remove("data.region.id")
+        except ValueError:
+            pass
+        try:
+            c.remove("data.region.name")
+        except ValueError:
+            pass
         return c
 
     @staticmethod
-    def build_and_merge_data(dic, lis):
-        import pandas as pd
-        from pandas.io.json import json_normalize
-
-        data = pd.DataFrame()
-        for d in lis:
-            try:
-                if data.empty is True:
-                    data = json_normalize(dic[d][0])
-                    data.columns = [d, "year"]
-                else:
-                    temp = json_normalize(dic[d][0])
+    def build_and_merge_data(dic, lis, year_default=True):
+        data = json_normalize(dic[lis[0]][0])
+        if year_default is True:
+            data.columns = [lis[0], "year"]
+            for d in lis[1:]:
+                if json_normalize(dic[d][0]).empty is True:
+                    temp = pd.DataFrame([np.nan, np.nan]).T
                     temp.columns = [d, "year"]
-                    data = data.merge(temp, on="year", how="outer")
-                print("no type variable")
-            except ValueError:
-                if data.empty is True:
-                    data = json_normalize(dic[d][0])
-                    newcolname = data.values[0][0] + "_" + d
-                    data = data.iloc[:, 1:]
-                    data.columns = [newcolname, "year"]
-                else:
+                elif json_normalize(dic[d][0]).empty is False:
                     temp = json_normalize(dic[d][0])
-                    newcolname = temp.values[0][0] + "_" + d
+                    try:
+                        temp.columns = [d, "year"]
+                        print("no type variable")
+                    except ValueError:
+                        newcolname = temp.values[0][0] + "_" + d
+                        temp = temp.iloc[:, 1:]
+                        temp.columns = [newcolname, "year"]
+                        print("type variable")
+                data = data.merge(temp, on="year", how="outer")
+
+            newcol = [x.replace("data.region.", "") for x in data.columns]
+            data.columns = newcol
+            try:
+                data["id"] = dic["data.region.id"][0]
+            except ValueError:
+                pass
+            try:
+                data["name"] = dic["data.region.name"][0]
+            except ValueError:
+                pass
+
+        if year_default is False:
+            data.columns = [lis[0]]
+            for d in lis[1:]:
+                temp = json_normalize(dic[d][0])
+                try:
+                    temp.columns = [d]
+                    print("no type variable")
+                except ValueError:
+                    newcolname = data.values[0][0] + "_" + d
                     temp = temp.iloc[:, 1:]
-                    temp.columns = [newcolname, "year"]
-                    data = data.merge(temp, on="year", how="outer")
-                print("type variable")
-        newcol = [x.replace("data.region.", "") for x in data.columns]
-        data.columns = newcol
-        data["id"] = dic["data.region.id"][0]
-        data["name"] = dic["data.region.name"][0]
+                    temp.columns = [newcolname]
+                    print("type variable")
+                pd.concat([data, temp], axis=1)
+
+            newcol = [x.replace("data.region.", "") for x in data.columns]
+            data.columns = newcol
+            try:
+                data["id"] = dic["data.region.id"][0]
+            except ValueError:
+                pass
+            try:
+                data["name"] = dic["data.region.name"][0]
+            except ValueError:
+                pass
         return data
 
-    @staticmethod
-    def drop_duplicates(df):
-        data = df.drop_duplicates()
-        return data
-
-    @staticmethod
-    def sort_by_year(df):
-        data = df.sort_values("year")
-        return data
-
-    @staticmethod
-    def order_cols(df):
-        c = list(df.columns)
-        for i in ["year", "id", "name"]:
-            c.remove(i)
-        cnew = ["id", "name", "year"] + c
-        data = df[cnew]
-        return data
-
-    def transform(self, dic):
-        flat = self.flatten_query(dic)
-        c = self.get_col_list(flat)
-        output = self.build_and_merge_data(flat, c)
-        output = self.drop_duplicates(output)
-        output = self.sort_by_year(output)
-        output = self.order_cols(output)
+    @classmethod
+    def transform(cls, dic, year_default=True):
+        flat = cls.flatten_query_result(dic)
+        c = cls.get_col_list(flat)
+        output = cls.build_and_merge_data(flat, c, year_default)
         return output
