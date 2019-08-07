@@ -1,21 +1,68 @@
 import pandas
 
+import requests
+
 from datenguide_python.output_transformer import QueryOutputTransformer
 
-from datenguide_python.query_executioner_4testing import QueryExecutioner
 
-from datenguide_python.query_builder_4testing import QueryBuilder
+def buildQuery():
+    testquery = """
+                          {
+              region(id: "05911") {
+                id
+                name
+                BEVZ20(statistics: R12111, filter: { GES: { in: ["GESM"]} }) {
+                type: GES
+                year
+                value
+                }
+                AI0101 {
+                value
+                year
+                }
+                AENW01 {
+                value
+                year
+                }
+                BEV083 {
+                value
+                year
+                }
+                BEVSTD {
+                value
+                year
+                }
+                BEVMK3 {
+                value
+                year
+                }
+              }
+            }
+            """
+    return testquery
+
+
+def runQuery(queryString):
+
+    post_json = dict()
+    post_json["query"] = queryString
+    header = {"Content-Type": "application/json"}
+    URL = "https://api-next.datengui.de/graphql"
+    resp = requests.post(url=URL, headers=header, json=post_json)
+
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        raise Exception(f"Http error: status code {resp.status_code}")
 
 
 def test_output_transformer():
 
     """ prepare test of output transformer """
 
-    qBuild = QueryBuilder()
-    testquery = qBuild.buildQuery()
+    testquery = buildQuery()
 
-    qExec = QueryExecutioner()
-    query_result = qExec.runQuery(testquery)
+    query_result = runQuery(testquery)
 
     """ start test of output transformer """
     qOutTrans = QueryOutputTransformer()
@@ -23,20 +70,15 @@ def test_output_transformer():
     # test whether input data arrive in correct format
     assert type(query_result) == dict, "input data not dict type"
 
-    data_transformed = qOutTrans.transform(query_result)
+    data_transformed = qOutTrans.transform(query_result, year_default=True)
 
     # test whether transformed output data is a dataframe
     assert (
         type(data_transformed) == pandas.DataFrame
     ), "transformed data is not a dataframe"
 
-    # outdata must contain 'id' column
     assert "id" in data_transformed.columns, "no id colum"
-
-    # outdata must contain 'name' column
     assert "name" in data_transformed.columns, "no name colum"
-
-    # outdata must contain 'year' column
     assert "year" in data_transformed.columns, "no year colum"
 
     # columns of outdata should not contain json format
@@ -45,9 +87,9 @@ def test_output_transformer():
     assert True not in checklist, "hierarchy not properly transformed"
 
     # outdata should not contain duplicates
-    assert len(data_transformed.drop_duplicates()) == len(
-        data_transformed
-    ), "transformed data contain duplicates"
+    # assert len(data_transformed.drop_duplicates()) == len(
+    #    data_transformed
+    # ), "transformed data contain duplicates"
 
     # check year ranges
     # assert (
