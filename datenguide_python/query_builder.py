@@ -1,5 +1,10 @@
 from __future__ import annotations
 from typing import Optional, Union, List, Dict
+from datenguide_python.query_execution import (
+    QueryExecutioner,
+    TypeMetaData,
+    ExecutionResults,
+)
 
 
 class Field:
@@ -52,6 +57,9 @@ class Field:
             self.args.update(args)
         else:
             self.args = args
+
+    def get_info(self) -> Optional[TypeMetaData]:
+        return QueryExecutioner().get_type_info(self.name)
 
 
 class Query:
@@ -112,10 +120,10 @@ class Query:
     def _get_fields_to_query(self) -> str:
         fields_string = ""
         for field in self.fields:
-            fields_string += self._get_fields_helper(field)
+            fields_string += self._get_fields_to_query_helper(field)
         return fields_string.strip()
 
-    def _get_fields_helper(self, field: Union[str, Field]) -> str:
+    def _get_fields_to_query_helper(self, field: Union[str, Field]) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
@@ -135,7 +143,7 @@ class Query:
             if field.fields:
                 substring += "{"
                 for subfield in field.fields:
-                    substring += self._get_fields_helper(subfield)
+                    substring += self._get_fields_to_query_helper(subfield)
                 substring += "} "
         else:
             raise TypeError
@@ -196,10 +204,44 @@ class Query:
         else:
             raise TypeError("region or parent must be defined.")
 
-    def get_fields(self) -> List[Union[str, Field]]:
+    def get_fields(self) -> List[str]:
         """Get all fields of a query.
 
         Returns:
             List[Union[str, Field]] -- a list of strings and / or Fields
         """
-        return self.fields
+        field_list = []
+        for field in self.fields:
+            field_list.extend(Query._get_fields_helper(field))
+        return field_list
+
+    def results(self) -> Optional[ExecutionResults]:
+        return QueryExecutioner().run_query(self)
+
+    @staticmethod
+    def _get_fields_helper(field: Union[str, Field]) -> List[str]:
+        field_list = []
+        if isinstance(field, str):
+            field_list.append(field)
+        elif isinstance(field, Field):
+            field_list.append(field.name)
+            if field.fields:
+                for subfield in field.fields:
+                    field_list.extend(Query._get_fields_helper(subfield))
+            else:
+                raise TypeError
+        return field_list
+
+    @staticmethod
+    def get_info(field: str = None) -> Optional[TypeMetaData]:
+        """Get information on a specific field.
+        If field is not specified return meta data for
+        all statistics that can be queried.
+
+        Returns:
+            str -- Response from QueryExecutioner on meta data info
+        """
+        if field:
+            return QueryExecutioner().get_type_info(field)
+        else:
+            return QueryExecutioner().get_type_info("Region")

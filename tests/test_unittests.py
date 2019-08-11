@@ -228,3 +228,40 @@ def test_get_type_info_uses_cached_resutls(type_request_response):
     res = qe.get_type_info("BEVMK3Statistics")
     assert res == expected_result
     qe._send_request.assert_not_called()
+
+    def test_QueryExecutionerWorkflow(sample_queries):
+        qExec = QueryExecutioner()
+
+        assert (
+            qExec.endpoint == "https://api-next.datengui.de/graphql"
+        ), "Default endpoint is wrong"
+
+        res_query1 = qExec.run_query(sample_queries.data_query1)
+        assert res_query1 is not None, "query did not return results"
+
+        assert len(res_query1.query_results) > 0, "query did not return results"
+        assert (
+            type(res_query1.query_results) is dict
+        ), "query results are not a python json representation"
+
+        assert type(res_query1.meta_data) == dict, "meta data not a dict"
+        assert len(res_query1.meta_data) > 0, "meta data absent"
+        assert len(res_query1.meta_data) == 1, "too much meta data"
+
+        assert "BEVMK3" in res_query1.meta_data, "statistic absend"
+        assert (
+            res_query1.meta_data["BEVMK3"] != "NO DESCRIPTION FOUND"
+        ), "descrption was not obtained"
+
+        info = qExec.get_type_info("Region")
+        assert info.kind == "OBJECT", "Region should be an object"
+        assert info.enum_values is None, "Region doesn't have enum values"
+        assert type(info.fields) == dict, "Fields should be a dict"
+
+        stat_args = info.fields["BEVMK3"].get_arguments()
+        assert len(stat_args) > 0
+        assert "statistics" in stat_args
+
+        enum_vals = qExec.get_type_info("BEVMK3Statistics").enum_values
+        assert type(enum_vals) == dict, "Enum values should be dict"
+        assert len(enum_vals) > 0, "Enums should have values"
