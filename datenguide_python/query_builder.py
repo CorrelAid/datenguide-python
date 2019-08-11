@@ -65,16 +65,14 @@ class Query:
     ):
         """Initialize the Query either with a region or a parent region.
 
-        Arguments:
-            fields {List[Union[str, Field]]} -- all fields that shall be returned
-            for that region. Can either be simple fields (e.g. name)
-            or fields with nested fields.
-
         Keyword Arguments:
             region {str} -- The region the statistics shall be queried for.
             (default: {None})
             parent {str} -- The parent region the statistics shall be queried for.
             (default: {None})
+            fields {List[Union[str, Field]]} -- all fields that shall be returned
+            for that region. Can either be simple fields (e.g. name)
+            or fields with nested fields.
             nuts {int} -- [The administration level: 1 – Bundesländer
             2 – Regierungsbezirke / statistische Regionen
             3 – Kreise / kreisfreie Städte.
