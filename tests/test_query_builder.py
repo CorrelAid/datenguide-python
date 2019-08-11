@@ -2,8 +2,6 @@ import pytest
 import re
 import datenguide_python as dg
 
-# from datenguide_python import query_builder
-
 
 @pytest.fixture
 def query():
@@ -12,10 +10,10 @@ def query():
 
 @pytest.fixture
 def complex_query():
-    source = dg.Field(name="source", fields=["title_de"])
+    source = dg.Field("source", fields=["title_de"])
 
     statistic1 = dg.Field(
-        name="WAHL09", args={"year": 2017}, fields=["value", "PART04", source]
+        "WAHL09", args={"year": 2017}, fields=["value", "PART04", source]
     )
 
     statistic2 = dg.Field(
@@ -119,17 +117,19 @@ def test_get_subfields(query):
     assert query.get_fields() == ["BEV001"]
 
 
-def test_get_subfields_complex():
-    statistic1 = dg.Field(
-        name="WAHL09", args={"year": 2017}, fields=["value", "PART04"]
-    )
-
-    statistic2 = dg.Field(
-        name="BEV001", args={"statistics": "R12612"}, fields=["value", "year"]
-    )
-
-    query = dg.Query(region="09", fields=["id", "name", statistic1, statistic2])
-    assert query.get_fields() == ["id", "name", statistic1, statistic2]
+def test_get_subfields_complex(complex_query):
+    assert complex_query.get_fields() == [
+        "id",
+        "name",
+        "WAHL09",
+        "value",
+        "PART04",
+        "source",
+        "title_de",
+        "BEV001",
+        "value",
+        "year",
+    ]
 
 
 def test_multiple_filter_args():
