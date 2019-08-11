@@ -1,4 +1,3 @@
-from __future__ import annotations
 from typing import Optional, Union, List, Dict
 from datenguide_python.query_execution import (
     QueryExecutioner,
@@ -29,7 +28,7 @@ class Field:
     def __init__(
         self,
         name: str,
-        fields: List[Union[str, Field]] = [],
+        fields: List[Union[str, object]] = [],
         args: Optional[Dict[str, Union[str, List[str]]]] = None,
     ):
 
@@ -40,7 +39,7 @@ class Field:
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def add_field(self, field: Union[str, "Field"]) -> Field:
+    def add_field(self, field: Union[str, "Field"]) -> object:
         if isinstance(field, str):
             added_field = Field(name=field)
         else:
@@ -123,7 +122,7 @@ class Query:
             fields_string += self._get_fields_to_query_helper(field)
         return fields_string.strip()
 
-    def _get_fields_to_query_helper(self, field: Union[str, Field]) -> str:
+    def _get_fields_to_query_helper(self, field: Union[str, object]) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
@@ -219,7 +218,7 @@ class Query:
         return QueryExecutioner().run_query(self)
 
     @staticmethod
-    def _get_fields_helper(field: Union[str, Field]) -> List[str]:
+    def _get_fields_helper(field: Union[str, object]) -> List[str]:
         field_list = []
         if isinstance(field, str):
             field_list.append(field)
