@@ -47,13 +47,15 @@ def test_output_transformer():
 
     query_result = runQuery(testquery)
 
+    metadata = {"id": "09"}
+
     """ start test of output transformer """
     qOutTrans = QueryOutputTransformer()
 
     # test whether input data arrive in correct format
     assert type(query_result) == dict, "input data not dict type"
 
-    data_transformed = qOutTrans.transform(query_result, year_default=True)
+    data_transformed = qOutTrans.transform(query_result, metadata)
 
     # test whether transformed output data is a dataframe
     assert (
