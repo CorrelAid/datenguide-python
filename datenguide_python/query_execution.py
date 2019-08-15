@@ -91,9 +91,36 @@ class QueryExecutioner(object):
         if alternative_endpoint:
             self.endpoint = cast(str, alternative_endpoint)
 
-    def run_query(self, query) -> Optional[ExecutionResults]:
-        query_json = self._generate_post_json(query)
-        results = self._send_request(query_json)
+    @staticmethod
+    def _pagination_json(page):
+        return {"page": page, "itemsPerPage": 1000}
+
+    def run_query(self, query) -> Optional[List[ExecutionResults]]:
+        if "allRegions" in query.get_fields():
+            results = []
+            page = 0
+            while True:
+                query_json = self._generate_post_json(
+                    query, self._pagination_json(page)
+                )
+                result_page = self._send_request(query_json)
+                if result_page is None:
+                    return None
+                results.append(result_page)
+                if (cast(Json, result_page)["data"]["allRegions"]["page"] + 1) * (
+                    cast(Json, result_page)["data"]["allRegions"]["itemsPerPage"]
+                ) >= cast(Json, result_page)["data"]["allRegions"]["total"]:
+                    break
+                else:
+                    page += 1
+        else:
+            query_json = self._generate_post_json(query)
+            single_result = self._send_request(query_json)
+            if single_result is None:
+                return None
+            else:
+                results = [single_result]
+
         if results:
             # Region type contains all the statistics fields
             stat_meta = self.get_type_info("Region")
@@ -109,7 +136,7 @@ class QueryExecutioner(object):
                 }
             else:
                 meta = {"error": "META DATA COULD NOT BE LOADED"}
-            return ExecutionResults(query_results=cast(Json, results), meta_data=meta)
+            return [ExecutionResults(query_results=cast(Json, results), meta_data=meta)]
         else:
             return None
 
