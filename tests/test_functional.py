@@ -8,7 +8,7 @@ from datenguide_python.query_builder import Query, Field
 @pytest.fixture
 def query():
     field = Field(name="BEVMK3", fields=["value", "year"])
-    query = Query(region="05911", fields=["id", "name", field])
+    query = Query.regionQuery(region="05911", fields=["id", "name", field])
     return query
 
 
