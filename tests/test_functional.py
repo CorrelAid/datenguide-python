@@ -1,49 +1,18 @@
-from unittest.mock import Mock
-from collections import namedtuple
 import pytest
 
 
 from datenguide_python.query_execution import QueryExecutioner
+from datenguide_python.query_builder import Query, Field
 
 
 @pytest.fixture
-def sample_queries():
-    q1 = Mock()
-    q1.get_graphql_query.return_value = """
-    {
-        region(id:"05911") {
-            id
-            name
-            BEVMK3 {
-                value
-                year
-            }
-        }
-    }
-    """
-    q1.get_fields.return_value = ["region", "id", "name", "BEVMK3", "value", ".year"]
-
-    mq1 = Mock()
-    mq1.get_graphql_query.return_value = """
-    {
-      __type(name: "Region") {
-        name
-        fields {
-          name
-          description
-          type {
-            name
-            kind
-          }
-        }
-      }
-    }
-    """
-    SampleQueries = namedtuple("SampleQueries", "data_query1 meta_query1")
-    return SampleQueries(q1, mq1)
+def query():
+    field = Field(name="BEVMK3", fields=["value", "year"])
+    query = Query.regionQuery(region="05911", fields=["id", "name", field])
+    return query
 
 
-def test_QueryExecutionerWorkflow(sample_queries):
+def test_QueryExecutionerWorkflow(query):
     """Functional test for the query executioner"""
 
     # Ira (W. Cotton, probably the first person to use the term API) want to
@@ -67,7 +36,8 @@ def test_QueryExecutionerWorkflow(sample_queries):
     # now wants to execute one of his queries to see that he gets some return
     # values.
 
-    res_query1 = qExec.run_query(sample_queries.data_query1)
+    res_query1 = query.results()
+
     assert res_query1 is not None, "query did not return results"
 
     # He wants to have a closer look at the raw return query results and
@@ -77,6 +47,14 @@ def test_QueryExecutionerWorkflow(sample_queries):
     assert (
         type(res_query1.query_results) is dict
     ), "query results are not a python json representation"
+
+    # Ira wants to get an overview of all possible statistics that can be
+    # queried.
+
+    stats = Query.get_info()
+    assert stats.kind == "OBJECT", "Region should be an object"
+    assert stats.enum_values is None, "Region doesn't have enum values"
+    assert type(stats.fields) == dict, "Fields should be a dict"
 
     # Ira remembers that he read about the executioners functionality to
     # return metadata along with the query results. So he wants to check
@@ -100,31 +78,31 @@ def test_QueryExecutionerWorkflow(sample_queries):
     # that this might be an issue for the server in general, but that the
     # executioner takes care of addressing this issue by itself.
 
-    # IMPLEMENT ON QUERY BUILDER SIDE?
-
-    # so far everything has been quite nice but Ira feels a little
-    # lost with all the types and arguments. But he knows that the
-    # executioner can actually give information on types and Ira
-    # happens to know that the type of region queries is "Region"
-    # and he tries to gen info on it.
-
-    info = qExec.get_type_info("Region")
-    assert info.kind == "OBJECT", "Region should be an object"
-    assert info.enum_values is None, "Region doesn't have enum values"
-    assert type(info.fields) == dict, "Fields should be a dict"
-
     # Since this is a lot of information Ira would particularly
     # like to drill down on the arguments that are allowed for his
     # favorite statistic BEVMK3
 
-    stat_args = info.fields["BEVMK3"].get_arguments()
+    stat_args = stats.fields["BEVMK3"].get_arguments()
     assert len(stat_args) > 0
     assert "statistics" in stat_args
 
-    # Although this is already really helpfull Ira notices that
+    # Although this is already really helpful Ira notices that
     # one of the arguments is an ENUM and he would like to know
     # the possible values that he can use for it.
 
-    enum_vals = qExec.get_type_info("BEVMK3Statistics").enum_values
+    enum_vals = Query.get_info("BEVMK3Statistics").enum_values
     assert type(enum_vals) == dict, "Enum values should be dict"
     assert len(enum_vals) > 0, "Enums should have values"
+
+    # Ira wants to add another statistic to his query.
+    statistic1 = query.add_field("BEV001")
+    statistic1.add_field("year")
+    statistic1.add_args({"year": 2017})
+
+    assert type(statistic1) == Field, "statistic is not a Field"
+
+    # Then he wants to get metainfo on the field.
+
+    stats_info = statistic1.get_info()
+    assert stats_info.kind == "OBJECT", "BEV001 should be an object"
+    assert type(stats_info.fields) == dict, "Fields should be a dict"
