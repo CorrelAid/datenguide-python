@@ -4,8 +4,6 @@ from pandas.io.json import json_normalize
 
 from typing import Dict, Any
 
-from pandas.errors import MergeError
-
 
 class QueryOutputTransformer:
     """ IN PROGRESS only region query to do: DOKU """
@@ -27,24 +25,25 @@ class QueryOutputTransformer:
         flat_json_dict = {}
 
         i = 0
+
         for c in col_list_whole_data_body:
-            flat_json_dict["{}".format(c)] = json_normalize(query_response_json)[
+            flat_json_dict[f"{c}"] = json_normalize(query_response_json)[
                 col_list_whole_data_body[i]
             ]
             i = i + 1
 
         for i in range(len(col_list_whole_data_body)):
-            globals()["datatemp{}".format(i)] = json_normalize(
+            locals()[f"data_0{i}"] = json_normalize(
                 flat_json_dict[col_list_whole_data_body[i]][0]
             )
             # w/ type (e.g. GES)
             try:
-                globals()["data{}".format(i)] = (
-                    globals()["datatemp{}".format(i)]
+                locals()[f"data{i}"] = (
+                    locals()[f"data_0{i}"]
                     .pivot(index="year", columns="type", values="value")
                     .reset_index()
                 )
-                cols = list(globals()["data{}".format(i)].columns)
+                cols = list(locals()[f"data{i}"].columns)
                 new_cols = [
                     x.replace(
                         "GES",
@@ -53,11 +52,11 @@ class QueryOutputTransformer:
                     )
                     for x in cols
                 ]
-                globals()["data{}".format(i)].columns = new_cols
-            # w/o type
+                locals()[f"data{i}"].columns = new_cols
+                # w/o type
             except KeyError:
-                globals()["data{}".format(i)] = globals()["datatemp{}".format(i)]
-                cols = list(globals()["data{}".format(i)].columns)
+                locals()[f"data{i}"] = locals()[f"data_0{i}"]
+                cols = list(locals()[f"data{i}"].columns)
                 cols_temp = [
                     col_list_whole_data_body[i].replace("data.region.", "") + "_" + x
                     for x in cols
@@ -71,34 +70,30 @@ class QueryOutputTransformer:
                     for x in cols_temp
                 ]
                 new_cols = [x.replace("data.region.", "") for x in cols_temp3]
-                globals()["data{}".format(i)].columns = new_cols
+                locals()["data{}".format(i)].columns = new_cols
             try:
-                globals()["data{}".format(i)]["id"] = whole_data_body["data.region.id"][
+                locals()["data{}".format(i)]["id"] = whole_data_body["data.region.id"][
                     0
                 ]
             except KeyError:
                 print(col_list_whole_data_body[i] + " has no id")
                 pass
             try:
-                globals()["data{}".format(i)]["name"] = whole_data_body[
+                locals()["data{}".format(i)]["name"] = whole_data_body[
                     "data.region.name"
                 ][0]
             except KeyError:
                 print(col_list_whole_data_body[i] + " has no name")
                 pass
 
-        data_out = globals()["data{}".format(0)]
+        data_out = locals()[f"data_0{0}"]
         for l in range(1, len(col_list_whole_data_body)):
-            try:
-                data_out = data_out.merge(globals()["data{}".format(l)], how="outer")
-            except MergeError:
-                print("no joint key to merge on")
-                data_out["fake_id"] = 1
-                globals()["data{}".format(l)]["fake_id"] = 1
-                data_out = data_out.merge(globals()["data{}".format(l)], how="outer")
-                cols = list(data_out.columns)
-                cols.remove("fake_id")
-                data_out = data_out[cols]
+            data_out["fake_id"] = 1
+            locals()[f"data{l}"]["fake_id"] = 1
+            data_out = data_out.merge(locals()[f"data{l}"], how="outer")
+            cols = list(data_out.columns)
+            cols.remove("fake_id")
+            data_out = data_out[cols]
 
         return data_out
 
