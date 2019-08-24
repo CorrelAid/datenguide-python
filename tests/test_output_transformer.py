@@ -48,12 +48,12 @@ def test_output_transformer():
     query_result = runQuery(testquery)
 
     """ start test of output transformer """
-    qOutTrans = QueryOutputTransformer()
+    qOutTrans = QueryOutputTransformer(query_result)
 
     # test whether input data arrive in correct format
     assert type(query_result) == dict, "input data not dict type"
 
-    data_transformed = qOutTrans.transform(query_result)
+    data_transformed = qOutTrans.transform()
 
     # test whether transformed output data is a dataframe
     assert (
@@ -68,16 +68,3 @@ def test_output_transformer():
     lenlist = len(data_transformed.columns)
     checklist = ["." in data_transformed.columns[x] for x in range(lenlist)]
     assert True not in checklist, "hierarchy not properly transformed"
-
-    # outdata should not contain duplicates
-    # assert len(data_transformed.drop_duplicates()) == len(
-    #    data_transformed
-    # ), "transformed data contain duplicates"
-
-    # check year ranges
-    # assert (
-    #    data_transformed["year"].min() > 1900
-    # ), "transformed data contain data from 1900 or before"
-    # assert (
-    #    data_transformed["year"].max() < 2050
-    # ), "transformed data contain data from after 2050"
