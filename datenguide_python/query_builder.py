@@ -1,7 +1,12 @@
-from typing import NamedTuple, Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict
+from datenguide_python.query_execution import (
+    QueryExecutioner,
+    TypeMetaData,
+    ExecutionResults,
+)
 
 
-class Field(NamedTuple):
+class Field:
     """A field of a query that specifies a statistic or
     (another information, e.g. source) to query.
     The name of the field (mostly statistic), the filters (specified with args)
@@ -20,63 +25,39 @@ class Field(NamedTuple):
         If the filter is not set, then only the summed result is returned.)
     """
 
-    name: str
-    subfields: list
-    args: Optional[Dict[str, Union[str, List[str]]]] = None
-
-
-class QueryBuilder:
     def __init__(
         self,
-        fields: List[Union[str, Field]],
-        region: str = None,
-        parent: str = None,
-        nuts: int = None,
-        lau: int = None,
+        name: str,
+        fields: List[Union[str, "Field"]] = [],
+        args: Optional[Dict[str, str]] = None,
     ):
-        """Initialize the QueryBuilder either with a region or a parent region.
 
-        Arguments:
-            fields {List[Union[str, Field]]} -- all fields that shall be returned
-            for that region. Can either be simple fields (e.g. name)
-            or fields with nested fields.
-
-        Keyword Arguments:
-            region {str} -- The region the statistics shall be queried for.
-            (default: {None})
-            parent {str} -- The parent region the statistics shall be queried for.
-            (default: {None})
-            nuts {int} -- [The administration level: 1 – Bundesländer
-            2 – Regierungsbezirke / statistische Regionen
-            3 – Kreise / kreisfreie Städte.
-            Default None returns results for all levels. (default: {None})
-            lau {int} -- The administration level: 1 - Verwaltungsgemeinschaften
-            2 - Gemeinden.
-            Default returns results for all levels. (default: {None})
-
-        Raises:
-            TypeError: Region or parent must be defined.
-            Raises TypeError if neither region or parent is specified.
-        """
-
-        if region:
-            self.region = region
-        elif parent:
-            self.parent = parent
-        else:
-            raise TypeError("region or parent must be defined.")
-
-        self.nuts = nuts if nuts else None
-        self.lau = lau if lau else None
+        self.name = name
         self.fields = fields
+        self.args = args
 
-    def _get_fields_to_query(self) -> str:
-        fields_string = ""
-        for field in self.fields:
-            fields_string += self._get_fields_helper(field)
-        return fields_string.strip()
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
-    def _get_fields_helper(self, field) -> str:
+    def add_field(self, field: Union[str, "Field"]) -> "Field":
+        if isinstance(field, str):
+            added_field = Field(name=field)
+        else:
+            added_field = field
+
+        if self.fields:
+            self.fields.append(added_field)
+        else:
+            self.fields = [added_field]
+        return added_field
+
+    def add_args(self, args: dict):
+        if self.args:
+            self.args.update(args)
+        else:
+            self.args = args
+
+    def _get_fields_to_query(self, field: Union[str, "Field"]) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
@@ -93,70 +74,167 @@ class QueryBuilder:
                         filters.append(key + ": " + str(value).replace("'", ""))
                 substring += "(" + ", ".join(filters) + ")"
 
-            substring += "{"
-            for subfield in field.subfields:
-                substring += self._get_fields_helper(subfield)
-            substring += "} "
+            if field.fields:
+                substring += "{"
+                for subfield in field.fields:
+                    substring += field._get_fields_to_query(subfield)
+                substring += "}"
         else:
             raise TypeError
         return substring
 
+    def get_fields(self):
+        field_list = [self.name]
+        for field in self.fields:
+            field_list.extend(Field._get_fields_helper(field))
+        return field_list
+
+    def get_info(self) -> Optional[TypeMetaData]:
+        return QueryExecutioner().get_type_info(self.name)
+
+    @staticmethod
+    def _get_fields_helper(field: Union[str, "Field"]) -> List[str]:
+        field_list = []
+        if isinstance(field, str):
+            field_list.append(field)
+        elif isinstance(field, Field):
+            field_list.append(field.name)
+            if field.fields:
+                for subfield in field.fields:
+                    field_list.extend(Field._get_fields_helper(subfield))
+            else:
+                raise TypeError
+        return field_list
+
+
+class Query:
+    """A query to get information via the datenguide API for regionalstatistik.
+    The query contains all fields and arguments.
+
+    Raises:
+        TypeError: [description]
+        TypeError: [description]
+        TypeError: [description]
+
+    Returns:
+        [type] -- [description]
+    """
+
+    def __init__(self, start_field: Field):
+        """Initialize the Query with a start Field, which is either
+        a region with a region ID or the field allRegions.
+
+        Arguments:
+            start_field {Field} -- The top node field.
+            Either a single region or allRegions.
+        """
+        self.start_field = start_field
+
+    @classmethod
+    def regionQuery(
+        cls, region: str, fields: List[Union[str, "Field"]] = []
+    ) -> "Query":
+        """Factory method to instantiate a Query with a single region through its region id.
+
+        Arguments:
+            region {str} -- The region id the statistics shall be queried for.
+            fields {List[Union[str, Field]]} -- all fields that shall be returned
+            for that region. Can either be simple fields (e.g. name)
+            or fields with nested fields.
+
+        Returns:
+            Query -- A query object with region as start Field.
+        """
+        return cls(start_field=Field("region", fields, args={"id": '"' + region + '"'}))
+
+    @classmethod
+    def allRegionsQuery(
+        cls,
+        fields: List[Union[str, "Field"]] = [],
+        parent: str = None,
+        nuts: int = None,
+        lau: int = None,
+    ) -> "Query":
+        """Factory method to instantiate a Query with allRegions start field.
+        A parent id, nuts or lau can be further specified for the query.
+
+        Arguments:
+            fields {List[Union[str, Field]]} -- all fields that shall be returned
+            for that region. Can either be simple fields (e.g. name)
+            or fields with nested fields.
+            parent {str} -- The region id of the parent region
+            the statistics shall be queried for.
+            (E.g. the id for a state where all sub regions within the
+            state shall be queried for.)
+            (default: {None})
+            nuts {int} -- [The administration level: 1 – Bundesländer
+            2 – Regierungsbezirke / statistische Regionen
+            3 – Kreise / kreisfreie Städte.
+            Default None returns results for all levels. (default: {None})
+            lau {int} -- The administration level: 1 - Verwaltungsgemeinschaften
+            2 - Gemeinden.
+            Default returns results for all levels. (default: {None})
+
+        Returns:
+            Query -- A query object with allRegions as start Field.
+        """
+        # add page and itemsPerPage as arguments for QueryExecutioner
+        args = {"page": "$page", "itemsPerPage": "$itemsPerPage"}
+
+        region_args = {}
+        if parent:
+            region_args["parent"] = '"' + parent + '"'
+        if nuts:
+            region_args["nuts"] = str(nuts)
+        if lau:
+            region_args["lau"] = str(lau)
+
+        regions = Field("regions", fields=fields, args=region_args)
+
+        # add fields page, itemsperPage and total for QueryExecutioner
+        return cls(
+            start_field=Field(
+                "allRegions",
+                fields=[regions, "page", "itemsPerPage", "total"],
+                args=args,
+            )
+        )
+
+    def add_field(self, field: Union[str, Field]) -> Field:
+        return self.start_field.add_field(field)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
     def get_graphql_query(self) -> str:
-        """Formats the QueryBuilder into a String that can be queried from the Datenguide API.
+        """Formats the Query into a String that can be queried from the Datenguide API.
 
         Returns:
             str -- the Query as a String.
         """
+        return "{" + self.start_field._get_fields_to_query(self.start_field) + "}"
 
-        if hasattr(self, "region"):
-            return (
-                """
-                {
-                    region(id: \""""
-                + self.region
-                + """\") {
-                        """
-                + self._get_fields_to_query()
-                + """
-                    }
-                }
-                """
-            )
-        elif hasattr(self, "parent"):
-            nuts = ""
-            lau = ""
-            if self.nuts:
-                nuts = ", nuts: " + str(self.nuts)
-            if self.lau:
-                lau = ", lau: " + str(self.lau)
-            return (
-                """
-                    {
-                        allRegions(page: $page, itemsPerPage:$itemsPerPage) {
-                            regions(parent: \""""
-                + self.parent
-                + '"'
-                + nuts
-                + lau
-                + """) {
-                                 """
-                + self._get_fields_to_query()
-                + """
-                            }
-                            page
-                            itemsPerPage
-                            total
-                        }
-                    }
-                    """
-            )
-        else:
-            raise TypeError("region or parent must be defined.")
-
-    def get_fields(self) -> List[Union[str, Field]]:
+    def get_fields(self) -> List[str]:
         """Get all fields of a query.
 
         Returns:
             List[Union[str, Field]] -- a list of strings and / or Fields
         """
-        return self.fields
+        return self.start_field.get_fields()
+
+    def results(self) -> Optional[ExecutionResults]:
+        return QueryExecutioner().run_query(self)
+
+    @staticmethod
+    def get_info(field: str = None) -> Optional[TypeMetaData]:
+        """Get information on a specific field.
+        If field is not specified return meta data for
+        all statistics that can be queried.
+
+        Returns:
+            str -- Response from QueryExecutioner on meta data info
+        """
+        if field:
+            return QueryExecutioner().get_type_info(field)
+        else:
+            return QueryExecutioner().get_type_info("Region")
