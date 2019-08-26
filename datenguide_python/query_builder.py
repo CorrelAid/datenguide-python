@@ -30,26 +30,77 @@ class Field:
         name: str,
         fields: List[Union[str, "Field"]] = [],
         args: Optional[Dict[str, str]] = None,
+        default_fields: bool = True,
+        return_type: str = None,
     ):
 
         self.name = name
-        self.fields = fields
+        # TODO: use name as default?
+        self.return_type = return_type if return_type else name
+
+        self.fields: Dict[str, "Field"] = {}
+
+        for field in fields:
+            self.add_field(field, default_fields=default_fields)
+
+        if default_fields:
+
+            # only add default values if field is a statistic
+            all_fields = Query._region_fields.fields if Query._region_fields else {}
+
+            # explicitly check if all_fields isn't empty for mypy
+            if all_fields:
+
+                if self.name in all_fields:
+                    field_args = all_fields[self.name].get_arguments()
+
+                    # check if fields contains argument "statistics"
+                    # and thus is a statistic
+                    if "statistics" in field_args:
+                        self.fields["year"] = Field(
+                            "year", return_type=self._get_return_type("year")
+                        )
+                        self.fields["value"] = Field(
+                            "value", return_type=self._get_return_type("value")
+                        )
+                        self.fields["source"] = Field(
+                            "source",
+                            fields=[
+                                "title_de",
+                                "valid_from",
+                                "periodicity",
+                                "name",
+                                "url",
+                            ],
+                            return_type=self._get_return_type("source"),
+                        )
+
         self.args = args
 
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+    def _get_return_type(self, fieldname):
+        return (
+            QueryExecutioner()
+            .get_type_info(self.return_type)
+            .fields[fieldname]
+            .get_return_type()
+        )
 
-    def add_field(self, field: Union[str, "Field"]) -> "Field":
+    def add_field(
+        self, field: Union[str, "Field"], default_fields: bool = True
+    ) -> "Field":
         if isinstance(field, str):
-            added_field = Field(name=field)
-        else:
-            added_field = field
+            self.fields[field] = Field(
+                name=field,
+                fields=[],
+                return_type=self._get_return_type(field),
+                default_fields=default_fields,
+            )
+            return self.fields[field]
 
-        if self.fields:
-            self.fields.append(added_field)
-        else:
-            self.fields = [added_field]
-        return added_field
+        # TODO: return type not properly set when adding entire Fields
+        field._set_return_type(self)
+        self.fields[field.name] = field
+        return self.fields[field.name]
 
     def add_args(self, args: dict):
         if self.args:
@@ -57,12 +108,15 @@ class Field:
         else:
             self.args = args
 
+    def _set_return_type(self, parentfield):
+        self.return_type = (parentfield._get_return_type(self.name),)
+
     def _get_fields_to_query(self, field: Union[str, "Field"]) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
         elif isinstance(field, Field):
-            substring += field.name
+            substring += field.name + " "
 
             if field.args:
                 filters = []
@@ -76,8 +130,8 @@ class Field:
 
             if field.fields:
                 substring += "{"
-                for subfield in field.fields:
-                    substring += field._get_fields_to_query(subfield)
+                for key, field_item in field.fields.items():
+                    substring += field._get_fields_to_query(field_item)
                 substring += "}"
         else:
             raise TypeError
@@ -85,25 +139,23 @@ class Field:
 
     def get_fields(self):
         field_list = [self.name]
-        for field in self.fields:
-            field_list.extend(Field._get_fields_helper(field))
+        for key, value in self.fields.items():
+            field_list.extend(Field._get_fields_helper(value))
         return field_list
 
     def get_info(self) -> Optional[TypeMetaData]:
-        return QueryExecutioner().get_type_info(self.name)
+        return QueryExecutioner().get_type_info(self.return_type)
 
     @staticmethod
     def _get_fields_helper(field: Union[str, "Field"]) -> List[str]:
         field_list = []
         if isinstance(field, str):
             field_list.append(field)
-        elif isinstance(field, Field):
+        else:
             field_list.append(field.name)
             if field.fields:
-                for subfield in field.fields:
-                    field_list.extend(Field._get_fields_helper(subfield))
-            else:
-                raise TypeError
+                for key, value in field.fields.items():
+                    field_list.extend(Field._get_fields_helper(value))
         return field_list
 
 
@@ -120,7 +172,49 @@ class Query:
         [type] -- [description]
     """
 
-    def __init__(self, start_field: Field):
+    """static variables based on QueryExecutioner
+    """
+    # static variable with all subfields of "Query"
+    _query_fields: Optional[TypeMetaData] = QueryExecutioner().get_type_info("Query")
+
+    _return_type_region: str = ""
+    _return_type_allreg: str = ""
+    if _query_fields:
+
+        # static variable with return type of "region"
+        _return_type_region = (
+            _query_fields.fields["region"].get_return_type()
+            if _query_fields.fields
+            else ""
+        )
+
+        # static variable with return type of "allRegions"
+        _return_type_allreg = (
+            _query_fields.fields["allRegions"].get_return_type()
+            if _query_fields.fields
+            else ""
+        )
+
+    # static variable with all subfields of "Region"
+    _region_fields: Optional[TypeMetaData] = QueryExecutioner().get_type_info(
+        _return_type_region
+    )
+
+    # static variable with all subfields of "allRegions"
+    _allregions_fields: Optional[TypeMetaData] = QueryExecutioner().get_type_info(
+        _return_type_allreg
+    )
+
+    # static variable with return type of field "regions"
+    _return_type_regions: str = ""
+    if _allregions_fields:
+        _return_type_regions = (
+            _allregions_fields.fields["regions"].get_return_type()
+            if _allregions_fields.fields
+            else ""
+        )
+
+    def __init__(self, start_field: Field, default_fields: bool = True):
         """Initialize the Query with a start Field, which is either
         a region with a region ID or the field allRegions.
 
@@ -132,20 +226,37 @@ class Query:
 
     @classmethod
     def regionQuery(
-        cls, region: str, fields: List[Union[str, "Field"]] = []
+        cls,
+        region: str,
+        fields: List[Union[str, "Field"]] = [],
+        default_fields: bool = True,
     ) -> "Query":
         """Factory method to instantiate a Query with a single region through its region id.
 
         Arguments:
             region {str} -- The region id the statistics shall be queried for.
-            fields {List[Union[str, Field]]} -- all fields that shall be returned
+            fields {List[Union[str, Field]]} -- all fields that shall be
+            returned from the query
             for that region. Can either be simple fields (e.g. name)
             or fields with nested fields.
 
         Returns:
             Query -- A query object with region as start Field.
         """
-        return cls(start_field=Field("region", fields, args={"id": '"' + region + '"'}))
+
+        if default_fields:
+            defaults: List[Union[str, "Field"]] = ["id", "name"]
+            fields = defaults + fields
+
+        return cls(
+            start_field=Field(
+                "region",
+                fields,
+                args={"id": '"' + region + '"'},
+                return_type=Query._return_type_region,
+                default_fields=default_fields,
+            )
+        )
 
     @classmethod
     def allRegionsQuery(
@@ -154,6 +265,7 @@ class Query:
         parent: str = None,
         nuts: int = None,
         lau: int = None,
+        default_fields: bool = True,
     ) -> "Query":
         """Factory method to instantiate a Query with allRegions start field.
         A parent id, nuts or lau can be further specified for the query.
@@ -189,22 +301,29 @@ class Query:
         if lau:
             region_args["lau"] = str(lau)
 
-        regions = Field("regions", fields=fields, args=region_args)
+        if default_fields:
+            defaults: List[Union[str, "Field"]] = ["id", "name"]
+            fields = defaults + fields
 
+        regions = Field(
+            "regions",
+            fields=fields,
+            args=region_args,
+            return_type=Query._return_type_regions,
+        )
         # add fields page, itemsperPage and total for QueryExecutioner
         return cls(
             start_field=Field(
                 "allRegions",
                 fields=[regions, "page", "itemsPerPage", "total"],
                 args=args,
+                return_type=Query._return_type_allreg,
+                default_fields=default_fields,
             )
         )
 
-    def add_field(self, field: Union[str, Field]) -> Field:
-        return self.start_field.add_field(field)
-
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+    def add_field(self, field: Union[str, Field], default_fields=True) -> Field:
+        return self.start_field.add_field(field, default_fields=default_fields)
 
     def get_graphql_query(self) -> str:
         """Formats the Query into a String that can be queried from the Datenguide API.
@@ -237,4 +356,4 @@ class Query:
         if field:
             return QueryExecutioner().get_type_info(field)
         else:
-            return QueryExecutioner().get_type_info("Region")
+            return QueryExecutioner().get_type_info(Query._return_type_region)
