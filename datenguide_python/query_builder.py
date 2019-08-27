@@ -130,7 +130,7 @@ class Field:
 
             if field.fields:
                 substring += "{"
-                for key, field_item in field.fields.items():
+                for field_item in field.fields.values():
                     substring += field._get_fields_to_query(field_item)
                 substring += "}"
         else:
