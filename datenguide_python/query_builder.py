@@ -154,7 +154,7 @@ class Field:
         else:
             field_list.append(field.name)
             if field.fields:
-                for key, value in field.fields.items():
+                for value in field.fields.values():
                     field_list.extend(Field._get_fields_helper(value))
         return field_list
 
