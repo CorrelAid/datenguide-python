@@ -139,7 +139,7 @@ class Field:
 
     def get_fields(self):
         field_list = [self.name]
-        for key, value in self.fields.items():
+        for value in self.fields.values():
             field_list.extend(Field._get_fields_helper(value))
         return field_list
 
