@@ -129,7 +129,7 @@ class Field:
 
             if field.fields:
                 substring += "{"
-                for key, field_item in field.fields.items():
+                for field_item in field.fields.values():
                     substring += field._get_fields_to_query(field_item)
                 substring += "}"
         else:
@@ -138,7 +138,7 @@ class Field:
 
     def get_fields(self):
         field_list = [self.name]
-        for key, value in self.fields.items():
+        for value in self.fields.values():
             field_list.extend(Field._get_fields_helper(value))
         return field_list
 
@@ -153,7 +153,7 @@ class Field:
         else:
             field_list.append(field.name)
             if field.fields:
-                for key, value in field.fields.items():
+                for value in field.fields.values():
                     field_list.extend(Field._get_fields_helper(value))
         return field_list
 
