@@ -291,9 +291,6 @@ def test_add_fields_stepwise():
         ],
         default_fields=False,
     )
-
-    print(query)
-    print(query2)
     assert query.get_graphql_query() == query2.get_graphql_query()
 
     graphql_query = query.get_graphql_query()
@@ -305,6 +302,27 @@ def test_add_fields_stepwise():
                     BEV001 {year }
                     WAHL09 (year: 2017, filter:{ PART04: { nin: []}}){value PART04 }
                 }
+        }""".replace(
+            "\n", ""
+        ),
+    )
+
+
+def test_add_fields_all_regions():
+    all_reg_query = Query.allRegionsQuery(parent="11")
+    all_reg_query.add_field("BEV001")
+
+    graphql_query = all_reg_query.get_graphql_query()
+    assert graphql_query == re.sub(
+        "    ",
+        "",
+        """{
+            allRegions (page: $page, itemsPerPage: $itemsPerPage){
+                regions (parent: "11"){
+                    id name BEV001 {
+                        year value source {title_de valid_from periodicity name url }}
+                }
+                page itemsPerPage total }
         }""".replace(
             "\n", ""
         ),

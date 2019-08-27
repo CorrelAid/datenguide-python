@@ -97,7 +97,6 @@ class Field:
             )
             return self.fields[field]
 
-        # TODO: return type not properly set when adding entire Fields
         field._set_return_type(self)
         self.fields[field.name] = field
         return self.fields[field.name]
@@ -109,7 +108,7 @@ class Field:
             self.args = args
 
     def _set_return_type(self, parentfield):
-        self.return_type = (parentfield._get_return_type(self.name),)
+        self.return_type = parentfield._get_return_type(self.name)
 
     def _get_fields_to_query(self, field: Union[str, "Field"]) -> str:
         substring = ""
@@ -206,23 +205,26 @@ class Query:
     )
 
     # static variable with return type of field "regions"
-    _return_type_regions: str = ""
-    if _allregions_fields:
-        _return_type_regions = (
-            _allregions_fields.fields["regions"].get_return_type()
-            if _allregions_fields.fields
-            else ""
-        )
+    _return_type_regions: str = "Region"
 
-    def __init__(self, start_field: Field, default_fields: bool = True):
+    def __init__(
+        self,
+        start_field: Field,
+        region_field: Field = None,
+        default_fields: bool = True,
+    ):
         """Initialize the Query with a start Field, which is either
         a region with a region ID or the field allRegions.
 
         Arguments:
-            start_field {Field} -- The top node field.
+            start_field {Field} -- The top node field (allRegions or Region).
+            region_field {Field} -- If Top Node is allRegions
+            then the second node is "regions" accessible through this field.
+
             Either a single region or allRegions.
         """
         self.start_field = start_field
+        self.region_field = region_field
 
     @classmethod
     def regionQuery(
@@ -311,6 +313,7 @@ class Query:
             args=region_args,
             return_type=Query._return_type_regions,
         )
+
         # add fields page, itemsperPage and total for QueryExecutioner
         return cls(
             start_field=Field(
@@ -319,11 +322,18 @@ class Query:
                 args=args,
                 return_type=Query._return_type_allreg,
                 default_fields=default_fields,
-            )
+            ),
+            region_field=regions,
         )
 
     def add_field(self, field: Union[str, Field], default_fields=True) -> Field:
-        return self.start_field.add_field(field, default_fields=default_fields)
+        if self.start_field.name == "allRegions":
+            if self.region_field is not None:
+                return self.region_field.add_field(field, default_fields=default_fields)
+            else:
+                raise TypeError("All Regions Query initialized without regions field.")
+        else:
+            return self.start_field.add_field(field, default_fields=default_fields)
 
     def get_graphql_query(self) -> str:
         """Formats the Query into a String that can be queried from the Datenguide API.
