@@ -136,6 +136,7 @@ class QueryExecutioner(object):
                 }
             else:
                 meta = {"error": "META DATA COULD NOT BE LOADED"}
+            # wrong casting as the result is a list of Json
             return [ExecutionResults(query_results=cast(Json, results), meta_data=meta)]
         else:
             return None
@@ -213,7 +214,7 @@ class QueryExecutioner(object):
 
     @staticmethod
     def _extract_main_description(description: str) -> str:
-        match = re.match(r"^\*\*([^*]*)\*\*", description)
+        match = re.match(r"^\s*\*\*([^*]*)\*\*", description)
         if match:
             return match.group(1)
         else:

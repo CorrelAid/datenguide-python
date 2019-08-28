@@ -222,7 +222,7 @@ class Query:
         """
         return self.start_field.get_fields()
 
-    def results(self) -> Optional[ExecutionResults]:
+    def results(self) -> Optional[List[ExecutionResults]]:
         return QueryExecutioner().run_query(self)
 
     @staticmethod
