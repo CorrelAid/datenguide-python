@@ -101,6 +101,12 @@ class Field:
         self.fields[field.name] = field
         return self.fields[field.name]
 
+    def drop_field(self, field: str):
+        if isinstance(field, str):
+            self.fields.pop(field, None)
+        else:
+            self.fields.pop(field.name, None)
+
     def add_args(self, args: dict):
         if self.args:
             self.args.update(args)
@@ -334,6 +340,17 @@ class Query:
                 raise TypeError("All Regions Query initialized without regions field.")
         else:
             return self.start_field.add_field(field, default_fields=default_fields)
+
+    def drop_field(self, field: str) -> "Query":
+        if self.start_field.name == "allRegions":
+            if self.region_field is not None:
+                self.region_field.drop_field(field)
+                return self
+            else:
+                raise TypeError("All Regions Query initialized without regions field.")
+        else:
+            self.start_field.drop_field(field)
+            return self
 
     def get_graphql_query(self) -> str:
         """Formats the Query into a String that can be queried from the Datenguide API.

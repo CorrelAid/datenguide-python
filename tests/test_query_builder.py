@@ -30,6 +30,13 @@ def query():
 
 
 @pytest.fixture
+def all_regions_query(field):
+    return Query.allRegionsQuery(
+        parent="11", fields=["id", "name", field], default_fields=False
+    )
+
+
+@pytest.fixture
 def complex_query(field):
     return Query.regionQuery(
         region="09", fields=["id", "name", field], default_fields=False
@@ -172,10 +179,7 @@ def test_multiple_filter_args():
     )
 
 
-def test_all_regions(field):
-    all_regions_query = Query.allRegionsQuery(
-        parent="11", fields=["id", "name", field], default_fields=False
-    )
+def test_all_regions(all_regions_query):
     graphql_query = all_regions_query.get_graphql_query()
     assert graphql_query == re.sub(
         "    ",
@@ -197,7 +201,6 @@ def test_nuts(field):
     query = Query.allRegionsQuery(
         parent="11", nuts=3, fields=["id", "name", field], default_fields=False
     )
-
     graphql_query = query.get_graphql_query()
     assert graphql_query == re.sub(
         "    ",
@@ -363,3 +366,26 @@ def test_get_all_stats_info():
 def test_get_field_info():
     info = Query.get_info("BEV001")
     assert "BEVM01" in info.fields
+
+
+def test_drop_field(query):
+    query = query.drop_field("BEV001")
+    assert query.get_fields() == ["region"]
+
+
+def test_drop_field_without_assignment(query):
+    query.drop_field("BEV001")
+    assert query.get_fields() == ["region"]
+
+
+def test_drop_field_all_regions(all_regions_query):
+    all_regions_query = all_regions_query.drop_field("WAHL09")
+    assert all_regions_query.get_fields() == [
+        "allRegions",
+        "regions",
+        "id",
+        "name",
+        "page",
+        "itemsPerPage",
+        "total",
+    ]
