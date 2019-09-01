@@ -1,5 +1,6 @@
 import pytest
 import re
+import pandas as pd
 from datenguide_python import Field, Query
 
 
@@ -389,3 +390,15 @@ def test_drop_field_all_regions(all_regions_query):
         "itemsPerPage",
         "total",
     ]
+
+
+def test_process_query(query_default):
+    df = query_default.results()
+    assert isinstance(df, pd.DataFrame)
+    pass
+
+
+def test_process_query_meta(query_default):
+    meta_data = query_default.meta_data()
+    assert isinstance(meta_data, dict)
+    pass

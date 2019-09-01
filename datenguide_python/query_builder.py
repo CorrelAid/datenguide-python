@@ -1,9 +1,11 @@
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Any
+from pandas import DataFrame
 from datenguide_python.query_execution import (
     QueryExecutioner,
     TypeMetaData,
     ExecutionResults,
 )
+from datenguide_python.output_transformer import QueryOutputTransformer
 
 
 class Field:
@@ -368,8 +370,35 @@ class Query:
         """
         return self.start_field.get_fields()
 
-    def results(self) -> Optional[ExecutionResults]:
-        return QueryExecutioner().run_query(self)
+    # TODO: throw error instead of None if no results?
+    # TODO: result object with meta data included?
+    def results(self) -> Union[DataFrame, Optional[ExecutionResults]]:
+        """Runs the query and returns a Pandas DataFrame with the results.
+
+        Returns:
+            Union[DataFrame, Optional[ExecutionResults]] --
+            A DataFrame with the queried data.
+            If the query fails None from the QueryExectioner is passed on.
+        """
+        result = QueryExecutioner().run_query(self)
+        if result:
+            return QueryOutputTransformer(result.query_results).transform()
+        else:
+            return result
+
+    def meta_data(self) -> Optional[Dict[str, Any]]:
+        """Runs the query and returns a Dict with the meta data of the queries results.
+
+        Returns:
+            Union[DataFrame, Optional[ExecutionResults]] --
+            A DataFrame with the queried data.
+            If the query fails None from the QueryExectioner is passed on.
+        """
+        result = QueryExecutioner().run_query(self)
+        if result:
+            return result.meta_data
+        else:
+            return result
 
     @staticmethod
     def get_info(field: str = None) -> Optional[TypeMetaData]:

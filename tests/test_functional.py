@@ -1,6 +1,6 @@
 import pytest
 
-
+import pandas as pd
 from datenguide_python.query_execution import QueryExecutioner
 from datenguide_python.query_builder import Query, Field
 
@@ -43,9 +43,8 @@ def test_QueryExecutionerWorkflow(query):
     # He wants to have a closer look at the raw return query results and
     # remembers that they are sorted in the results field and he has a look.
 
-    assert len(res_query1.query_results) > 0, "query did not return results"
     assert (
-        type(res_query1.query_results) is dict
+        type(res_query1) is pd.DataFrame
     ), "query results are not a python json representation"
 
     # Ira wants to get an overview of all possible statistics that can be
@@ -61,16 +60,17 @@ def test_QueryExecutionerWorkflow(query):
     # whether this metadata is actually present. And that it only contains
     # meta data related to his query
 
-    assert type(res_query1.meta_data) == dict, "meta data not a dict"
-    assert len(res_query1.meta_data) > 0, "meta data absent"
-    assert len(res_query1.meta_data) == 1, "too much meta data"
+    meta_query1 = query.meta_data()
+    assert type(meta_query1) == dict, "meta data not a dict"
+    assert len(meta_query1) > 0, "meta data absent"
+    assert len(meta_query1) == 1, "too much meta data"
 
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.
 
-    assert "BEVMK3" in res_query1.meta_data, "statistic absend"
+    assert "BEVMK3" in meta_query1, "statistic absend"
     assert (
-        res_query1.meta_data["BEVMK3"] != "NO DESCRIPTION FOUND"
+        meta_query1["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
 
     # Being satisfied with the results he obtained for his simple query
