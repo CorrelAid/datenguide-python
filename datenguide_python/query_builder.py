@@ -370,35 +370,41 @@ class Query:
         """
         return self.start_field.get_fields()
 
-    # TODO: throw error instead of None if no results?
-    # TODO: result object with meta data included?
     def results(self) -> Union[DataFrame, Optional[ExecutionResults]]:
         """Runs the query and returns a Pandas DataFrame with the results.
+
+        Raises:
+            ValueError: If the Query did not return any results.
+            E.g. if the Query was ill-formed.
 
         Returns:
             Union[DataFrame, Optional[ExecutionResults]] --
             A DataFrame with the queried data.
-            If the query fails None from the QueryExectioner is passed on.
+            If the query fails raise ValueError.
         """
         result = QueryExecutioner().run_query(self)
         if result:
             return QueryOutputTransformer(result.query_results).transform()
         else:
-            return result
+            raise ValueError("No results could be returned for this Query.")
 
     def meta_data(self) -> Optional[Dict[str, Any]]:
         """Runs the query and returns a Dict with the meta data of the queries results.
 
+        Raises:
+            ValueError: If the Query did not return any results.
+            E.g. if the Query was ill-formed.
+
         Returns:
             Union[DataFrame, Optional[ExecutionResults]] --
-            A DataFrame with the queried data.
-            If the query fails None from the QueryExectioner is passed on.
+            A Dict with the queried meta data.
+            If the query fails raise ValueError.
         """
         result = QueryExecutioner().run_query(self)
         if result:
             return result.meta_data
         else:
-            return result
+            raise ValueError("No results could be returned for this Query.")
 
     @staticmethod
     def get_info(field: str = None) -> Optional[TypeMetaData]:

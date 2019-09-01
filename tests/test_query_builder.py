@@ -398,10 +398,15 @@ def test_process_query(query_default):
 
 
 def test_invalid_query(query):
-    df = query.results()
-    assert df is None
+    with pytest.raises(ValueError):
+        query.results()
 
 
 def test_process_query_meta(query_default):
     meta_data = query_default.meta_data()
     assert isinstance(meta_data, dict)
+
+
+def test_invalid_query_meta(query):
+    with pytest.raises(ValueError):
+        query.meta_data()
