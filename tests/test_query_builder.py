@@ -410,3 +410,12 @@ def test_process_query_meta(query_default):
 def test_invalid_query_meta(query):
     with pytest.raises(ValueError):
         query.meta_data()
+
+
+def test_multiple_regions_query():
+    query = Query.regionQuery(region=["01", "02"], fields=["BEV001"])
+    graphql_query = query.get_graphql_query()
+    assert len(graphql_query) == 2, "wrong amount of query strings"
+    assert graphql_query[1].startswith(
+        '{region (id: "02")'
+    ), "not properly iterated over all regions"

@@ -31,7 +31,7 @@ class Field:
         self,
         name: str,
         fields: List[Union[str, "Field"]] = [],
-        args: Optional[Dict[str, str]] = None,
+        args: Dict[str, Any] = {},
         default_fields: bool = True,
         return_type: str = None,
     ):
@@ -118,7 +118,9 @@ class Field:
     def _set_return_type(self, parentfield):
         self.return_type = parentfield._get_return_type(self.name)
 
-    def _get_fields_to_query(self, field: Union[str, "Field"]) -> str:
+    def _get_fields_to_query(
+        self, field: Union[str, "Field"], region_id: str = None
+    ) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
@@ -126,8 +128,15 @@ class Field:
             substring += field.name + " "
 
             if field.args:
+                # make copy, so original field id is not overwritten
+                this_query_args = field.args
+
+                if (field.args.get("id", None) is not None) & (region_id is not None):
+                    # set region id to given single id to not use list
+                    this_query_args["id"] = region_id
+
                 filters = []
-                for key, value in field.args.items():
+                for key, value in this_query_args.items():
                     if value == "ALL":
                         filters.append("filter:{ " + key + ": { nin: []}}")
                     else:
@@ -237,7 +246,7 @@ class Query:
     @classmethod
     def regionQuery(
         cls,
-        region: str,
+        region: Union[str, List[str]],
         fields: List[Union[str, "Field"]] = [],
         default_fields: bool = True,
     ) -> "Query":
@@ -258,11 +267,17 @@ class Query:
             defaults: List[Union[str, "Field"]] = ["id", "name"]
             fields = defaults + fields
 
+        # add quotation marks around id for correct query
+        if isinstance(region, list):
+            region_arg: Union[str, List[str]] = [('"' + x + '"') for x in region]
+        else:
+            region_arg = ['"' + region + '"']
+
         return cls(
             start_field=Field(
                 "region",
                 fields,
-                args={"id": '"' + region + '"'},
+                args={"id": region_arg},
                 return_type=Query._return_type_region,
                 default_fields=default_fields,
             )
@@ -354,13 +369,30 @@ class Query:
             self.start_field.drop_field(field)
             return self
 
-    def get_graphql_query(self) -> str:
+    def get_graphql_query(self) -> Union[str, List[str]]:
         """Formats the Query into a String that can be queried from the Datenguide API.
 
         Returns:
             str -- the Query as a String.
         """
-        return "{" + self.start_field._get_fields_to_query(self.start_field) + "}"
+        # for regionQuery with multiple region IDs return a list of queries
+        if (self.start_field.name == "region") and isinstance(
+            self.start_field.args.get("id", ""), list
+        ):
+            query_list: List[str] = []
+            for region_id in self.start_field.args["id"]:
+                query_list += [
+                    (
+                        "{"
+                        + self.start_field._get_fields_to_query(
+                            self.start_field, region_id
+                        )
+                        + "}"
+                    )
+                ]
+            return query_list
+        else:
+            return "{" + self.start_field._get_fields_to_query(self.start_field) + "}"
 
     def get_fields(self) -> List[str]:
         """Get all fields of a query.
