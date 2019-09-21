@@ -177,20 +177,19 @@ def test_all_regions(field):
         parent="11", fields=["id", "name", field], default_fields=False
     )
     graphql_query = all_regions_query.get_graphql_query()
-    assert graphql_query == re.sub(
-        "    ",
+    expected_query = re.sub(
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11"){
                     id name WAHL09 (year: 2017){
                         value year PART04 }
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
+    assert graphql_query == expected_query
 
 
 def test_nuts(field):
@@ -200,17 +199,15 @@ def test_nuts(field):
 
     graphql_query = query.get_graphql_query()
     assert graphql_query == re.sub(
-        "    ",
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11", nuts: 3){
                     id name WAHL09 (year: 2017){value year PART04 }
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
 
 
@@ -220,17 +217,15 @@ def test_lau(field):
     )
     graphql_query = query.get_graphql_query()
     assert re.sub(" +", " ", graphql_query.replace("\n", " ")) == re.sub(
-        "    ",
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11", lau: 3){
                     id name WAHL09 (year: 2017){value year PART04 }
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
 
 
@@ -314,18 +309,16 @@ def test_add_fields_all_regions():
 
     graphql_query = all_reg_query.get_graphql_query()
     assert graphql_query == re.sub(
-        "    ",
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11"){
                     id name BEV001 {
                         year value source {title_de valid_from periodicity name url }}
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
 
 
