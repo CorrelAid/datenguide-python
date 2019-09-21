@@ -78,7 +78,7 @@ def get_all_regions() -> pd.DataFrame:
 
 state_regions: pd.DataFrame = get_all_regions().query('level == "nuts1"')
 federal_state_dictionary = {
-    region.name.replace("-", "_"): region.id for region in state_regions.itertuples()
+    region.name.replace("-", "_"): region.Index for region in state_regions.itertuples()
 }
 
 federal_states = ConfigMapping(federal_state_dictionary)
