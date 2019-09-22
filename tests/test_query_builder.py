@@ -69,7 +69,7 @@ def test_create_query_class_without_start_filed_raises_error():
 
 def test_basic_graphql_string(query):
     graphql_query = query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         " +", " ", """{region (id: "09"){BEV001 }}""".replace("\n", " ")
     )
 
@@ -87,7 +87,7 @@ def test_get_fields_to_query():
 
 def test_get_complex_graphql_string(complex_query):
     graphql_query = complex_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -107,7 +107,7 @@ def test_get_complex_graphql_string_without_args():
     )
 
     graphql_query = no_args_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -121,7 +121,7 @@ def test_get_complex_graphql_string_without_args():
 
 def test_get_multiple_stats(more_complex_query):
     graphql_query = more_complex_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -167,7 +167,7 @@ def test_multiple_filter_args():
     )
 
     graphql_query = multiple_args_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -182,7 +182,7 @@ def test_multiple_filter_args():
 
 def test_all_regions(all_regions_query):
     graphql_query = all_regions_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -203,7 +203,7 @@ def test_nuts(field):
         parent="11", nuts=3, fields=["id", "name", field], default_fields=False
     )
     graphql_query = query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -223,7 +223,7 @@ def test_lau(field):
         parent="11", lau=3, fields=["id", "name", field], default_fields=False
     )
     graphql_query = query.get_graphql_query()
-    assert re.sub(" +", " ", graphql_query.replace("\n", " ")) == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -248,7 +248,7 @@ def test_filter_for_all(query):
     )
     query = Query.regionQuery(region="09", fields=["id", "name", field])
     graphql_query = query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -298,7 +298,7 @@ def test_add_fields_stepwise():
     assert query.get_graphql_query() == query2.get_graphql_query()
 
     graphql_query = query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -317,7 +317,7 @@ def test_add_fields_all_regions():
     all_reg_query.add_field("BEV001")
 
     graphql_query = all_reg_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -348,7 +348,7 @@ def test_add_args_stepwise():
 
 def test_default_fields(query_default):
     graphql_query = query_default.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{region (id: "09"){id name BEV001
@@ -419,3 +419,69 @@ def test_multiple_regions_query():
     assert graphql_query[1].startswith(
         '{region (id: "02")'
     ), "not properly iterated over all regions"
+
+
+def test_arguments_info(query_default):
+    stat = query_default.add_field("BEV001")
+    info = stat.arguments_info()
+    assert info == "year, statistics, ALTMT1, BEVM01, GES, LEGIT2, NAT, filter"
+
+
+def test_field_info(query_default):
+    stat = query_default.add_field("BEV001")
+    info = stat.fields_info()
+    assert info == "id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT"
+
+
+def test_enum_info(query_default):
+    stat = query_default.add_field("BEV001")
+    ges = stat.add_field("GES")
+    info = ges.enum_info()
+    assert info == "GESM: männlich, GESW: weiblich, GESAMT: Gesamt"
+
+
+def test_description(query_default):
+    stat = query_default.add_field("BEV001")
+    descr = stat.description()
+    assert re.sub("\n", "", re.sub(" ", "", descr)) == re.sub(
+        "\n",
+        "",
+        re.sub(
+            " ",
+            "",
+            """  **Lebend Geborene**
+        \n  *aus GENESIS-Statistik "Statistik der Geburten" 12612)*
+        \n  Lebend Geborene\n\n\n
+        Erläuterung für folgende Statistik(en): 12612 Statistik der Geburten
+        \n\nBegriffsinhalt: Lebendgeborene
+        \n\nLebendgeborene sind Kinder, bei denen nach der Scheidung vom
+        Mutterleib entweder das Herz geschlagen oder die Nabelschnur
+        pulsiert oder die natürliche Lungenatmung eingesetzt hat.
+        """,
+        ),
+    )
+
+
+def test_get_info_stat(query_default):
+    stat = query_default.add_field("BEV001")
+    info = stat.get_info()
+    assert re.sub("\n", "", re.sub(" ", "", info)) == re.sub(
+        "\n",
+        "",
+        re.sub(
+            " ",
+            "",
+            """kind: OBJECT
+            description:   **Lebend Geborene**\n
+            *aus GENESIS-Statistik "Statistik der Geburten" 12612)*
+            \n  Lebend Geborene
+            \n\n\nErläuterung für folgende Statistik(en): 12612 Statistik der Geburten
+            \n\nBegriffsinhalt: Lebendgeborene
+            \n\nLebendgeborene sind Kinder, bei denen nach der Scheidung vom
+            Mutterleib entweder das Herz geschlagen oder die Nabelschnur
+            pulsiert oder die natürliche Lungenatmung eingesetzt hat.
+            arguments: year, statistics, ALTMT1, BEVM01, GES, LEGIT2, NAT, filter
+            fields: id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
+            enum values: None""",
+        ),
+    )

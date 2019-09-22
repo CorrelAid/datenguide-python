@@ -32,11 +32,13 @@ class Field:
         name: str,
         fields: List[Union[str, "Field"]] = [],
         args: Dict[str, Any] = {},
+        parent_field: "Field" = None,
         default_fields: bool = True,
         return_type: str = None,
     ):
 
         self.name = name
+        self.parent_field = parent_field
         # TODO: use name as default?
         self.return_type = return_type if return_type else name
 
@@ -93,6 +95,7 @@ class Field:
         if isinstance(field, str):
             self.fields[field] = Field(
                 name=field,
+                parent_field=self,
                 fields=[],
                 return_type=self._get_return_type(field),
                 default_fields=default_fields,
@@ -100,6 +103,7 @@ class Field:
             return self.fields[field]
 
         field._set_return_type(self)
+        field._set_parent_field(self)
         self.fields[field.name] = field
         return self.fields[field.name]
 
@@ -117,6 +121,9 @@ class Field:
 
     def _set_return_type(self, parentfield):
         self.return_type = parentfield._get_return_type(self.name)
+
+    def _set_parent_field(self, parent_field):
+        self.parent_field = parent_field
 
     def _get_fields_to_query(
         self, field: Union[str, "Field"], region_id: str = None
@@ -159,8 +166,113 @@ class Field:
             field_list.extend(Field._get_fields_helper(value))
         return field_list
 
-    def get_info(self) -> Optional[TypeMetaData]:
-        return QueryExecutioner().get_type_info(self.return_type)
+    def get_info(self) -> str:
+        """Get summarized information on a field's meta data.
+
+        Returns:
+            str -- Information on meta data as string.
+        """
+        kind: str = "kind: "
+        meta = QueryExecutioner().get_type_info(self.name)
+        if meta is not None:
+            kind += meta.kind
+        else:
+            kind += "None"
+        description = "description: " + str(self.description())
+        arguments = "arguments: " + str(self.arguments_info())
+        fields = "fields: " + str(self.fields_info())
+        enum_values = "enum values: " + str(self.enum_info())
+        return (
+            kind
+            + "\n"
+            + description
+            + "\n"
+            + arguments
+            + "\n"
+            + fields
+            + "\n"
+            + enum_values
+        )
+
+    def arguments_info(self) -> Optional[str]:
+        """Get information on possible arguments for field.
+
+        Returns:
+            str -- Possible arguments for the field as string.
+        """
+        parent = self.parent_field
+        if parent is not None:
+            meta = QueryExecutioner().get_type_info(parent.return_type)
+            if meta is not None:
+                meta_fields = meta.fields
+                args = (
+                    meta_fields[self.name]["args"]
+                    if isinstance(meta_fields, dict)
+                    else None
+                )
+                arg_list = []
+                for i in range(0, len(args)):
+                    arg_list.append(args[i]["name"])
+                return ", ".join(arg_list)
+            else:
+                return None
+        else:
+            return None
+
+    def fields_info(self) -> Optional[str]:
+        """Get information on possible fields for field.
+
+        Returns:
+            str -- Possible fields for the field as string.
+        """
+        meta = QueryExecutioner().get_type_info(self.name)
+        if meta is not None:
+            meta_fields = meta.fields
+            if meta_fields is not None:
+                return ", ".join(meta_fields.keys())
+            else:
+                return None
+        else:
+            return None
+
+    def enum_info(self) -> Optional[str]:
+        """Get information on possible enum vaules for field.
+
+        Returns:
+            str -- Possible enum values for the field as string.
+        """
+        enum_list = []
+        meta = QueryExecutioner().get_type_info(self.name)
+        if meta is not None:
+            enum_meta = meta.enum_values
+            if enum_meta:
+                for key, value in enum_meta.items():
+                    enum_list.append(key + ": " + value)
+                return ", ".join(enum_list)
+            else:
+                return None
+        else:
+            return None
+
+    def description(self) -> Optional[str]:
+        """Get description of field.
+
+        Returns:
+            str -- Description of the field as string.
+        """
+        parent = self.parent_field
+        if parent is not None:
+            meta = QueryExecutioner().get_type_info(parent.return_type)
+            if meta is not None:
+                meta_fields = meta.fields
+                if meta_fields is not None:
+                    return meta_fields[self.name]["description"]
+                else:
+                    return None
+            else:
+                return None
+        else:
+            return None
 
     @staticmethod
     def _get_fields_helper(field: Union[str, "Field"]) -> List[str]:
@@ -369,7 +481,7 @@ class Query:
             self.start_field.drop_field(field)
             return self
 
-    def get_graphql_query(self) -> Union[str, List[str]]:
+    def get_graphql_query(self) -> List[str]:
         """Formats the Query into a String that can be queried from the Datenguide API.
 
         Returns:
@@ -392,7 +504,7 @@ class Query:
                 ]
             return query_list
         else:
-            return "{" + self.start_field._get_fields_to_query(self.start_field) + "}"
+            return ["{" + self.start_field._get_fields_to_query(self.start_field) + "}"]
 
     def get_fields(self) -> List[str]:
         """Get all fields of a query.
