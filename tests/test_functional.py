@@ -100,9 +100,3 @@ def test_QueryExecutionerWorkflow(query):
     statistic1.add_args({"year": 2017})
 
     assert type(statistic1) == Field, "statistic is not a Field"
-
-    # Then he wants to get metainfo on the field.
-
-    stats_info = statistic1.get_info()
-    assert stats_info.kind == "OBJECT", "BEV001 should be an object"
-    assert type(stats_info.fields) == dict, "Fields should be a dict"

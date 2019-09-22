@@ -160,7 +160,7 @@ class QueryExecutioner(object):
         query, variables: Optional[Dict[str, str]] = None
     ) -> Dict[str, str]:
         post_json: Json = dict()
-        post_json["query"] = query.get_graphql_query()
+        post_json["query"] = query.get_graphql_query()[0]
         if variables:
             post_json["variables"] = cast(Dict[str, str], variables)
         return post_json

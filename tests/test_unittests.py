@@ -12,7 +12,8 @@ from collections import namedtuple
 @pytest.fixture
 def sample_queries():
     q1 = Mock()
-    q1.get_graphql_query.return_value = """
+    q1.get_graphql_query.return_value = [
+        """
     {
         region(id:"05911") {
             id
@@ -24,6 +25,7 @@ def sample_queries():
         }
     }
     """
+    ]
     q1.get_fileds.return_value = ["region", "id", "name", "BEVMK3", "value", "year"]
 
     mq1 = Mock()
@@ -178,7 +180,8 @@ def test_generate_post_json(sample_queries):
     sample_queries.data_query1.get_graphql_query.assert_called_once()
     assert "query" in post_json, "post jsons does not contain a query key"
     assert (
-        post_json["query"] == sample_queries.data_query1.get_graphql_query.return_value
+        post_json["query"]
+        == sample_queries.data_query1.get_graphql_query.return_value[0]
     ), "query not part of the post json"
 
 
