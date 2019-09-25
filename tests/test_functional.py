@@ -1,8 +1,15 @@
 import pytest
+import pandas as pd
 
 
 from datenguide_python.query_execution import QueryExecutioner
 from datenguide_python.query_builder import Query, Field
+from datenguide_python.query_helper import (
+    federal_states,
+    get_statistics,
+    get_all_regions,
+    download_all_regions,
+)
 
 
 @pytest.fixture
@@ -43,9 +50,9 @@ def test_QueryExecutionerWorkflow(query):
     # He wants to have a closer look at the raw return query results and
     # remembers that they are sorted in the results field and he has a look.
 
-    assert len(res_query1.query_results) > 0, "query did not return results"
+    assert len(res_query1[0].query_results) > 0, "query did not return results"
     assert (
-        type(res_query1.query_results) is dict
+        type(res_query1[0].query_results) is list
     ), "query results are not a python json representation"
 
     # Ira wants to get an overview of all possible statistics that can be
@@ -61,16 +68,16 @@ def test_QueryExecutionerWorkflow(query):
     # whether this metadata is actually present. And that it only contains
     # meta data related to his query
 
-    assert type(res_query1.meta_data) == dict, "meta data not a dict"
-    assert len(res_query1.meta_data) > 0, "meta data absent"
-    assert len(res_query1.meta_data) == 1, "too much meta data"
+    assert type(res_query1[0].meta_data) == dict, "meta data not a dict"
+    assert len(res_query1[0].meta_data) > 0, "meta data absent"
+    assert len(res_query1[0].meta_data) == 1, "too much meta data"
 
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.
 
-    assert "BEVMK3" in res_query1.meta_data, "statistic absend"
+    assert "BEVMK3" in res_query1[0].meta_data, "statistic absend"
     assert (
-        res_query1.meta_data["BEVMK3"] != "NO DESCRIPTION FOUND"
+        res_query1[0].meta_data["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
 
     # Being satisfied with the results he obtained for his simple query
@@ -106,3 +113,48 @@ def test_QueryExecutionerWorkflow(query):
     stats_info = statistic1.get_info()
     assert stats_info.kind == "OBJECT", "BEV001 should be an object"
     assert type(stats_info.fields) == dict, "Fields should be a dict"
+
+
+def test_queryHelper():
+    # Ira is happy with the functionality so far but is worried a bit
+    # about the difficuilty of finding the right technichal ids for regions
+    # and statistics.
+
+    # He realizes that there is helper functionality to identify the
+    # federal states quickly in a human readable way and wants to try
+    # it for Berlin
+    assert federal_states.Berlin == "11"
+
+    # That already worked nicely but in general there are many regions.
+    # Ira would like to easily search through all of them and realizes
+    # that he can obtain a DataFrame for this.
+    reg_locally_stored = get_all_regions()
+    assert isinstance(reg_locally_stored, pd.DataFrame)
+
+    # Ira reads in the help that this is a stored list of regions and
+    # not obtained live from datenguide.
+    # He knows that region definitions and ids don't change very
+    # often, but he would like the ability to obtain the most up to date
+    # regions anyways. He therefore tries the function download_all_regions
+    # that is designed for this purpouse
+
+    reg = download_all_regions()
+    assert isinstance(reg, pd.DataFrame)
+    assert list(reg.columns) == ["name", "level", "parent"]
+    assert reg.index.name == "id"
+    assert reg.shape[0] > 10000
+
+    # Being satisfied with the regions, Ira now wants to have a
+    # look at an equivalent overview of statistics.
+
+    statistics = get_statistics()
+    assert isinstance(statistics, pd.DataFrame)
+
+    # Although this might already be sufficient for finding
+    # interesting statistics, Ira read that there is already
+    # some basic build in search functionality which
+    # he wants to try.
+
+    filtered_statistics = get_statistics("scheidung")
+    assert isinstance(filtered_statistics, pd.DataFrame)
+    assert filtered_statistics.shape[0] < 50

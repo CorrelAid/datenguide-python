@@ -341,7 +341,16 @@ class Query:
         Returns:
             str -- the Query as a String.
         """
-        return "{" + self.start_field._get_fields_to_query(self.start_field) + "}"
+        if self.start_field.name == "allRegions":
+            query_prefix = "query ($page : Int, $itemsPerPage : Int) "
+        else:
+            query_prefix = ""
+        return (
+            query_prefix
+            + "{"
+            + self.start_field._get_fields_to_query(self.start_field)
+            + "}"
+        )
 
     def get_fields(self) -> List[str]:
         """Get all fields of a query.
@@ -351,7 +360,7 @@ class Query:
         """
         return self.start_field.get_fields()
 
-    def results(self) -> Optional[ExecutionResults]:
+    def results(self) -> Optional[List[ExecutionResults]]:
         return QueryExecutioner().run_query(self)
 
     @staticmethod

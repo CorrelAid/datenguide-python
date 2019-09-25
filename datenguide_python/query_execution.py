@@ -1,18 +1,20 @@
-from typing import Dict, Any, cast, Optional, NamedTuple, List, Tuple
+from typing import Dict, Any, cast, Optional, NamedTuple, List, Tuple, Union
 import requests
 import re
 
-Json = Dict[str, Any]
+Json_Dict = Dict[str, Any]
+Json_List = List[Json_Dict]
+Json = Union[Json_Dict, Json_List]
 
 
 class ExecutionResults(NamedTuple):
-    query_results: Json
+    query_results: Json_List
     meta_data: Json
 
 
 class TypeMetaData(NamedTuple):
     kind: str
-    fields: Optional[Json]
+    fields: Optional[Json_Dict]
     enum_values: Optional[Dict[str, str]]
 
 
@@ -49,7 +51,7 @@ class QueryExecutioner(object):
     REQUEST_HEADER: Dict[str, str] = {"Content-Type": "application/json"}
     endpoint: str = "https://api-next.datengui.de/graphql"
 
-    _META_DATA_CACHE: Json = dict()
+    _META_DATA_CACHE: Json_Dict = dict()
 
     _meta_type_info: str = """
         query TypeInfo($type: String!) {
@@ -91,25 +93,51 @@ class QueryExecutioner(object):
         if alternative_endpoint:
             self.endpoint = cast(str, alternative_endpoint)
 
-    def run_query(self, query) -> Optional[ExecutionResults]:
-        query_json = self._generate_post_json(query)
-        results = self._send_request(query_json)
+    @staticmethod
+    def _pagination_json(page: int) -> Json_Dict:
+        return {"page": page, "itemsPerPage": 1000}
+
+    def run_query(self, query) -> Optional[List[ExecutionResults]]:
+        if "allRegions" in query.get_fields():
+            results = []
+            page = 0
+            while True:
+                query_json = self._generate_post_json(
+                    query, self._pagination_json(page)
+                )
+                result_page = self._send_request(query_json)
+                if result_page is None:
+                    return None
+                results.append(result_page)
+                if (cast(Json_Dict, result_page)["data"]["allRegions"]["page"] + 1) * (
+                    cast(Json_Dict, result_page)["data"]["allRegions"]["itemsPerPage"]
+                ) >= cast(Json_Dict, result_page)["data"]["allRegions"]["total"]:
+                    break
+                else:
+                    page += 1
+        else:
+            query_json = self._generate_post_json(query)
+            single_result = self._send_request(query_json)
+            if single_result is None:
+                return None
+            else:
+                results = [single_result]
+
         if results:
             # Region type contains all the statistics fields
-            stat_meta = self.get_type_info("Region")
-            if stat_meta:
-                stat_descriptions = self._create_stat_desc_dic(
-                    # casting given "Regions" type
-                    cast(Json, cast(TypeMetaData, stat_meta).fields)
-                )
+            stat_descriptions = self.get_stat_descriptions()
+            if stat_descriptions is not None:
                 meta = {
-                    stat: stat_descriptions[stat]
+                    stat: stat_descriptions[stat][0]
                     for stat in stat_descriptions
                     if stat in query.get_fields()
                 }
             else:
                 meta = {"error": "META DATA COULD NOT BE LOADED"}
-            return ExecutionResults(query_results=cast(Json, results), meta_data=meta)
+            # wrong casting as the result is a list of Json
+            return [
+                ExecutionResults(query_results=cast(Json_List, results), meta_data=meta)
+            ]
         else:
             return None
 
@@ -125,7 +153,7 @@ class QueryExecutioner(object):
                 print("use cache")
             return self.__class__._META_DATA_CACHE[graph_ql_type]
         variables = {"type": graph_ql_type}
-        query_json: Json = {}
+        query_json: Json_Dict = {}
         query_json["query"] = self._meta_type_info
         query_json["variables"] = variables
         if verbose:
@@ -135,7 +163,7 @@ class QueryExecutioner(object):
             type_kind = info["data"]["__type"]["kind"]
 
             if type_kind == "OBJECT":
-                field_meta: Optional[Json] = {
+                field_meta: Optional[Json_Dict] = {
                     f["name"]: FieldMetaDict(f)
                     for f in info["data"]["__type"]["fields"]
                 }
@@ -159,13 +187,13 @@ class QueryExecutioner(object):
     def _generate_post_json(
         query, variables: Optional[Dict[str, str]] = None
     ) -> Dict[str, str]:
-        post_json: Json = dict()
+        post_json: Json_Dict = dict()
         post_json["query"] = query.get_graphql_query()
         if variables:
             post_json["variables"] = cast(Dict[str, str], variables)
         return post_json
 
-    def _send_request(self, query_json: Json) -> Optional[Json]:
+    def _send_request(self, query_json: Json_Dict) -> Optional[Json_Dict]:
         resp = requests.post(
             self.endpoint, headers=self.REQUEST_HEADER, json=query_json
         )
@@ -177,7 +205,7 @@ class QueryExecutioner(object):
             return None
 
     @staticmethod
-    def _process_stat_meta_data(type_fields: Json) -> List[Json]:
+    def _process_stat_meta_data(type_fields: Json_Dict) -> List[Json_Dict]:
         return [
             type_fields[name]
             for name in type_fields
@@ -186,18 +214,32 @@ class QueryExecutioner(object):
 
     @staticmethod
     def _extract_main_description(description: str) -> str:
-        match = re.match(r"^\*\*([^*]*)\*\*", description)
+        match = re.match(r"^\s*\*\*([^*]*)\*\*", description)
         if match:
             return match.group(1)
         else:
             return "NO DESCRIPTION FOUND"
 
+    def get_stat_descriptions(self):
+        stat_meta = self.get_type_info("Region")
+        if stat_meta:
+            stat_descriptions = self._create_stat_desc_dic(
+                # casting given "Regions" type
+                cast(Json, cast(TypeMetaData, stat_meta).fields)
+            )
+            return stat_descriptions
+        else:
+            return None
+
     @staticmethod
-    def _create_stat_desc_dic(raw_response: Json) -> Dict[str, str]:
+    def _create_stat_desc_dic(raw_response: Json_Dict) -> Dict[str, Tuple[str, str]]:
         return dict(
             (
                 field["name"],
-                QueryExecutioner._extract_main_description(field["description"]),
+                (
+                    QueryExecutioner._extract_main_description(field["description"]),
+                    field["description"],
+                ),
             )
             for field in QueryExecutioner._process_stat_meta_data(raw_response)
         )
