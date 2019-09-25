@@ -166,11 +166,9 @@ class Field:
             field_list.extend(Field._get_fields_helper(value))
         return field_list
 
-    def get_info(self) -> str:
-        """Get summarized information on a field's meta data.
+    def get_info(self):
+        """Prints summarized information on a field's meta data.
 
-        Returns:
-            str -- Information on meta data as string.
         """
         kind: str = "kind: "
         meta = QueryExecutioner().get_type_info(self.name)
@@ -182,7 +180,7 @@ class Field:
         arguments = "arguments: " + str(self.arguments_info())
         fields = "fields: " + str(self.fields_info())
         enum_values = "enum values: " + str(self.enum_info())
-        return (
+        print(
             kind
             + "\n"
             + description
@@ -212,7 +210,16 @@ class Field:
                 )
                 arg_list = []
                 for i in range(0, len(args)):
-                    arg_list.append(args[i]["name"])
+                    temp_arg = str(args[i]["name"]) + " ["
+                    temp_arg += (
+                        str(args[i]["type"]["kind"]) + ":" if args[i]["type"] else ":"
+                    )
+                    temp_arg += (
+                        str(args[i]["type"]["ofType"]["name"]) + "]"
+                        if args[i]["type"]["ofType"]
+                        else "]"
+                    )
+                    arg_list.append(temp_arg)
                 return ", ".join(arg_list)
             else:
                 return None
@@ -266,7 +273,9 @@ class Field:
             if meta is not None:
                 meta_fields = meta.fields
                 if meta_fields is not None:
-                    return meta_fields[self.name]["description"]
+                    return QueryExecutioner._extract_main_description(
+                        meta_fields[self.name]["description"]
+                    )
                 else:
                     return None
             else:

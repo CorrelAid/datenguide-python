@@ -186,7 +186,7 @@ class QueryExecutioner(object):
 
     @staticmethod
     def _extract_main_description(description: str) -> str:
-        match = re.match(r"^\*\*([^*]*)\*\*", description)
+        match = re.match(r"^\s*\*\*([^*]*)\*\*", description)
         if match:
             return match.group(1)
         else:

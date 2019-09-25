@@ -424,7 +424,14 @@ def test_multiple_regions_query():
 def test_arguments_info(query_default):
     stat = query_default.add_field("BEV001")
     info = stat.arguments_info()
-    assert info == "year, statistics, ALTMT1, BEVM01, GES, LEGIT2, NAT, filter"
+    expected_info = re.sub(
+        r"\n\s+",
+        "",
+        """year [LIST:Int], statistics [LIST:BEV001Statistics], ALTMT1 [LIST:ALTMT1]
+        , BEVM01 [LIST:BEVM01], GES [LIST:GES], LEGIT2 [LIST:LEGIT2]
+        , NAT [LIST:NAT], filter [INPUT_OBJECT:]""",
+    )
+    assert info == expected_info
 
 
 def test_field_info(query_default):
@@ -443,45 +450,21 @@ def test_enum_info(query_default):
 def test_description(query_default):
     stat = query_default.add_field("BEV001")
     descr = stat.description()
-    assert re.sub("\n", "", re.sub(" ", "", descr)) == re.sub(
-        "\n",
-        "",
-        re.sub(
-            " ",
-            "",
-            """  **Lebend Geborene**
-        \n  *aus GENESIS-Statistik "Statistik der Geburten" 12612)*
-        \n  Lebend Geborene\n\n\n
-        Erläuterung für folgende Statistik(en): 12612 Statistik der Geburten
-        \n\nBegriffsinhalt: Lebendgeborene
-        \n\nLebendgeborene sind Kinder, bei denen nach der Scheidung vom
-        Mutterleib entweder das Herz geschlagen oder die Nabelschnur
-        pulsiert oder die natürliche Lungenatmung eingesetzt hat.
-        """,
-        ),
-    )
+    assert descr == "Lebend Geborene"
 
 
 def test_get_info_stat(query_default):
     stat = query_default.add_field("BEV001")
     info = stat.get_info()
-    assert re.sub("\n", "", re.sub(" ", "", info)) == re.sub(
-        "\n",
+    expected_info = re.sub(
+        r"\n\s+",
         "",
-        re.sub(
-            " ",
-            "",
-            """kind: OBJECT
-            description:   **Lebend Geborene**\n
-            *aus GENESIS-Statistik "Statistik der Geburten" 12612)*
-            \n  Lebend Geborene
-            \n\n\nErläuterung für folgende Statistik(en): 12612 Statistik der Geburten
-            \n\nBegriffsinhalt: Lebendgeborene
-            \n\nLebendgeborene sind Kinder, bei denen nach der Scheidung vom
-            Mutterleib entweder das Herz geschlagen oder die Nabelschnur
-            pulsiert oder die natürliche Lungenatmung eingesetzt hat.
-            arguments: year, statistics, ALTMT1, BEVM01, GES, LEGIT2, NAT, filter
+        """kind: OBJECT
+            description: Lebend Geborene
+            arguments: year [LIST:Int], statistics [LIST:BEV001Statistics],
+            ALTMT1 [LIST:ALTMT1], BEVM01 [LIST:BEVM01],
+            GES [LIST:GES], LEGIT2 [LIST:LEGIT2], NAT [LIST:NAT], filter [INPUT_OBJECT:]
             fields: id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
             enum values: None""",
-        ),
     )
+    assert info == expected_info
