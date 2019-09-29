@@ -1,10 +1,6 @@
 from typing import Optional, Union, List, Dict, Any
 from pandas import DataFrame
-from datenguide_python.query_execution import (
-    QueryExecutioner,
-    TypeMetaData,
-    ExecutionResults,
-)
+from datenguide_python.query_execution import QueryExecutioner, TypeMetaData
 from datenguide_python.output_transformer import QueryOutputTransformer
 
 
@@ -180,17 +176,7 @@ class Field:
         arguments = "arguments: " + str(self.arguments_info())
         fields = "fields: " + str(self.fields_info())
         enum_values = "enum values: " + str(self.enum_info())
-        print(
-            kind
-            + "\n"
-            + description
-            + "\n"
-            + arguments
-            + "\n"
-            + fields
-            + "\n"
-            + enum_values
-        )
+        print("\n".join([kind, description, arguments, fields, enum_values]))
 
     def arguments_info(self) -> Optional[str]:
         """Get information on possible arguments for field.
@@ -365,7 +351,7 @@ class Query:
         self.region_field = region_field
 
     @classmethod
-    def regionQuery(
+    def region(
         cls,
         region: Union[str, List[str]],
         fields: List[Union[str, "Field"]] = [],
@@ -405,7 +391,7 @@ class Query:
         )
 
     @classmethod
-    def allRegionsQuery(
+    def all_regions(
         cls,
         fields: List[Union[str, "Field"]] = [],
         parent: str = None,
@@ -501,7 +487,7 @@ class Query:
         else:
             query_prefix = ""
 
-        # for regionQuery with multiple region IDs return a list of queries
+        # for region with multiple region IDs return a list of queries
         if (self.start_field.name == "region") and isinstance(
             self.start_field.args.get("id", ""), list
         ):
@@ -533,43 +519,43 @@ class Query:
         """
         return self.start_field.get_fields()
 
-    def results(self) -> Union[DataFrame, Optional[ExecutionResults]]:
+    def results(self) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
 
         Raises:
-            ValueError: If the Query did not return any results.
+            RuntimeError: If the Query did not return any results.
             E.g. if the Query was ill-formed.
 
         Returns:
-            Union[DataFrame, Optional[ExecutionResults]] --
+            DataFrame --
             A DataFrame with the queried data.
-            If the query fails raise ValueError.
+            If the query fails raise RuntimeError.
         """
         result = QueryExecutioner().run_query(self)
         if result:
             # TODO: adapt QueryOutputTransformer to process list of results
             return QueryOutputTransformer(result[0].query_results[0]).transform()
         else:
-            raise ValueError("No results could be returned for this Query.")
+            raise RuntimeError("No results could be returned for this Query.")
 
     def meta_data(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """Runs the query and returns a Dict with the meta data of the queries results.
 
         Raises:
-            ValueError: If the Query did not return any results.
+            RuntimeError: If the Query did not return any results.
             E.g. if the Query was ill-formed.
 
         Returns:
-            Union[DataFrame, Optional[ExecutionResults]] --
+            DataFrame --
             A Dict with the queried meta data.
-            If the query fails raise ValueError.
+            If the query fails raise RuntimeError.
         """
         result = QueryExecutioner().run_query(self)
         if result:
             # TODO: correct indexing?
             return result[0].meta_data
         else:
-            raise ValueError("No results could be returned for this Query.")
+            raise RuntimeError("No results could be returned for this Query.")
 
     @staticmethod
     def get_info(field: str = None) -> Optional[TypeMetaData]:

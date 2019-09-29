@@ -13,7 +13,7 @@ from datenguide_python.query_helper import (
 @pytest.fixture
 def query():
     field = Field(name="BEVMK3", fields=["value", "year"])
-    query = Query.regionQuery(region="05911", fields=["id", "name", field])
+    query = Query.region(region="05911", fields=["id", "name", field])
     return query
 
 
@@ -66,9 +66,6 @@ def test_QueryExecutionerWorkflow(query):
     # meta data related to his query
 
     meta_query1 = query.meta_data()
-    assert type(meta_query1) == dict, "meta data not a dict"
-    assert len(meta_query1) > 0, "meta data absent"
-    assert len(meta_query1) == 1, "too much meta data"
 
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.

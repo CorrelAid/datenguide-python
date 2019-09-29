@@ -13,7 +13,7 @@ def field_default():
 
 @pytest.fixture
 def query_default():
-    return Query.regionQuery(region="09", fields=["BEV001"])
+    return Query.region(region="09", fields=["BEV001"])
 
 
 @pytest.fixture
@@ -29,21 +29,19 @@ def field():
 
 @pytest.fixture
 def query():
-    return Query.regionQuery(region="09", fields=["BEV001"], default_fields=False)
+    return Query.region(region="09", fields=["BEV001"], default_fields=False)
 
 
 @pytest.fixture
 def all_regions_query(field):
-    return Query.allRegionsQuery(
+    return Query.all_regions(
         parent="11", fields=["id", "name", field], default_fields=False
     )
 
 
 @pytest.fixture
 def complex_query(field):
-    return Query.regionQuery(
-        region="09", fields=["id", "name", field], default_fields=False
-    )
+    return Query.region(region="09", fields=["id", "name", field], default_fields=False)
 
 
 @pytest.fixture
@@ -104,7 +102,7 @@ def test_get_complex_graphql_string(complex_query):
 
 def test_get_complex_graphql_string_without_args():
     field = Field(name="WAHL09", fields=["value"], default_fields=False)
-    no_args_query = Query.regionQuery(
+    no_args_query = Query.region(
         region="09", fields=["id", "name", field], default_fields=False
     )
 
@@ -164,7 +162,7 @@ def test_multiple_filter_args():
         fields=["FRUNW2", "value", "year"],
         default_fields=False,
     )
-    multiple_args_query = Query.regionQuery(
+    multiple_args_query = Query.region(
         region="02", fields=[statistic1], default_fields=False
     )
 
@@ -200,7 +198,7 @@ def test_all_regions(all_regions_query):
 
 
 def test_nuts(field):
-    query = Query.allRegionsQuery(
+    query = Query.all_regions(
         parent="11", nuts=3, fields=["id", "name", field], default_fields=False
     )
     graphql_query = query.get_graphql_query()[0]
@@ -218,7 +216,7 @@ def test_nuts(field):
 
 
 def test_lau(field):
-    query = Query.allRegionsQuery(
+    query = Query.all_regions(
         parent="11", lau=3, fields=["id", "name", field], default_fields=False
     )
     graphql_query = query.get_graphql_query()[0]
@@ -243,7 +241,7 @@ def test_filter_for_all(query):
         default_fields=False,
         return_type="WAHL09",
     )
-    query = Query.regionQuery(region="09", fields=["id", "name", field])
+    query = Query.region(region="09", fields=["id", "name", field])
     graphql_query = query.get_graphql_query()
     assert graphql_query[0] == re.sub(
         "    ",
@@ -261,7 +259,7 @@ def test_filter_for_all(query):
 
 
 def test_add_fields_stepwise():
-    query = Query.regionQuery(region="11", default_fields=False)
+    query = Query.region(region="11", default_fields=False)
     statistic1 = query.add_field("BEV001", default_fields=False)
     statistic1.add_field("year")
     statistic2 = Field(
@@ -273,7 +271,7 @@ def test_add_fields_stepwise():
     )
     query.add_field(statistic2)
 
-    query2 = Query.regionQuery(
+    query2 = Query.region(
         region="11",
         fields=[
             Field(
@@ -310,7 +308,7 @@ def test_add_fields_stepwise():
 
 
 def test_add_fields_all_regions():
-    all_reg_query = Query.allRegionsQuery(parent="11")
+    all_reg_query = Query.all_regions(parent="11")
     all_reg_query.add_field("BEV001")
 
     graphql_query = all_reg_query.get_graphql_query()[0]
@@ -329,12 +327,12 @@ def test_add_fields_all_regions():
 
 
 def test_add_args_stepwise():
-    query = Query.regionQuery(region="11")
+    query = Query.region(region="11")
     statistic1 = query.add_field("BEV001")
     statistic1.add_field("year")
     statistic1.add_args({"year": 2017})
 
-    query2 = Query.regionQuery(
+    query2 = Query.region(
         region="11", fields=[Field(name="BEV001", args={"year": 2017}, fields=["year"])]
     )
 
@@ -393,7 +391,7 @@ def test_process_query(query_default):
 
 
 def test_invalid_query(query):
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         query.results()
 
 
@@ -403,12 +401,12 @@ def test_process_query_meta(query_default):
 
 
 def test_invalid_query_meta(query):
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         query.meta_data()
 
 
 def test_multiple_regions_query():
-    query = Query.regionQuery(region=["01", "02"], fields=["BEV001"])
+    query = Query.region(region=["01", "02"], fields=["BEV001"])
     graphql_query = query.get_graphql_query()
     assert len(graphql_query) == 2, "wrong amount of query strings"
     assert graphql_query[1].startswith(

@@ -101,14 +101,14 @@ def get_statistics(search: Optional[str] = None) -> pd.DataFrame:
 
 def download_all_regions() -> pd.DataFrame:
     def nuts_query(nuts_level):
-        q = Query.allRegionsQuery(nuts=nuts_level)
+        q = Query.all_regions(nuts=nuts_level)
         return q
 
     def lau_query(lau_level):
-        q = Query.allRegionsQuery(lau=lau_level)
+        q = Query.all_regions(lau=lau_level)
         return q
 
-    qb_all = Query.allRegionsQuery()
+    qb_all = Query.all_regions()
 
     qe = QueryExecutioner()
     all_regions = qe.run_query(qb_all)
