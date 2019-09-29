@@ -1,5 +1,8 @@
 import pytest
 import pandas as pd
+import sys
+import io
+import re
 from datenguide_python.query_execution import QueryExecutioner
 from datenguide_python.query_builder import Query, Field
 from datenguide_python.query_helper import (
@@ -52,13 +55,7 @@ def test_QueryExecutionerWorkflow(query):
         type(res_query1) is pd.DataFrame
     ), "query results are not a python json representation"
 
-    # Ira wants to get an overview of all possible statistics that can be
-    # queried.
-
     stats = Query.get_info()
-    assert stats.kind == "OBJECT", "Region should be an object"
-    assert stats.enum_values is None, "Region doesn't have enum values"
-    assert type(stats.fields) == dict, "Fields should be a dict"
 
     # Ira remembers that he read about the executioners functionality to
     # return metadata along with the query results. So he wants to check
@@ -105,9 +102,12 @@ def test_QueryExecutionerWorkflow(query):
 
     # Then he wants to get metainfo on the field.
 
-    stats_info = statistic1.get_info()
-    assert stats_info.kind == "OBJECT", "BEV001 should be an object"
-    assert type(stats_info.fields) == dict, "Fields should be a dict"
+    stringio = io.StringIO()
+    sys.stdout = stringio
+
+    statistic1.get_info()
+    stats_info = re.sub(r"\n", "", stringio.getvalue())
+    assert "OBJECT" in stats_info, "BEV001 should be an object"
 
 
 def test_queryHelper():
