@@ -4,9 +4,16 @@ from datenguide_python.query_execution import (
     TypeMetaData,
 )
 
+from datenguide_python.query_helper import (
+    get_statistics,
+    get_all_regions,
+    federal_states,
+)
+
 import pytest
 from unittest.mock import Mock
 from collections import namedtuple
+import pandas as pd
 
 
 @pytest.fixture
@@ -194,8 +201,10 @@ def test_extract_stat_desc(stat_description):
 
 def test_create_stat_desc_dic(sample_stat_meta_response):
     desc_dict = QueryExecutioner._create_stat_desc_dic(sample_stat_meta_response)
-    assert desc_dict["AENW01"] == "Description 1", "first dict entry is wrong"
-    assert desc_dict["AENW02"] == "NO DESCRIPTION FOUND", "second dict entry is wrong"
+    assert desc_dict["AENW01"][0] == "Description 1", "first dict entry is wrong"
+    assert (
+        desc_dict["AENW02"][0] == "NO DESCRIPTION FOUND"
+    ), "second dict entry is wrong"
 
 
 def test_get_args(sample_stat_meta_response):
@@ -268,3 +277,47 @@ def test_get_type_info_uses_cached_resutls(type_request_response):
         enum_vals = qExec.get_type_info("BEVMK3Statistics").enum_values
         assert type(enum_vals) == dict, "Enum values should be dict"
         assert len(enum_vals) > 0, "Enums should have values"
+
+
+def test_federal_states():
+    state_mappings = [
+        ("Schleswig_Holstein", "01"),
+        ("Hamburg", "02"),
+        ("Niedersachsen", "03"),
+        ("Bremen", "04"),
+        ("Nordrhein_Westfalen", "05"),
+        ("Hessen", "06"),
+        ("Rheinland_Pfalz", "07"),
+        ("Baden_Württemberg", "08"),
+        ("Bayern", "09"),
+        ("Saarland", "10"),
+        ("Berlin", "11"),
+        ("Brandenburg", "12"),
+        ("Mecklenburg_Vorpommern", "13"),
+        ("Sachsen", "14"),
+        ("Sachsen_Anhalt", "15"),
+        ("Thüringen", "16"),
+    ]
+    print(federal_states)
+    for name, id in state_mappings:
+        dic_id = getattr(federal_states, name)
+        assert dic_id == id, f"{dic_id},{id}"
+
+
+def test_regions_overview_table():
+    reg = get_all_regions()
+    assert isinstance(reg, pd.DataFrame)
+    assert list(reg.columns) == ["name", "level", "parent"]
+    assert reg.index.name == "id"
+    assert reg.shape[0] > 10000
+
+
+def test_statistic_overview_table():
+    stats = get_statistics()
+    assert isinstance(stats, pd.DataFrame)
+    assert list(stats.columns) == [
+        "statistics",
+        "short_description",
+        "long_description",
+    ]
+    assert stats.shape[0] > 400

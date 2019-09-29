@@ -1,5 +1,7 @@
 import pytest
 import re
+import sys
+import io
 import pandas as pd
 from datenguide_python import Field, Query
 
@@ -181,40 +183,37 @@ def test_multiple_filter_args():
 
 
 def test_all_regions(all_regions_query):
-    graphql_query = all_regions_query.get_graphql_query()
-    assert graphql_query[0] == re.sub(
-        "    ",
+    graphql_query = all_regions_query.get_graphql_query()[0]
+    expected_query = re.sub(
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11"){
                     id name WAHL09 (year: 2017){
                         value year PART04 }
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
+    assert graphql_query == expected_query
 
 
 def test_nuts(field):
     query = Query.allRegionsQuery(
         parent="11", nuts=3, fields=["id", "name", field], default_fields=False
     )
-    graphql_query = query.get_graphql_query()
-    assert graphql_query[0] == re.sub(
-        "    ",
+    graphql_query = query.get_graphql_query()[0]
+    assert graphql_query == re.sub(
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11", nuts: 3){
                     id name WAHL09 (year: 2017){value year PART04 }
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
 
 
@@ -222,19 +221,17 @@ def test_lau(field):
     query = Query.allRegionsQuery(
         parent="11", lau=3, fields=["id", "name", field], default_fields=False
     )
-    graphql_query = query.get_graphql_query()
-    assert graphql_query[0] == re.sub(
-        "    ",
+    graphql_query = query.get_graphql_query()[0]
+    assert re.sub(" +", " ", graphql_query.replace("\n", " ")) == re.sub(
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11", lau: 3){
                     id name WAHL09 (year: 2017){value year PART04 }
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
 
 
@@ -316,20 +313,18 @@ def test_add_fields_all_regions():
     all_reg_query = Query.allRegionsQuery(parent="11")
     all_reg_query.add_field("BEV001")
 
-    graphql_query = all_reg_query.get_graphql_query()
-    assert graphql_query[0] == re.sub(
-        "    ",
+    graphql_query = all_reg_query.get_graphql_query()[0]
+    assert graphql_query == re.sub(
+        r"\n\s+",
         "",
-        """{
+        """query ($page : Int, $itemsPerPage : Int) {
             allRegions (page: $page, itemsPerPage: $itemsPerPage){
                 regions (parent: "11"){
                     id name BEV001 {
                         year value source {title_de valid_from periodicity name url }}
                 }
                 page itemsPerPage total }
-        }""".replace(
-            "\n", ""
-        ),
+        }""",
     )
 
 
@@ -454,16 +449,19 @@ def test_description(query_default):
 
 
 def test_get_info_stat(query_default):
+    stringio = io.StringIO()
+    sys.stdout = stringio
     stat = query_default.add_field("BEV001")
-    info = stat.get_info()
+    stat.get_info()
+    info = re.sub(r"\n", "", stringio.getvalue())
     expected_info = re.sub(
         r"\n\s+",
         "",
         """kind: OBJECT
             description: Lebend Geborene
-            arguments: year [LIST:Int], statistics [LIST:BEV001Statistics],
-            ALTMT1 [LIST:ALTMT1], BEVM01 [LIST:BEVM01],
-            GES [LIST:GES], LEGIT2 [LIST:LEGIT2], NAT [LIST:NAT], filter [INPUT_OBJECT:]
+            arguments: year [LIST:Int], statistics [LIST:BEV001Statistics], ALTMT1 [
+            LIST:ALTMT1], BEVM01 [LIST:BEVM01], GES [
+            LIST:GES], LEGIT2 [LIST:LEGIT2], NAT [LIST:NAT], filter [INPUT_OBJECT:]
             fields: id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
             enum values: None""",
     )

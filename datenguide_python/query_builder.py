@@ -166,7 +166,7 @@ class Field:
             field_list.extend(Field._get_fields_helper(value))
         return field_list
 
-    def get_info(self):
+    def get_info(self) -> None:
         """Prints summarized information on a field's meta data.
 
         """
@@ -496,6 +496,11 @@ class Query:
         Returns:
             str -- the Query as a String.
         """
+        if self.start_field.name == "allRegions":
+            query_prefix = "query ($page : Int, $itemsPerPage : Int) "
+        else:
+            query_prefix = ""
+
         # for regionQuery with multiple region IDs return a list of queries
         if (self.start_field.name == "region") and isinstance(
             self.start_field.args.get("id", ""), list
@@ -513,7 +518,12 @@ class Query:
                 ]
             return query_list
         else:
-            return ["{" + self.start_field._get_fields_to_query(self.start_field) + "}"]
+            return [
+                query_prefix
+                + "{"
+                + self.start_field._get_fields_to_query(self.start_field)
+                + "}"
+            ]
 
     def get_fields(self) -> List[str]:
         """Get all fields of a query.
@@ -537,11 +547,12 @@ class Query:
         """
         result = QueryExecutioner().run_query(self)
         if result:
-            return QueryOutputTransformer(result.query_results).transform()
+            # TODO: adapt QueryOutputTransformer to process list of results
+            return QueryOutputTransformer(result[0].query_results[0]).transform()
         else:
             raise ValueError("No results could be returned for this Query.")
 
-    def meta_data(self) -> Optional[Dict[str, Any]]:
+    def meta_data(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """Runs the query and returns a Dict with the meta data of the queries results.
 
         Raises:
@@ -555,7 +566,8 @@ class Query:
         """
         result = QueryExecutioner().run_query(self)
         if result:
-            return result.meta_data
+            # TODO: correct indexing?
+            return result[0].meta_data
         else:
             raise ValueError("No results could be returned for this Query.")
 
