@@ -79,12 +79,12 @@ class QueryOutputTransformer:
             data_out = data_out.merge(self.query_data[f"data{l+1}"], how="outer").drop(
                 "fake_id", axis=1
             )
-
-        cols_4 = [x.replace("_value", "") for x in data_out.columns]
-        data_out.columns = cols_4
-        cols_5 = ["id", "name", "year"]
+        cols_4 = [col for col in data_out.columns if "_value" in col]
+        cols_5 = ["id", "name", "year"] + cols_4
         cols_6 = [col for col in data_out.columns if col not in cols_5]
         output_ordered = data_out.loc[:, cols_5 + cols_6]
+        cols_7 = [x.replace("_value", "") for x in output_ordered.columns]
+        output_ordered.columns = cols_7
 
         return output_ordered
 
