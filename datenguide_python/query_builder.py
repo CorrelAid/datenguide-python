@@ -464,7 +464,9 @@ class Query:
                 self.region_field.drop_field(field)
                 return self
             else:
-                raise TypeError("All Regions Query initialized without regions field.")
+                raise RuntimeError(
+                    "All Regions Query initialized without regions field."
+                )
         else:
             self.start_field.drop_field(field)
             return self
