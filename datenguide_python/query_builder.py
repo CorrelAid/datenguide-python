@@ -178,6 +178,23 @@ class Field:
         enum_values = "enum values:\n" + str(self.enum_info())
         print("\n\n".join([kind, description, arguments, fields, enum_values]))
 
+    @staticmethod
+    def _no_none_values(base_function, dict_content, sub_key) -> Optional[str]:
+        if dict_content is None:
+            return None
+        value = getattr(dict_content, sub_key)
+        if value is None:
+            return None
+        return base_function(value)
+
+    def _arguments_info_helper(self, meta_fields) -> Optional[str]:
+        args = meta_fields[self.name].get_arguments()
+        arg_list = []
+        for key, value in args.items():
+            temp_arg = key + str(value)
+            arg_list.append(temp_arg)
+        return ", ".join(arg_list)
+
     def arguments_info(self) -> Optional[str]:
         """Get information on possible arguments for field. The name of the argument is
         followed by the kind and name of the input type for the argument in brackets.
@@ -190,20 +207,12 @@ class Field:
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
-            if meta is not None:
-                if meta.fields is not None:
-                    args = meta.fields[self.name].get_arguments()
-                    arg_list = []
-                    for key, value in args.items():
-                        temp_arg = key + str(value)
-                        arg_list.append(temp_arg)
-                    return ", ".join(arg_list)
-                else:
-                    return None
-            else:
-                return None
+            return Field._no_none_values(self._arguments_info_helper, meta, "fields")
         else:
             return None
+
+    def _fields_info_helper(self, meta_fields) -> Optional[str]:
+        return ", ".join(meta_fields.keys())
 
     def fields_info(self) -> Optional[str]:
         """Get information on possible fields for field.
@@ -212,14 +221,13 @@ class Field:
             str -- Possible fields for the field as string.
         """
         meta = QueryExecutioner().get_type_info(self.name)
-        if meta is not None:
-            meta_fields = meta.fields
-            if meta_fields is not None:
-                return ", ".join(meta_fields.keys())
-            else:
-                return None
-        else:
-            return None
+        return Field._no_none_values(self._fields_info_helper, meta, "fields")
+
+    def _enum_info_helper(self, enum_meta) -> Optional[str]:
+        enum_list = []
+        for key, value in enum_meta.items():
+            enum_list.append(key + ": " + value)
+        return ", ".join(enum_list)
 
     def enum_info(self) -> Optional[str]:
         """Get information on possible enum vaules for field.
@@ -227,18 +235,13 @@ class Field:
         Returns:
             str -- Possible enum values for the field as string.
         """
-        enum_list = []
         meta = QueryExecutioner().get_type_info(self.name)
-        if meta is not None:
-            enum_meta = meta.enum_values
-            if enum_meta:
-                for key, value in enum_meta.items():
-                    enum_list.append(key + ": " + value)
-                return ", ".join(enum_list)
-            else:
-                return None
-        else:
-            return None
+        return Field._no_none_values(self._enum_info_helper, meta, "enum_values")
+
+    def _description_helper(self, meta_fields) -> Optional[str]:
+        return QueryExecutioner._extract_main_description(
+            meta_fields[self.name]["description"]
+        )
 
     def description(self) -> Optional[str]:
         """Get description of field.
@@ -249,16 +252,7 @@ class Field:
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
-            if meta is not None:
-                meta_fields = meta.fields
-                if meta_fields is not None:
-                    return QueryExecutioner._extract_main_description(
-                        meta_fields[self.name]["description"]
-                    )
-                else:
-                    return None
-            else:
-                return None
+            return Field._no_none_values(self._description_helper, meta, "fields")
         else:
             return None
 
@@ -278,14 +272,6 @@ class Field:
 class Query:
     """A query to get information via the datenguide API for regionalstatistik.
     The query contains all fields and arguments.
-
-    Raises:
-        TypeError: [description]
-        TypeError: [description]
-        TypeError: [description]
-
-    Returns:
-        [type] -- [description]
     """
 
     """static variables based on QueryExecutioner
