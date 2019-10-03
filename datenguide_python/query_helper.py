@@ -111,11 +111,17 @@ def download_all_regions() -> pd.DataFrame:
     qb_all = Query.all_regions()
 
     qe = QueryExecutioner()
+    print("start")
     all_regions = qe.run_query(qb_all)
+    print("all")
     r_nuts1 = qe.run_query(nuts_query(1))
+    print("nuts1")
     r_nuts2 = qe.run_query(nuts_query(2))
+    print("nuts2")
     r_nuts3 = qe.run_query(nuts_query(3))
+    print("nuts3")
     r_lau1 = qe.run_query(lau_query(1))
+    print("lau")
     # currently no distinction between different laus
     # on datehenguide side
     # r_lau2 = qe.run_query(lau_query(2))
