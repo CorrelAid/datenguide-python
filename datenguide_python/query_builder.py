@@ -166,47 +166,40 @@ class Field:
         """Prints summarized information on a field's meta data.
 
         """
-        kind: str = "kind: "
+        kind: str = "kind:\n"
         meta = QueryExecutioner().get_type_info(self.name)
         if meta is not None:
             kind += meta.kind
         else:
             kind += "None"
-        description = "description: " + str(self.description())
-        arguments = "arguments: " + str(self.arguments_info())
-        fields = "fields: " + str(self.fields_info())
-        enum_values = "enum values: " + str(self.enum_info())
-        print("\n".join([kind, description, arguments, fields, enum_values]))
+        description = "description:\n" + str(self.description())
+        arguments = "arguments:\n" + str(self.arguments_info())
+        fields = "fields:\n" + str(self.fields_info())
+        enum_values = "enum values:\n" + str(self.enum_info())
+        print("\n\n".join([kind, description, arguments, fields, enum_values]))
 
     def arguments_info(self) -> Optional[str]:
-        """Get information on possible arguments for field.
+        """Get information on possible arguments for field. The name of the argument is
+        followed by the kind and name of the input type for the argument in brackets.
+        If the argument is a list, the kind and name of the list elements are
+        included in the brackets as well.
 
         Returns:
-            str -- Possible arguments for the field as string.
+            str -- Possible arguments for the field as string and their input types.
         """
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
             if meta is not None:
-                meta_fields = meta.fields
-                args = (
-                    meta_fields[self.name]["args"]
-                    if isinstance(meta_fields, dict)
-                    else None
-                )
-                arg_list = []
-                for i in range(0, len(args)):
-                    temp_arg = str(args[i]["name"]) + " ["
-                    temp_arg += (
-                        str(args[i]["type"]["kind"]) + ":" if args[i]["type"] else ":"
-                    )
-                    temp_arg += (
-                        str(args[i]["type"]["ofType"]["name"]) + "]"
-                        if args[i]["type"]["ofType"]
-                        else "]"
-                    )
-                    arg_list.append(temp_arg)
-                return ", ".join(arg_list)
+                if meta.fields is not None:
+                    args = meta.fields[self.name].get_arguments()
+                    arg_list = []
+                    for key, value in args.items():
+                        temp_arg = key + str(value)
+                        arg_list.append(temp_arg)
+                    return ", ".join(arg_list)
+                else:
+                    return None
             else:
                 return None
         else:

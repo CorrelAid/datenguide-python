@@ -420,9 +420,14 @@ def test_arguments_info(query_default):
     expected_info = re.sub(
         r"\n\s+",
         "",
-        """year [LIST:Int], statistics [LIST:BEV001Statistics], ALTMT1 [LIST:ALTMT1]
-        , BEVM01 [LIST:BEVM01], GES [LIST:GES], LEGIT2 [LIST:LEGIT2]
-        , NAT [LIST:NAT], filter [INPUT_OBJECT:]""",
+        """year('LIST', None, 'SCALAR', 'Int')
+        , statistics('LIST', None, 'ENUM', 'BEV001Statistics')
+        , ALTMT1('LIST', None, 'ENUM', 'ALTMT1')
+        , BEVM01('LIST', None, 'ENUM', 'BEVM01')
+        , GES('LIST', None, 'ENUM', 'GES')
+        , LEGIT2('LIST', None, 'ENUM', 'LEGIT2')
+        , NAT('LIST', None, 'ENUM', 'NAT')
+        , filter('INPUT_OBJECT', 'BEV001Filter', None, None)""",
     )
     assert info == expected_info
 
@@ -455,12 +460,27 @@ def test_get_info_stat(query_default):
     expected_info = re.sub(
         r"\n\s+",
         "",
-        """kind: OBJECT
-            description: Lebend Geborene
-            arguments: year [LIST:Int], statistics [LIST:BEV001Statistics], ALTMT1 [
-            LIST:ALTMT1], BEVM01 [LIST:BEVM01], GES [
-            LIST:GES], LEGIT2 [LIST:LEGIT2], NAT [LIST:NAT], filter [INPUT_OBJECT:]
-            fields: id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
-            enum values: None""",
+        """
+        kind:
+        OBJECT
+
+        description:
+        Lebend Geborene
+
+        arguments:
+        year('LIST', None, 'SCALAR', 'Int')
+        , statistics('LIST', None, 'ENUM', 'BEV001Statistics')
+        , ALTMT1('LIST', None, 'ENUM', 'ALTMT1')
+        , BEVM01('LIST', None, 'ENUM', 'BEVM01')
+        , GES('LIST', None, 'ENUM', 'GES')
+        , LEGIT2('LIST', None, 'ENUM', 'LEGIT2')
+        , NAT('LIST', None, 'ENUM', 'NAT')
+        , filter('INPUT_OBJECT', 'BEV001Filter', None, None)
+
+        fields:
+        id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
+
+        enum values:
+        None""",
     )
     assert info == expected_info
