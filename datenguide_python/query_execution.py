@@ -2,8 +2,6 @@ from typing import Dict, Any, cast, Optional, NamedTuple, List, Tuple, Union
 import requests
 import re
 
-from datenguide_python.query_builder import Query
-
 Json_Dict = Dict[str, Any]
 Json_List = List[Json_Dict]
 Json = Union[Json_Dict, Json_List]
@@ -99,7 +97,7 @@ class QueryExecutioner(object):
     def _pagination_json(page: int) -> Json_Dict:
         return {"page": page, "itemsPerPage": 1000}
 
-    def run_query(self, query: Query) -> Optional[List[ExecutionResults]]:
+    def run_query(self, query) -> Optional[List[ExecutionResults]]:
         all_results = [
             self.run_single_query_json(query_json, query.get_fields())
             for query_json in self._generate_post_json(query)
@@ -195,7 +193,7 @@ class QueryExecutioner(object):
             return None
 
     @staticmethod
-    def _generate_post_json(query: Query) -> List[Dict[str, str]]:
+    def _generate_post_json(query) -> List[Dict[str, str]]:
         jsons: List[Dict[str, str]] = []
         for query_string in query.get_graphql_query():
             post_json: Json_Dict = dict()
