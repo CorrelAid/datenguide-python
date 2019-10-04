@@ -98,13 +98,23 @@ class QueryExecutioner(object):
         return {"page": page, "itemsPerPage": 1000}
 
     def run_query(self, query) -> Optional[List[ExecutionResults]]:
-        if "allRegions" in query.get_fields():
+        all_results = [
+            self.run_single_query_json(query_json, query.get_fields())
+            for query_json in self._generate_post_json(query)
+        ]
+        if not any(map(lambda r: r is None, all_results)):
+            return [cast(ExecutionResults, r) for r in all_results]
+        else:
+            return None
+
+    def run_single_query_json(
+        self, query_json: Json_Dict, query_fields: List[str]
+    ) -> Optional[ExecutionResults]:
+        if "allRegions" in query_fields:
             results = []
             page = 0
             while True:
-                query_json = self._generate_post_json(
-                    query, self._pagination_json(page)
-                )
+                query_json["variables"] = self._pagination_json(page)
                 result_page = self._send_request(query_json)
                 if result_page is None:
                     return None
@@ -116,7 +126,6 @@ class QueryExecutioner(object):
                 else:
                     page += 1
         else:
-            query_json = self._generate_post_json(query)
             single_result = self._send_request(query_json)
             if single_result is None:
                 return None
@@ -130,14 +139,14 @@ class QueryExecutioner(object):
                 meta = {
                     stat: stat_descriptions[stat][0]
                     for stat in stat_descriptions
-                    if stat in query.get_fields()
+                    if stat in query_fields
                 }
             else:
                 meta = {"error": "META DATA COULD NOT BE LOADED"}
             # wrong casting as the result is a list of Json
-            return [
-                ExecutionResults(query_results=cast(Json_List, results), meta_data=meta)
-            ]
+            return ExecutionResults(
+                query_results=cast(Json_List, results), meta_data=meta
+            )
         else:
             return None
 
@@ -184,14 +193,13 @@ class QueryExecutioner(object):
             return None
 
     @staticmethod
-    def _generate_post_json(
-        query, variables: Optional[Dict[str, str]] = None
-    ) -> Dict[str, str]:
-        post_json: Json_Dict = dict()
-        post_json["query"] = query.get_graphql_query()
-        if variables:
-            post_json["variables"] = cast(Dict[str, str], variables)
-        return post_json
+    def _generate_post_json(query) -> List[Dict[str, str]]:
+        jsons: List[Dict[str, str]] = []
+        for query_string in query.get_graphql_query():
+            post_json: Json_Dict = dict()
+            post_json["query"] = query_string
+            jsons.append(post_json)
+        return jsons
 
     def _send_request(self, query_json: Json_Dict) -> Optional[Json_Dict]:
         resp = requests.post(

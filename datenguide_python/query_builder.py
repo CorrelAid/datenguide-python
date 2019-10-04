@@ -1,9 +1,7 @@
-from typing import Optional, Union, List, Dict
-from datenguide_python.query_execution import (
-    QueryExecutioner,
-    TypeMetaData,
-    ExecutionResults,
-)
+from typing import Optional, Union, List, Dict, Any
+from pandas import DataFrame
+from datenguide_python.query_execution import QueryExecutioner, TypeMetaData
+from datenguide_python.output_transformer import QueryOutputTransformer
 
 
 class Field:
@@ -29,12 +27,14 @@ class Field:
         self,
         name: str,
         fields: List[Union[str, "Field"]] = [],
-        args: Optional[Dict[str, str]] = None,
+        args: Dict[str, Any] = {},
+        parent_field: "Field" = None,
         default_fields: bool = True,
         return_type: str = None,
     ):
 
         self.name = name
+        self.parent_field = parent_field
         # TODO: use name as default?
         self.return_type = return_type if return_type else name
 
@@ -91,6 +91,7 @@ class Field:
         if isinstance(field, str):
             self.fields[field] = Field(
                 name=field,
+                parent_field=self,
                 fields=[],
                 return_type=self._get_return_type(field),
                 default_fields=default_fields,
@@ -98,8 +99,15 @@ class Field:
             return self.fields[field]
 
         field._set_return_type(self)
+        field._set_parent_field(self)
         self.fields[field.name] = field
         return self.fields[field.name]
+
+    def drop_field(self, field: str):
+        if isinstance(field, str):
+            self.fields.pop(field, None)
+        else:
+            self.fields.pop(field.name, None)
 
     def add_args(self, args: dict):
         if self.args:
@@ -110,7 +118,12 @@ class Field:
     def _set_return_type(self, parentfield):
         self.return_type = parentfield._get_return_type(self.name)
 
-    def _get_fields_to_query(self, field: Union[str, "Field"]) -> str:
+    def _set_parent_field(self, parent_field):
+        self.parent_field = parent_field
+
+    def _get_fields_to_query(
+        self, field: Union[str, "Field"], region_id: str = None
+    ) -> str:
         substring = ""
         if isinstance(field, str):
             substring += field + " "
@@ -118,8 +131,15 @@ class Field:
             substring += field.name + " "
 
             if field.args:
+                # make copy, so original field id is not overwritten
+                this_query_args = field.args
+
+                if (field.args.get("id", None) is not None) & (region_id is not None):
+                    # set region id to given single id to not use list
+                    this_query_args["id"] = region_id
+
                 filters = []
-                for key, value in field.args.items():
+                for key, value in this_query_args.items():
                     if value == "ALL":
                         filters.append("filter:{ " + key + ": { nin: []}}")
                     else:
@@ -142,8 +162,99 @@ class Field:
             field_list.extend(Field._get_fields_helper(value))
         return field_list
 
-    def get_info(self) -> Optional[TypeMetaData]:
-        return QueryExecutioner().get_type_info(self.return_type)
+    def get_info(self) -> None:
+        """Prints summarized information on a field's meta data.
+
+        """
+        kind: str = "kind:\n"
+        meta = QueryExecutioner().get_type_info(self.name)
+        if meta is not None:
+            kind += meta.kind
+        else:
+            kind += "None"
+        description = "description:\n" + str(self.description())
+        arguments = "arguments:\n" + str(self.arguments_info())
+        fields = "fields:\n" + str(self.fields_info())
+        enum_values = "enum values:\n" + str(self.enum_info())
+        print("\n\n".join([kind, description, arguments, fields, enum_values]))
+
+    @staticmethod
+    def _no_none_values(base_function, dict_content, sub_key) -> Optional[str]:
+        if dict_content is None:
+            return None
+        value = getattr(dict_content, sub_key)
+        if value is None:
+            return None
+        return base_function(value)
+
+    def _arguments_info_helper(self, meta_fields) -> Optional[str]:
+        args = meta_fields[self.name].get_arguments()
+        arg_list = []
+        for key, value in args.items():
+            temp_arg = key + str(value)
+            arg_list.append(temp_arg)
+        return ", ".join(arg_list)
+
+    def arguments_info(self) -> Optional[str]:
+        """Get information on possible arguments for field. The name of the argument is
+        followed by the kind and name of the input type for the argument in brackets.
+        If the argument is a list, the kind and name of the list elements are
+        included in the brackets as well.
+
+        Returns:
+            str -- Possible arguments for the field as string and their input types.
+        """
+        parent = self.parent_field
+        if parent is not None:
+            meta = QueryExecutioner().get_type_info(parent.return_type)
+            return Field._no_none_values(self._arguments_info_helper, meta, "fields")
+        else:
+            return None
+
+    def _fields_info_helper(self, meta_fields) -> Optional[str]:
+        return ", ".join(meta_fields.keys())
+
+    def fields_info(self) -> Optional[str]:
+        """Get information on possible fields for field.
+
+        Returns:
+            str -- Possible fields for the field as string.
+        """
+        meta = QueryExecutioner().get_type_info(self.name)
+        return Field._no_none_values(self._fields_info_helper, meta, "fields")
+
+    def _enum_info_helper(self, enum_meta) -> Optional[str]:
+        enum_list = []
+        for key, value in enum_meta.items():
+            enum_list.append(key + ": " + value)
+        return ", ".join(enum_list)
+
+    def enum_info(self) -> Optional[str]:
+        """Get information on possible enum vaules for field.
+
+        Returns:
+            str -- Possible enum values for the field as string.
+        """
+        meta = QueryExecutioner().get_type_info(self.name)
+        return Field._no_none_values(self._enum_info_helper, meta, "enum_values")
+
+    def _description_helper(self, meta_fields) -> Optional[str]:
+        return QueryExecutioner._extract_main_description(
+            meta_fields[self.name]["description"]
+        )
+
+    def description(self) -> Optional[str]:
+        """Get description of field.
+
+        Returns:
+            str -- Description of the field as string.
+        """
+        parent = self.parent_field
+        if parent is not None:
+            meta = QueryExecutioner().get_type_info(parent.return_type)
+            return Field._no_none_values(self._description_helper, meta, "fields")
+        else:
+            return None
 
     @staticmethod
     def _get_fields_helper(field: Union[str, "Field"]) -> List[str]:
@@ -161,14 +272,6 @@ class Field:
 class Query:
     """A query to get information via the datenguide API for regionalstatistik.
     The query contains all fields and arguments.
-
-    Raises:
-        TypeError: [description]
-        TypeError: [description]
-        TypeError: [description]
-
-    Returns:
-        [type] -- [description]
     """
 
     """static variables based on QueryExecutioner
@@ -227,9 +330,9 @@ class Query:
         self.region_field = region_field
 
     @classmethod
-    def regionQuery(
+    def region(
         cls,
-        region: str,
+        region: Union[str, List[str]],
         fields: List[Union[str, "Field"]] = [],
         default_fields: bool = True,
     ) -> "Query":
@@ -250,18 +353,24 @@ class Query:
             defaults: List[Union[str, "Field"]] = ["id", "name"]
             fields = defaults + fields
 
+        # add quotation marks around id for correct query
+        if isinstance(region, list):
+            region_arg: Union[str, List[str]] = [('"' + x + '"') for x in region]
+        else:
+            region_arg = ['"' + region + '"']
+
         return cls(
             start_field=Field(
                 "region",
                 fields,
-                args={"id": '"' + region + '"'},
+                args={"id": region_arg},
                 return_type=Query._return_type_region,
                 default_fields=default_fields,
             )
         )
 
     @classmethod
-    def allRegionsQuery(
+    def all_regions(
         cls,
         fields: List[Union[str, "Field"]] = [],
         parent: str = None,
@@ -335,7 +444,20 @@ class Query:
         else:
             return self.start_field.add_field(field, default_fields=default_fields)
 
-    def get_graphql_query(self) -> str:
+    def drop_field(self, field: str) -> "Query":
+        if self.start_field.name == "allRegions":
+            if self.region_field is not None:
+                self.region_field.drop_field(field)
+                return self
+            else:
+                raise RuntimeError(
+                    "All Regions Query initialized without regions field."
+                )
+        else:
+            self.start_field.drop_field(field)
+            return self
+
+    def get_graphql_query(self) -> List[str]:
         """Formats the Query into a String that can be queried from the Datenguide API.
 
         Returns:
@@ -345,12 +467,30 @@ class Query:
             query_prefix = "query ($page : Int, $itemsPerPage : Int) "
         else:
             query_prefix = ""
-        return (
-            query_prefix
-            + "{"
-            + self.start_field._get_fields_to_query(self.start_field)
-            + "}"
-        )
+
+        # for region with multiple region IDs return a list of queries
+        if (self.start_field.name == "region") and isinstance(
+            self.start_field.args.get("id", ""), list
+        ):
+            query_list: List[str] = []
+            for region_id in self.start_field.args["id"]:
+                query_list += [
+                    (
+                        "{"
+                        + self.start_field._get_fields_to_query(
+                            self.start_field, region_id
+                        )
+                        + "}"
+                    )
+                ]
+            return query_list
+        else:
+            return [
+                query_prefix
+                + "{"
+                + self.start_field._get_fields_to_query(self.start_field)
+                + "}"
+            ]
 
     def get_fields(self) -> List[str]:
         """Get all fields of a query.
@@ -360,8 +500,43 @@ class Query:
         """
         return self.start_field.get_fields()
 
-    def results(self) -> Optional[List[ExecutionResults]]:
-        return QueryExecutioner().run_query(self)
+    def results(self) -> DataFrame:
+        """Runs the query and returns a Pandas DataFrame with the results.
+
+        Raises:
+            RuntimeError: If the Query did not return any results.
+            E.g. if the Query was ill-formed.
+
+        Returns:
+            DataFrame --
+            A DataFrame with the queried data.
+            If the query fails raise RuntimeError.
+        """
+        result = QueryExecutioner().run_query(self)
+        if result:
+            # TODO: adapt QueryOutputTransformer to process list of results
+            return QueryOutputTransformer(result[0].query_results[0]).transform()
+        else:
+            raise RuntimeError("No results could be returned for this Query.")
+
+    def meta_data(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        """Runs the query and returns a Dict with the meta data of the queries results.
+
+        Raises:
+            RuntimeError: If the Query did not return any results.
+            E.g. if the Query was ill-formed.
+
+        Returns:
+            DataFrame --
+            A Dict with the queried meta data.
+            If the query fails raise RuntimeError.
+        """
+        result = QueryExecutioner().run_query(self)
+        if result:
+            # TODO: correct indexing?
+            return result[0].meta_data
+        else:
+            raise RuntimeError("No results could be returned for this Query.")
 
     @staticmethod
     def get_info(field: str = None) -> Optional[TypeMetaData]:

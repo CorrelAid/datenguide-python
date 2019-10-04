@@ -1,5 +1,8 @@
 import pytest
 import re
+import sys
+import io
+import pandas as pd
 from datenguide_python import Field, Query
 
 
@@ -10,7 +13,7 @@ def field_default():
 
 @pytest.fixture
 def query_default():
-    return Query.regionQuery(region="09", fields=["BEV001"])
+    return Query.region(region="09", fields=["BEV001"])
 
 
 @pytest.fixture
@@ -26,14 +29,19 @@ def field():
 
 @pytest.fixture
 def query():
-    return Query.regionQuery(region="09", fields=["BEV001"], default_fields=False)
+    return Query.region(region="09", fields=["BEV001"], default_fields=False)
+
+
+@pytest.fixture
+def all_regions_query(field):
+    return Query.all_regions(
+        parent="11", fields=["id", "name", field], default_fields=False
+    )
 
 
 @pytest.fixture
 def complex_query(field):
-    return Query.regionQuery(
-        region="09", fields=["id", "name", field], default_fields=False
-    )
+    return Query.region(region="09", fields=["id", "name", field], default_fields=False)
 
 
 @pytest.fixture
@@ -61,7 +69,7 @@ def test_create_query_class_without_start_filed_raises_error():
 
 def test_basic_graphql_string(query):
     graphql_query = query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         " +", " ", """{region (id: "09"){BEV001 }}""".replace("\n", " ")
     )
 
@@ -79,7 +87,7 @@ def test_get_fields_to_query():
 
 def test_get_complex_graphql_string(complex_query):
     graphql_query = complex_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -94,12 +102,12 @@ def test_get_complex_graphql_string(complex_query):
 
 def test_get_complex_graphql_string_without_args():
     field = Field(name="WAHL09", fields=["value"], default_fields=False)
-    no_args_query = Query.regionQuery(
+    no_args_query = Query.region(
         region="09", fields=["id", "name", field], default_fields=False
     )
 
     graphql_query = no_args_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -113,7 +121,7 @@ def test_get_complex_graphql_string_without_args():
 
 def test_get_multiple_stats(more_complex_query):
     graphql_query = more_complex_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -154,12 +162,12 @@ def test_multiple_filter_args():
         fields=["FRUNW2", "value", "year"],
         default_fields=False,
     )
-    multiple_args_query = Query.regionQuery(
+    multiple_args_query = Query.region(
         region="02", fields=[statistic1], default_fields=False
     )
 
     graphql_query = multiple_args_query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -172,11 +180,8 @@ def test_multiple_filter_args():
     )
 
 
-def test_all_regions(field):
-    all_regions_query = Query.allRegionsQuery(
-        parent="11", fields=["id", "name", field], default_fields=False
-    )
-    graphql_query = all_regions_query.get_graphql_query()
+def test_all_regions(all_regions_query):
+    graphql_query = all_regions_query.get_graphql_query()[0]
     expected_query = re.sub(
         r"\n\s+",
         "",
@@ -193,11 +198,10 @@ def test_all_regions(field):
 
 
 def test_nuts(field):
-    query = Query.allRegionsQuery(
+    query = Query.all_regions(
         parent="11", nuts=3, fields=["id", "name", field], default_fields=False
     )
-
-    graphql_query = query.get_graphql_query()
+    graphql_query = query.get_graphql_query()[0]
     assert graphql_query == re.sub(
         r"\n\s+",
         "",
@@ -212,10 +216,10 @@ def test_nuts(field):
 
 
 def test_lau(field):
-    query = Query.allRegionsQuery(
+    query = Query.all_regions(
         parent="11", lau=3, fields=["id", "name", field], default_fields=False
     )
-    graphql_query = query.get_graphql_query()
+    graphql_query = query.get_graphql_query()[0]
     assert re.sub(" +", " ", graphql_query.replace("\n", " ")) == re.sub(
         r"\n\s+",
         "",
@@ -237,9 +241,9 @@ def test_filter_for_all(query):
         default_fields=False,
         return_type="WAHL09",
     )
-    query = Query.regionQuery(region="09", fields=["id", "name", field])
+    query = Query.region(region="09", fields=["id", "name", field])
     graphql_query = query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -255,7 +259,7 @@ def test_filter_for_all(query):
 
 
 def test_add_fields_stepwise():
-    query = Query.regionQuery(region="11", default_fields=False)
+    query = Query.region(region="11", default_fields=False)
     statistic1 = query.add_field("BEV001", default_fields=False)
     statistic1.add_field("year")
     statistic2 = Field(
@@ -267,7 +271,7 @@ def test_add_fields_stepwise():
     )
     query.add_field(statistic2)
 
-    query2 = Query.regionQuery(
+    query2 = Query.region(
         region="11",
         fields=[
             Field(
@@ -289,7 +293,7 @@ def test_add_fields_stepwise():
     assert query.get_graphql_query() == query2.get_graphql_query()
 
     graphql_query = query.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{
@@ -304,10 +308,10 @@ def test_add_fields_stepwise():
 
 
 def test_add_fields_all_regions():
-    all_reg_query = Query.allRegionsQuery(parent="11")
+    all_reg_query = Query.all_regions(parent="11")
     all_reg_query.add_field("BEV001")
 
-    graphql_query = all_reg_query.get_graphql_query()
+    graphql_query = all_reg_query.get_graphql_query()[0]
     assert graphql_query == re.sub(
         r"\n\s+",
         "",
@@ -323,12 +327,12 @@ def test_add_fields_all_regions():
 
 
 def test_add_args_stepwise():
-    query = Query.regionQuery(region="11")
+    query = Query.region(region="11")
     statistic1 = query.add_field("BEV001")
     statistic1.add_field("year")
     statistic1.add_args({"year": 2017})
 
-    query2 = Query.regionQuery(
+    query2 = Query.region(
         region="11", fields=[Field(name="BEV001", args={"year": 2017}, fields=["year"])]
     )
 
@@ -337,7 +341,7 @@ def test_add_args_stepwise():
 
 def test_default_fields(query_default):
     graphql_query = query_default.get_graphql_query()
-    assert graphql_query == re.sub(
+    assert graphql_query[0] == re.sub(
         "    ",
         "",
         """{region (id: "09"){id name BEV001
@@ -356,3 +360,127 @@ def test_get_all_stats_info():
 def test_get_field_info():
     info = Query.get_info("BEV001")
     assert "BEVM01" in info.fields
+
+
+def test_drop_field(query):
+    query = query.drop_field("BEV001")
+    assert query.get_fields() == ["region"]
+
+
+def test_drop_field_without_assignment(query):
+    query.drop_field("BEV001")
+    assert query.get_fields() == ["region"]
+
+
+def test_drop_field_all_regions(all_regions_query):
+    all_regions_query = all_regions_query.drop_field("WAHL09")
+    assert all_regions_query.get_fields() == [
+        "allRegions",
+        "regions",
+        "id",
+        "name",
+        "page",
+        "itemsPerPage",
+        "total",
+    ]
+
+
+def test_process_query(query_default):
+    df = query_default.results()
+    assert isinstance(df, pd.DataFrame)
+
+
+def test_invalid_query(query):
+    with pytest.raises(RuntimeError):
+        query.results()
+
+
+def test_process_query_meta(query_default):
+    meta_data = query_default.meta_data()
+    assert isinstance(meta_data, dict)
+
+
+def test_invalid_query_meta(query):
+    with pytest.raises(RuntimeError):
+        query.meta_data()
+
+
+def test_multiple_regions_query():
+    query = Query.region(region=["01", "02"], fields=["BEV001"])
+    graphql_query = query.get_graphql_query()
+    assert len(graphql_query) == 2, "wrong amount of query strings"
+    assert graphql_query[1].startswith(
+        '{region (id: "02")'
+    ), "not properly iterated over all regions"
+
+
+def test_arguments_info(query_default):
+    stat = query_default.add_field("BEV001")
+    info = stat.arguments_info()
+    expected_info = re.sub(
+        r"\n\s+",
+        "",
+        """year('LIST', None, 'SCALAR', 'Int')
+        , statistics('LIST', None, 'ENUM', 'BEV001Statistics')
+        , ALTMT1('LIST', None, 'ENUM', 'ALTMT1')
+        , BEVM01('LIST', None, 'ENUM', 'BEVM01')
+        , GES('LIST', None, 'ENUM', 'GES')
+        , LEGIT2('LIST', None, 'ENUM', 'LEGIT2')
+        , NAT('LIST', None, 'ENUM', 'NAT')
+        , filter('INPUT_OBJECT', 'BEV001Filter', None, None)""",
+    )
+    assert info == expected_info
+
+
+def test_field_info(query_default):
+    stat = query_default.add_field("BEV001")
+    info = stat.fields_info()
+    assert info == "id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT"
+
+
+def test_enum_info(query_default):
+    stat = query_default.add_field("BEV001")
+    ges = stat.add_field("GES")
+    info = ges.enum_info()
+    assert info == "GESM: männlich, GESW: weiblich, GESAMT: Gesamt"
+
+
+def test_description(query_default):
+    stat = query_default.add_field("BEV001")
+    descr = stat.description()
+    assert descr == "Lebend Geborene"
+
+
+def test_get_info_stat(query_default):
+    stringio = io.StringIO()
+    sys.stdout = stringio
+    stat = query_default.add_field("BEV001")
+    stat.get_info()
+    info = re.sub(r"\n", "", stringio.getvalue())
+    expected_info = re.sub(
+        r"\n\s+",
+        "",
+        """
+        kind:
+        OBJECT
+
+        description:
+        Lebend Geborene
+
+        arguments:
+        year('LIST', None, 'SCALAR', 'Int')
+        , statistics('LIST', None, 'ENUM', 'BEV001Statistics')
+        , ALTMT1('LIST', None, 'ENUM', 'ALTMT1')
+        , BEVM01('LIST', None, 'ENUM', 'BEVM01')
+        , GES('LIST', None, 'ENUM', 'GES')
+        , LEGIT2('LIST', None, 'ENUM', 'LEGIT2')
+        , NAT('LIST', None, 'ENUM', 'NAT')
+        , filter('INPUT_OBJECT', 'BEV001Filter', None, None)
+
+        fields:
+        id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
+
+        enum values:
+        None""",
+    )
+    assert info == expected_info

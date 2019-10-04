@@ -19,7 +19,8 @@ import pandas as pd
 @pytest.fixture
 def sample_queries():
     q1 = Mock()
-    q1.get_graphql_query.return_value = """
+    q1.get_graphql_query.return_value = [
+        """
     {
         region(id:"05911") {
             id
@@ -31,6 +32,7 @@ def sample_queries():
         }
     }
     """
+    ]
     q1.get_fileds.return_value = ["region", "id", "name", "BEVMK3", "value", "year"]
 
     mq1 = Mock()
@@ -181,11 +183,12 @@ def test_filter_stat_metatdata(sample_stat_meta_response):
 
 
 def test_generate_post_json(sample_queries):
-    post_json = QueryExecutioner._generate_post_json(sample_queries.data_query1)
+    post_jsons = QueryExecutioner._generate_post_json(sample_queries.data_query1)
     sample_queries.data_query1.get_graphql_query.assert_called_once()
-    assert "query" in post_json, "post jsons does not contain a query key"
+    assert "query" in post_jsons[0], "post jsons does not contain a query key"
     assert (
-        post_json["query"] == sample_queries.data_query1.get_graphql_query.return_value
+        post_jsons[0]["query"]
+        == sample_queries.data_query1.get_graphql_query.return_value[0]
     ), "query not part of the post json"
 
 

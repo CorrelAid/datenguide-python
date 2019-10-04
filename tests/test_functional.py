@@ -1,7 +1,8 @@
 import pytest
 import pandas as pd
-
-
+import sys
+import io
+import re
 from datenguide_python.query_execution import QueryExecutioner
 from datenguide_python.query_builder import Query, Field
 from datenguide_python.query_helper import (
@@ -15,7 +16,7 @@ from datenguide_python.query_helper import (
 @pytest.fixture
 def query():
     field = Field(name="BEVMK3", fields=["value", "year"])
-    query = Query.regionQuery(region="05911", fields=["id", "name", field])
+    query = Query.region(region="05911", fields=["id", "name", field])
     return query
 
 
@@ -50,34 +51,25 @@ def test_QueryExecutionerWorkflow(query):
     # He wants to have a closer look at the raw return query results and
     # remembers that they are sorted in the results field and he has a look.
 
-    assert len(res_query1[0].query_results) > 0, "query did not return results"
     assert (
-        type(res_query1[0].query_results) is list
+        type(res_query1) is pd.DataFrame
     ), "query results are not a python json representation"
 
-    # Ira wants to get an overview of all possible statistics that can be
-    # queried.
-
     stats = Query.get_info()
-    assert stats.kind == "OBJECT", "Region should be an object"
-    assert stats.enum_values is None, "Region doesn't have enum values"
-    assert type(stats.fields) == dict, "Fields should be a dict"
 
     # Ira remembers that he read about the executioners functionality to
     # return metadata along with the query results. So he wants to check
     # whether this metadata is actually present. And that it only contains
     # meta data related to his query
 
-    assert type(res_query1[0].meta_data) == dict, "meta data not a dict"
-    assert len(res_query1[0].meta_data) > 0, "meta data absent"
-    assert len(res_query1[0].meta_data) == 1, "too much meta data"
+    meta_query1 = query.meta_data()
 
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.
 
-    assert "BEVMK3" in res_query1[0].meta_data, "statistic absend"
+    assert "BEVMK3" in meta_query1, "statistic absend"
     assert (
-        res_query1[0].meta_data["BEVMK3"] != "NO DESCRIPTION FOUND"
+        meta_query1["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
 
     # Being satisfied with the results he obtained for his simple query
@@ -110,9 +102,12 @@ def test_QueryExecutionerWorkflow(query):
 
     # Then he wants to get metainfo on the field.
 
-    stats_info = statistic1.get_info()
-    assert stats_info.kind == "OBJECT", "BEV001 should be an object"
-    assert type(stats_info.fields) == dict, "Fields should be a dict"
+    stringio = io.StringIO()
+    sys.stdout = stringio
+
+    statistic1.get_info()
+    stats_info = re.sub(r"\n", "", stringio.getvalue())
+    assert "OBJECT" in stats_info, "BEV001 should be an object"
 
 
 def test_queryHelper():
