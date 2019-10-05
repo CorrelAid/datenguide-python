@@ -8,27 +8,58 @@ Json = Union[Json_Dict, Json_List]
 
 
 class ExecutionResults(NamedTuple):
+    """
+    Results of a query with the results itself and the according meta data.
+    """
+
     query_results: Json_List
     meta_data: Json
 
 
 class TypeMetaData(NamedTuple):
+    """
+    The meta data of a field, which consist of the kind, fields and enum values.
+    """
+
     kind: str
     fields: Optional[Json_Dict]
     enum_values: Optional[Dict[str, str]]
 
 
 class FieldMetaDict(dict):
+    """
+    [description]
+    """
+
     def get_return_type(self) -> str:
+        """[summary]
+
+        Returns:
+            str -- [description]
+        """
         if self["type"]["kind"] == "LIST":
             return self["type"]["ofType"]["name"]
         else:
             return self["type"]["name"]
 
     def get_arguments(self) -> Dict[str, Tuple[Optional[str], ...]]:
+        """[summary]
+
+        Returns:
+            Dict[str, Tuple[Optional[str], ...]] -- [description]
+        """
+
         def get_type_of(
             argument: Dict[str, Any]
         ) -> Tuple[Optional[str], Optional[str]]:
+            """[summary]
+
+            Arguments:
+                argument (Dict[str, Any]) -- [description]
+
+            Returns:
+                Tuple[Optional[str], Optional[str]] -- [description]
+            """
             if argument["type"]["ofType"]:
                 return (
                     argument["type"]["ofType"]["kind"],
@@ -48,6 +79,10 @@ class FieldMetaDict(dict):
 
 
 class QueryExecutioner(object):
+    """
+    [description]
+    """
+
     REQUEST_HEADER: Dict[str, str] = {"Content-Type": "application/json"}
     endpoint: str = "https://api-next.datengui.de/graphql"
 
@@ -90,6 +125,14 @@ class QueryExecutioner(object):
     """
 
     def __init__(self, alternative_endpoint: Optional[str] = None) -> None:
+        """[summary]
+
+        Keyword Arguments:
+            alternative_endpoint (Optional[str]) -- [description] (default: None)
+
+        Returns:
+            None -- [description]
+        """
         if alternative_endpoint:
             self.endpoint = cast(str, alternative_endpoint)
 
@@ -98,8 +141,16 @@ class QueryExecutioner(object):
         return {"page": page, "itemsPerPage": 1000}
 
     def run_query(self, query) -> Optional[List[ExecutionResults]]:
+        """[summary]
+
+        Arguments:
+            query ([type]) -- [description]
+
+        Returns:
+            Optional[List[ExecutionResults]] -- [description]
+        """
         all_results = [
-            self.run_single_query_json(query_json, query.get_fields())
+            self._run_single_query_json(query_json, query.get_fields())
             for query_json in self._generate_post_json(query)
         ]
         if not any(map(lambda r: r is None, all_results)):
@@ -107,7 +158,7 @@ class QueryExecutioner(object):
         else:
             return None
 
-    def run_single_query_json(
+    def _run_single_query_json(
         self, query_json: Json_Dict, query_fields: List[str]
     ) -> Optional[ExecutionResults]:
         if "allRegions" in query_fields:
@@ -153,9 +204,15 @@ class QueryExecutioner(object):
     def get_type_info(
         self, graph_ql_type: str, verbose=False
     ) -> Optional[TypeMetaData]:
-        """
-            Returns a json which at top level is a dict with all the
-            fields of the type
+        """Returns a json which at top level is a dict with all the
+                fields of the type
+
+        Arguments:
+            graph_ql_type (str) -- [description]
+            verbose (bool) -- [description] (default: False)
+
+        Returns:
+            Optional[TypeMetaData] -- [description]
         """
         if graph_ql_type in self.__class__._META_DATA_CACHE:
             if verbose:
@@ -229,6 +286,11 @@ class QueryExecutioner(object):
             return "NO DESCRIPTION FOUND"
 
     def get_stat_descriptions(self):
+        """[summary]
+
+        Returns:
+            TYPE -- [description]
+        """
         stat_meta = self.get_type_info("Region")
         if stat_meta:
             stat_descriptions = self._create_stat_desc_dic(
