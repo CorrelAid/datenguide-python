@@ -26,19 +26,64 @@ Python Wrapper for the Datenguide API.
 Features
 --------
 
-* TODO
+### A python package to easily retreive data from [Regionalstatistik](https://www.regionalstatistik.de/genesis/online/logon) via the [Datenguide API](https://github.com/datenguide/datenguide-api). 
 
-## Create a Query
+To use the package install the package with 
+```
+pip install xxx
+```
 
-A query is created with the QueryBuilder. 
-According to the Datenguide API it either needs a region or a parent region specified. 
-Also, at least one desired field must be defined. 
-Optionally, a filter can be applied with args. 
-Optionally, the administration level the statstics shall be returned from can be specified with nuts and lau. 
-See for full documentation of the API: https://github.com/datenguide/datenguide-api
+Import the package into your file
+```python
+from xx import Query
+```
+
+## Creating a query
+```python
+# either for single regions
+query_singleregion = Query.region('01')
+
+# or for all subregions a a region (e.g. all Kommunen in a Bundeland)
+query = Query.allRegions(parent='01')
+```
+
+Add statistics you want to get data one
+```python
+query.add_field('BEV001')
+```
+
+A field can also be added with filters. E.g. you can specify, that only data from a specific year shall be returned.
+```python
+query.add_field('BEV001', args={year:'2017'})
+```
+
+A set of default fields is defined (year, value, source). If additional fields shall be returned, they can be specified as a field argument.
+`
+query.add_field('BEV001', field=['GES'])
+`
+
+
+Get the results as a Pandas DataFrame
+
+```python
+df = query.results()
+```
+
+## Get information on fields and meta data
+
+# TODO
+
+## Further information
+
+for detailed examples see the notebooks xxx.
+
+For a detailled documentation of all statistics and fields see the Datenguide API.
+
 
 Credits
 -------
+
+This package is using the Datenguide API to retrieve information of Regionalstatistik.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
