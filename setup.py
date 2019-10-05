@@ -19,7 +19,7 @@ test_requirements = ["pytest"]
 
 setup(
     author="CorrelAid",
-    author_email="xxx@correlaid.org",  # ??
+    author_email="packages@correlaid.org",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
