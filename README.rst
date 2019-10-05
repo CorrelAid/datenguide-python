@@ -5,8 +5,8 @@ Datenguide Python
 .. image:: https://img.shields.io/pypi/v/datenguide_python.svg
         :target: https://pypi.python.org/pypi/datenguide_python
 
-.. image:: https://img.shields.io/travis/CorrelAid/datenguide_python.svg
-        :target: https://travis-ci.org/CorrelAid/datenguide_python
+.. image:: https://img.shields.io/travis/CorrelAid/datenguide-python.svg
+        :target: https://travis-ci.org/CorrelAid/datenguide-python
 
 .. image:: https://readthedocs.org/projects/datenguide-python/badge/?version=latest
         :target: https://datenguide-python.readthedocs.io/en/latest/?badge=latest
