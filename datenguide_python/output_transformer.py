@@ -9,12 +9,17 @@ class QueryOutputTransformer:
     """ IN PROGRESS only region query to do: DOKU """
 
     def __init__(self, query_response_json: Dict[str, Any]):
+        """[summary]
+
+        Arguments:
+            query_response_json (Dict[str, Any]) -- [description]
+        """
         self.whole_data_body = json_normalize(query_response_json, sep="_")
         self.query_data: Dict[str, Any] = {}
         self.default_list = ["data_region_id", "data_region_name"]
         self.flat_json_dict: Dict[str, Any] = {}
 
-    def build_and_merge_data_region_query(self) -> pd.DataFrame:
+    def _build_and_merge_data_region_query(self) -> pd.DataFrame:
 
         col_list_whole_data_body = [
             col for col in self.whole_data_body.columns if col not in self.default_list
@@ -88,6 +93,11 @@ class QueryOutputTransformer:
 
         return output_ordered
 
-    def transform(self):
-        output = self.build_and_merge_data_region_query()
+    def transform(self) -> pd.DataFrame:
+        """Transform the queries results into a Pandas DataFrame.
+
+        Returns:
+            DataFrame -- Returns a pandas DataFrame of the queries results.
+        """
+        output = self._build_and_merge_data_region_query()
         return output
