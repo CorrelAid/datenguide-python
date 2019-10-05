@@ -5,8 +5,8 @@ Datenguide Python
 .. image:: https://img.shields.io/pypi/v/datenguide_python.svg
         :target: https://pypi.python.org/pypi/datenguide_python
 
-.. image:: https://img.shields.io/travis/AlexandraKapp/datenguide_python.svg
-        :target: https://travis-ci.org/AlexandraKapp/datenguide_python
+.. image:: https://img.shields.io/travis/CorrelAid/datenguide_python.svg
+        :target: https://travis-ci.org/CorrelAid/datenguide_python
 
 .. image:: https://readthedocs.org/projects/datenguide-python/badge/?version=latest
         :target: https://datenguide-python.readthedocs.io/en/latest/?badge=latest
@@ -35,19 +35,10 @@ Features
   fetch certain statistics and return the results as a pandas DataFrame for
   further analysis.
 
-Language Note
--------------
-
-Although the package documentation, function names etc. are in English,
-the underlying data that is being fetched relates to German statistics.
-As a result descriptions that are being fetched are only available in
-German.
-
-.. Recommend the googletrans package and refer to an example.
 
 Credits
 -------
-All this builds on the great work of Datehenguide and their GraphQL API
+All this builds on the great work of Datenguide_ and their GraphQL API `datenguide/datenguide-api`_
 
 
 
