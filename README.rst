@@ -38,71 +38,67 @@ Features
 Quick Start
 --------
 
-**Install**
-To use the package install the package (command line): 
+============
+Install
+============
+  To use the package install the package (command line): 
 
-``
-pip install xxx
-``
+``pip install xxx``
 
-**Setup query**
-Within your python file or notebook:
+============
+Setup query
+============
+    Within your python file or notebook:
 
-1. Import the package
+1. **Import the package**
 
-``
-from xx import Query
-``
+``from xx import Query``
 
-2. Creating a query
+2. **Creating a query**
 
-``
-# either for single regions
-query_singleregion = Query.region('01')
+- either for single regions
+``query = Query.region('01')``
 
-# or for all subregions a a region (e.g. all Kommunen in a Bundeland)
-query = Query.allRegions(parent='01')
-``
+- or for all subregions a a region (e.g. all Kommunen in a Bundeland)``
 
-3. Add statistics (fields) 
-Add statistics you want to get data on
-(How do I find the short name of the statistics?(LINK))
+``query_allregions = Query.allRegions(parent='01')``
 
-``
-query.add_field('BEV001')
-``
+3. **Add statistics (fields)**
+    Add statistics you want to get data on
+    (How do I find the short name of the statistics?(LINK))
 
-4. Add filters
-A field can also be added with filters. E.g. you can specify, that only data from a specific year shall be returned.
+``query.add_field('BEV001')``
 
-``
-query.add_field('BEV001', args={year:'2017'})
-``
+4. **Add filters**
+    A field can also be added with filters. E.g. you can specify, that only data from a specific year     shall    be returned.
 
-5. Add subfield
-A set of default subfields are defined for all statistics (year, value, source). 
-If additional fields shall be returned, they can be specified as a field argument.
+``query.add_field('BEV001', args={year:'2017'})``
 
-``
-query.add_field('BEV001', field=['GES'])
-``
+5. **Add subfield**
+    A set of default subfields are defined for all statistics (year, value, source). 
+    If additional fields shall be returned, they can be specified as a field argument.
 
-6. Get results
-Get the results as a Pandas DataFrame
+``query.add_field('BEV001', field=['GES'])``
 
-``
-df = query.results()
-``
+6. **Get results**
+    Get the results as a Pandas DataFrame
 
-**Get information on fields and meta data**
+``df = query.results()``
+
+
+============
+Get information on fields and meta data
+============
 
 *TODO*
 
-**Further information**
+============
+Further information
+============
 
-for detailed examples see the notebooks xxx.
+  For detailed examples see the notebooks xxx.
 
-For a detailled documentation of all statistics and fields see the _Datenguide API.
+  For a detailled documentation of all statistics and fields see the _Datenguide API.
 
 
 
@@ -111,7 +107,7 @@ Credits
 All this builds on the great work of Datenguide_ and their GraphQL API `datenguide/datenguide-api`_ 
 
 The data is retreived via the Datenguide API from the "Statistische Ämter des Bundes und der Länder". 
-Data being used via this package has to be _`credited according to the "Datenlizenz Deutschland – Namensnennung – Version 2.0"`.
+Data being used via this package has to be `credited according to the "Datenlizenz Deutschland – Namensnennung – Version 2.0"`_.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
@@ -121,4 +117,4 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Datenguide: https://datengui.de/
 .. _`GraphQL API of the Datenguide project`: https://github.com/datenguide/datenguide-api
 .. _`regional statistics`: https://www.regionalstatistik.de/genesis/online/logon
-.. _`credited according to the "Datenlizenz Deutschland – Namensnennung – Version 2.0`: https://www.regionalstatistik.de/genesis/online;sid=C636A83329D19AF20E3A4F9E767576A9.reg2?Menu=Impressum
+.. _`credited according to the "Datenlizenz Deutschland – Namensnennung – Version 2.0"`: https://www.regionalstatistik.de/genesis/online;sid=C636A83329D19AF20E3A4F9E767576A9.reg2?Menu=Impressum
