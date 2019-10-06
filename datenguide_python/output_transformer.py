@@ -6,7 +6,11 @@ from typing import Dict, Any
 
 
 class QueryOutputTransformer:
-    """ IN PROGRESS only region query to do: DOKU """
+    """[description]
+
+    Arguments:
+            query_response_json (Dict[str, Any]) -- [description]
+    """
 
     def __init__(self, query_response_json: Dict[str, Any]):
         """[summary]
