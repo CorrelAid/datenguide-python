@@ -8,8 +8,7 @@ Json = Union[Json_Dict, Json_List]
 
 
 class ExecutionResults(NamedTuple):
-    """
-    Results of a query with the results itself and the according meta data.
+    """Results of a query with the results itself and the according meta data.
     """
 
     query_results: Json_List
@@ -17,8 +16,7 @@ class ExecutionResults(NamedTuple):
 
 
 class TypeMetaData(NamedTuple):
-    """
-    The meta data of a field, which consist of the kind, fields and enum values.
+    """The meta data of a field, which consist of the kind, fields and enum values.
     """
 
     kind: str
@@ -27,8 +25,7 @@ class TypeMetaData(NamedTuple):
 
 
 class FieldMetaDict(dict):
-    """
-    [description]
+    """[description]
     """
 
     def get_return_type(self) -> str:
@@ -52,14 +49,6 @@ class FieldMetaDict(dict):
         def get_type_of(
             argument: Dict[str, Any]
         ) -> Tuple[Optional[str], Optional[str]]:
-            """[summary]
-
-            Arguments:
-                argument (Dict[str, Any]) -- [description]
-
-            Returns:
-                Tuple[Optional[str], Optional[str]] -- [description]
-            """
             if argument["type"]["ofType"]:
                 return (
                     argument["type"]["ofType"]["kind"],
@@ -79,8 +68,10 @@ class FieldMetaDict(dict):
 
 
 class QueryExecutioner(object):
-    """
-    [description]
+    """[description]
+
+    Arguments:
+        alternative_endpoint -- [description]
     """
 
     REQUEST_HEADER: Dict[str, str] = {"Content-Type": "application/json"}
@@ -125,14 +116,6 @@ class QueryExecutioner(object):
     """
 
     def __init__(self, alternative_endpoint: Optional[str] = None) -> None:
-        """[summary]
-
-        Keyword Arguments:
-            alternative_endpoint (Optional[str]) -- [description] (default: None)
-
-        Returns:
-            None -- [description]
-        """
         if alternative_endpoint:
             self.endpoint = cast(str, alternative_endpoint)
 
@@ -144,7 +127,7 @@ class QueryExecutioner(object):
         """[summary]
 
         Arguments:
-            query ([type]) -- [description]
+            query -- [description]
 
         Returns:
             Optional[List[ExecutionResults]] -- [description]
@@ -208,8 +191,8 @@ class QueryExecutioner(object):
                 fields of the type
 
         Arguments:
-            graph_ql_type (str) -- [description]
-            verbose (bool) -- [description] (default: False)
+            graph_ql_type -- [description]
+            verbose -- [description]
 
         Returns:
             Optional[TypeMetaData] -- [description]

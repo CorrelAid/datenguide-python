@@ -10,6 +10,22 @@ class Field:
     The name of the field (mostly statistic), the filters (specified with args)
     and the desired output information (fields)
     are specified.
+
+    Arguments:
+        name -- Name of Field or statistic
+        fields  --
+            desired output fields (e.g. value or year).
+        args -- Filters for the desired field (e.g. year = 2017).
+        If "ALL" is passed as a value,
+        then results are returned for all possible subgroups.
+        (e.g. for gender GES = "ALL" three data entris are returned - for
+        male, female and summed for both.
+        If the filter is not set, then only the summed result is returned.
+        Except for year: this is by default returned for each year.)
+        (default:{})
+        parent_field -- The field this field is attached to.
+        default_fields -- Wether default fields
+        should be attached or not.
     """
 
     def __init__(
@@ -21,26 +37,6 @@ class Field:
         default_fields: bool = True,
         return_type: str = None,
     ):
-        """
-        Arguments:
-        name (str) -- Name of Field or statistic
-        fields (Optional[List[Union[str, "Field"]]]) --
-         desired output fields (e.g. value or year) (default: []).
-        args (Optional[Dict[str, Any]]) --
-        Filters for the desired field (e.g. year = 2017).
-        If "ALL" is passed as a value,
-        then results are returned for all possible subgroups.
-        (e.g. for gender GES = "ALL" the data for male,
-        female and summed for both is returned.
-        If the filter is not set, then only the summed result is returned.
-        Except for year: this is by default returned for each year.)
-        (default:{})
-        parent_field  (Field) -- The field this field is attached to
-        (default: None).
-        default_fields (bool) -- Wether default fields
-        should be attached or not (default: True).
-        """
-
         self.name = name
         self.parent_field = parent_field
         # TODO: use name as default?
@@ -99,9 +95,9 @@ class Field:
         """Ad a subfield to the field.
 
         Arguments:
-            field (Union[str, "Field"]) -- field to be added
-            default_fields {bool} -- Wether default fields
-            should be attached or not (default: True).
+            field -- field to be added
+            default_fields -- Wether default fields
+            should be attached or not.
 
         Raises:
             TypeError: If the added field is neither of type String nor Field.
@@ -128,7 +124,7 @@ class Field:
         """Drop an attached subfield of the field.
 
         Arguments:
-            field (str) -- The name of the field to be droped.
+            field -- The name of the field to be droped.
 
         Returns:
             Field -- The field without the subfield.
@@ -143,7 +139,7 @@ class Field:
         """Ad arguments to the field.
 
         Arguments:
-            args (dict) -- Arguments to be added.
+            args -- Arguments to be added.
         """
         if self.args:
             self.args.update(args)
@@ -361,13 +357,11 @@ class Query:
         a region with a region ID or the field allRegions.
 
         Arguments:
-            start_field (Field) -- The top node field; either allRegions or Region.
-            region_field (Field) -- If Top Node is allRegions
+            start_field -- The top node field; either allRegions or Region.
+            region_field -- If Top Node is allRegions
             then the second node is "regions" accessible through this field.
-            (default: None)
-            default_field (bool) -- Wether default fields shall
-            be attached to the fields
-            (default: True).
+            default_field -- Wether default fields shall
+            be attached to the fields.
         """
         self.start_field = start_field
         self.region_field = region_field
@@ -383,15 +377,14 @@ class Query:
         its region id.
 
         Arguments:
-            region (Union[str, List[str]]) -- The region id(s) the statistics shall
+            region -- The region id(s) the statistics shall
             be queried for.
-            fields (List[Union[str, Field]]) -- all fields that shall be
+            fields -- all fields that shall be
             returned from the query for that region.
             Can either be simple fields (e.g. name)
-            or fields with nested fields. (Default: [])
-            default_fields (bool) -- Wether default fields shall be attached
-            to the fields
-            (default: True).
+            or fields with nested fields.
+            default_fields -- Wether default fields shall be attached
+            to the fields.
 
         Returns:
             Query -- A query object with region as start Field.
@@ -430,24 +423,22 @@ class Query:
         A parent id, nuts or lau can be further specified for the query.
 
         Arguments:
-            fields (List[Union[str, Field]]) -- all fields that shall be returned
+            fields -- all fields that shall be returned
             for that region. Can either be simple fields (e.g. name)
-            or fields with nested fields (default: []).
-            parent (str) -- The region id of the parent region
+            or fields with nested fields.
+            parent -- The region id of the parent region
             the statistics shall be queried for.
             (E.g. the id for a state where all sub regions within the
             state shall be queried for.)
-            (default: None)
-            nuts (int) -- [The administration level: 1 – Bundesländer
+            nuts -- [The administration level: 1 – Bundesländer
             2 – Regierungsbezirke / statistische Regionen
             3 – Kreise / kreisfreie Städte.
-            Default None returns results for all levels (default: None).
-            lau (int) -- The administration level: 1 - Verwaltungsgemeinschaften
+            Default None returns results for all levels.
+            lau -- The administration level: 1 - Verwaltungsgemeinschaften
             2 - Gemeinden.
-            Default returns results for all levels (default: None).
-            default_field (bool) -- Wether default fields shall
-            be attached to the fields
-            (default: True).
+            Default returns results for all levels.
+            default_field -- Wether default fields shall
+            be attached to the fields.
 
         Returns:
             Query -- A query object with allRegions as start Field.
@@ -490,9 +481,9 @@ class Query:
         """Ad a field to the query.
 
         Arguments:
-            field (Union[str, Field]) -- Field to be added.
-            default_fields (bool) -- Wether default fields
-        should be attached or not (default: True).
+            field -- Field to be added.
+            default_fields-- Wether default fields
+        should be attached or not.
 
         Raises:
             RuntimeError: If the allRegions Query has
@@ -515,7 +506,7 @@ class Query:
         """Drop an attached field of the query.
 
         Arguments:
-            field (str) -- The name of the field to be droped.
+            field -- The name of the field to be droped.
 
         Returns:
             Query -- the query without the dropped field.
@@ -536,7 +527,7 @@ class Query:
         """Formats the Query into a String that can be queried from the Datenguide API.
 
         Returns:
-            List(str) -- the Query as a String.
+            List -- the Query as a String.
         """
         if self.start_field.name == "allRegions":
             query_prefix = "query ($page : Int, $itemsPerPage : Int) "
@@ -571,7 +562,7 @@ class Query:
         """Get all fields of a query.
 
         Returns:
-            List[str] -- a list field names.
+            List -- a list field names.
         """
         return self.start_field.get_fields()
 
@@ -620,9 +611,9 @@ class Query:
         all statistics that can be queried.
 
         Arguments:
-            field (str) -- the field to get information on. If None,
+            field -- the field to get information on. If None,
             then information on all possible fields of a query are
-            returned (default: None).
+            returned.
 
         Returns:
             Optional[TypeMetaData] -- Response from QueryExecutioner on meta data info
