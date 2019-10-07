@@ -2,7 +2,7 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
-include regions.csv
+include datenguide_python/regions.csv
 
 recursive-include tests *
 recursive-exclude * __pycache__
