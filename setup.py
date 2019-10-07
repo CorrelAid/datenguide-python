@@ -18,6 +18,9 @@ setup_requirements = ["pytest-runner"]
 test_requirements = ["pytest"]
 
 setup(
+    name="datenguidepy",
+    version="0.1.0",
+    packages=find_packages(include=["datenguide_python"]),
     author="CorrelAid",
     author_email="packages@correlaid.org",
     classifiers=[
@@ -42,13 +45,10 @@ setup(
     license="MIT license",
     long_description=readme + "\n\n" + history,
     include_package_data=True,
-    keywords="datenguide_python",
-    name="datenguide_python",
-    packages=find_packages(include=["datenguide_python"]),
+    keywords="datenguidepy",
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/CorrelAid/datenguide-python",
-    version="0.1.0",
     zip_safe=False,
 )
