@@ -2,7 +2,7 @@ import pandas
 
 import requests
 
-from datenguide_python.output_transformer import QueryOutputTransformer
+from datenguidepy.output_transformer import QueryOutputTransformer
 
 
 def buildQuery():
