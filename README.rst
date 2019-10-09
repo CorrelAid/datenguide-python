@@ -43,7 +43,7 @@ Install
 ============
   To use the package install the package (command line): 
 
-``pip install xxx``
+``pip install datenguidepy``
 
 ============
 Setup query
@@ -52,14 +52,14 @@ Setup query
 
 1. **Import the package**
 
-``from xx import Query``
+``from datenguidepy.query_builder import Query``
 
 2. **Creating a query**
 
 - either for single regions
 ``query = Query.region('01')``
 
-- or for all subregions a a region (e.g. all Kommunen in a Bundeland)``
+- or for all subregions a region (e.g. all Kommunen in a Bundeland)``
 
 ``query_allregions = Query.allRegions(parent='01')``
 
@@ -96,9 +96,9 @@ Get information on fields and meta data
 Further information
 ============
 
-  For detailed examples see the notebooks xxx.
+  For detailed examples see the notebooks in the use_case folder.
 
-  For a detailled documentation of all statistics and fields see the _Datenguide API.
+  For a detailed documentation of all statistics and fields see the _Datenguide API.
 
 
 
@@ -106,7 +106,7 @@ Credits
 -------
 All this builds on the great work of Datenguide_ and their GraphQL API `datenguide/datenguide-api`_ 
 
-The data is retreived via the Datenguide API from the "Statistische Ämter des Bundes und der Länder". 
+The data is retrieved via the Datenguide API from the "Statistische Ämter des Bundes und der Länder". 
 Data being used via this package has to be `credited according to the "Datenlizenz Deutschland – Namensnennung – Version 2.0"`_.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
