@@ -9,7 +9,7 @@ Datenguide Python
         :target: https://travis-ci.org/CorrelAid/datenguide-python
 
 .. image:: https://readthedocs.org/projects/datenguide-python/badge/?version=latest
-        :target: https://datenguide-python.readthedocs.io/en/latest/?badge=latest
+        :target: https://datenguidepy.readthedocs.io/en/latest/
         :alt: Documentation Status
 
 
@@ -36,7 +36,7 @@ Features
   further analysis.
 
 Quick Start
---------
+-----------
 
 ============
 Install
@@ -57,6 +57,7 @@ Setup query
 2. **Creating a query**
 
 - either for single regions
+
 ``query = Query.region('01')``
 
 - or for all subregions a region (e.g. all Kommunen in a Bundeland)``
@@ -86,15 +87,15 @@ Setup query
 ``df = query.results()``
 
 
-============
+=======================================
 Get information on fields and meta data
-============
+=======================================
 
 *TODO*
 
-============
+===================
 Further information
-============
+===================
 
   For detailed examples see the notebooks in the use_case folder.
 
