@@ -8,9 +8,8 @@ Datenguide Python
 .. image:: https://img.shields.io/travis/CorrelAid/datenguide-python.svg
         :target: https://travis-ci.org/CorrelAid/datenguide-python
 
-.. image:: https://readthedocs.org/projects/datenguide-python/badge/?version=latest
-        :target: https://datenguidepy.readthedocs.io/en/latest/
-        :alt: Documentation Status
+.. image:: https://readthedocs.org/projects/datenguidepy/badge/?version=latest
+        :target: https://datenguidepy.readthedocs.io/en/latest/readme/#quick-start
 
 
 
@@ -19,7 +18,7 @@ It does so by providing a wrapper for the `GraphQL API of the Datenguide project
 
 
 * Free software: MIT license
-* Documentation: https://datenguide-python.readthedocs.io.
+* Documentation:  https://datenguidepy.readthedocs.io/
 
 
 Features
@@ -41,47 +40,51 @@ Quick Start
 ============
 Install
 ============
-  To use the package install the package (command line): 
+To use the package install the package (command line): 
 
 ``pip install datenguidepy``
 
 ============
 Setup query
 ============
-    Within your python file or notebook:
+Within your python file or notebook:
 
-1. **Import the package**
+**1. Import the package**
 
-``from datenguidepy.query_builder import Query``
+``from datenguidepy import Query``
 
-2. **Creating a query**
+**2. Creating a query**
 
 - either for single regions
 
 ``query = Query.region('01')``
 
-- or for all subregions a region (e.g. all Kommunen in a Bundeland)``
+- or for all subregions a region (e.g. all Kommunen in a Bundeland)
 
 ``query_allregions = Query.allRegions(parent='01')``
 
-3. **Add statistics (fields)**
-    Add statistics you want to get data on
-    (How do I find the short name of the statistics?(LINK))
+- How to get IDs for regions? see below "Get information on fields and meta data"
+
+**3. Add statistics (fields)**
+
+- Add statistics you want to get data on
 
 ``query.add_field('BEV001')``
 
-4. **Add filters**
+- How do I find the short name of the statistics? see below "Get information on fields and meta data"
+
+**4. Add filters**
     A field can also be added with filters. E.g. you can specify, that only data from a specific year     shall    be returned.
 
 ``query.add_field('BEV001', args={year:'2017'})``
 
-5. **Add subfield**
+**5. Add subfield**
     A set of default subfields are defined for all statistics (year, value, source). 
     If additional fields shall be returned, they can be specified as a field argument.
 
 ``query.add_field('BEV001', field=['GES'])``
 
-6. **Get results**
+**6. Get results**
     Get the results as a Pandas DataFrame
 
 ``df = query.results()``
@@ -91,15 +94,40 @@ Setup query
 Get information on fields and meta data
 =======================================
 
-*TODO*
+**Get information on region ids**
+
+``from datenguidepy import get_all_regions``
+
+``get_all_regions()``
+
+Use pandas *query()* functionality to get specific regions. E.g., if you want to get all IDs on "Bundeländer" use.
+For more information on "nuts" levels see Wikipedia_.
+
+``get_all_regions().query("level == 'nuts1'")``
+
+
+
+**Get information on statistic shortnames**
+
+``from datenguidepy import get_statistics``
+
+``get_statistics()``
+
+**Get information on single fields**
+
+You can further information about description, possible arguments, fields and enum values on a field you added to a query.
+
+query = Query.region("01")
+field = query.add_field("BEV001")
+field.get_info()
 
 ===================
 Further information
 ===================
 
-  For detailed examples see the notebooks in the use_case folder.
+For detailed examples see the notebooks within the use_case_ folder.
 
-  For a detailed documentation of all statistics and fields see the _Datenguide API.
+For a detailed documentation of all statistics and fields see the Datenguide API.
 
 
 
@@ -118,4 +146,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Datenguide: https://datengui.de/
 .. _`GraphQL API of the Datenguide project`: https://github.com/datenguide/datenguide-api
 .. _`regional statistics`: https://www.regionalstatistik.de/genesis/online/logon
+.. _use_case: https://github.com/CorrelAid/datenguide-python/tree/master/use_case
 .. _`credited according to the "Datenlizenz Deutschland – Namensnennung – Version 2.0"`: https://www.regionalstatistik.de/genesis/online;sid=C636A83329D19AF20E3A4F9E767576A9.reg2?Menu=Impressum
+.. _Wikipedia: https://de.wikipedia.org/wiki/NUTS:DE#Liste_der_NUTS-Regionen_in_Deutschland_(NUTS_2016)
