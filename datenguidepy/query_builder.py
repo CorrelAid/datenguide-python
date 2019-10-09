@@ -95,19 +95,13 @@ class Field:
     def add_field(
         self, field: Union[str, "Field"], default_fields: bool = True
     ) -> "Field":
-        """Ad a subfield to the field.
+        """Add a subfield to the field.
 
-        Arguments:
-            field -- field to be added
-            default_fields -- Wether default fields
-            should be attached or not.
-
-        Raises:
-            TypeError: If the added field is neither of type String nor Field.
-
-        Returns:
-            Field -- the added field.
+        :raises TypeError: If the added field is neither of type String nor Field.
+        :return: the added field
+        :rtype: class:`datenguidepy.Field`
         """
+
         if isinstance(field, str):
             self.fields[field] = Field(
                 name=field,
@@ -126,11 +120,10 @@ class Field:
     def drop_field(self, field: str):
         """Drop an attached subfield of the field.
 
-        Arguments:
-            field -- The name of the field to be droped.
-
-        Returns:
-            Field -- The field without the subfield.
+        :param field: The name of the field to be droped.
+        :type field: str
+        :return: The field without the subfield.
+        :rtype: class:`datenguidepy.Field`
         """
         if isinstance(field, str):
             self.fields.pop(field, None)
@@ -139,10 +132,9 @@ class Field:
         return self
 
     def add_args(self, args: dict):
-        """Ad arguments to the field.
-
-        Arguments:
-            args -- Arguments to be added.
+        """Add arguments to the field.
+        :param args: Arguments to be added.
+        :type args: dict
         """
         if self.args:
             self.args.update(args)
@@ -194,9 +186,10 @@ class Field:
         """Get all fields that are attached to this
         field or subfields of this field.
 
-        Returns:
-            list -- a list of all fields.
+        :return: a list of all fields
+        :rtype: list
         """
+
         field_list = [self.name]
         for value in self.fields.values():
             field_list.extend(Field._get_fields_helper(value))
@@ -205,7 +198,10 @@ class Field:
     def get_info(self) -> None:
         """Prints summarized information on a field's meta data.
 
+        :return: None
+        :rtype: None
         """
+
         kind: str = "kind:\n"
         meta = QueryExecutioner().get_type_info(self.name)
         if meta is not None:
@@ -241,9 +237,10 @@ class Field:
         If the argument is a list, the kind and name of the list elements are
         included in the brackets as well.
 
-        Returns:
-            str -- Possible arguments for the field as string and their input types.
+        :return: Possible arguments for the field as string and their input types.
+        :rtype: Optional[str]
         """
+
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
@@ -257,9 +254,10 @@ class Field:
     def fields_info(self) -> Optional[str]:
         """Get information on possible fields for field.
 
-        Returns:
-            str -- Possible fields for the field as string.
+        :return: Possible fields for the field as string
+        :rtype: Optional[str]
         """
+
         meta = QueryExecutioner().get_type_info(self.name)
         return Field._no_none_values(self._fields_info_helper, meta, "fields")
 
@@ -272,9 +270,10 @@ class Field:
     def enum_info(self) -> Optional[str]:
         """Get information on possible enum vaules for field.
 
-        Returns:
-            str -- Possible enum values for the field as string.
+        :return:  Possible enum values for the field as string.
+        :rtype: Optional[str]
         """
+
         meta = QueryExecutioner().get_type_info(self.name)
         return Field._no_none_values(self._enum_info_helper, meta, "enum_values")
 
@@ -286,9 +285,10 @@ class Field:
     def description(self) -> Optional[str]:
         """Get description of field.
 
-        Returns:
-            str -- Description of the field as string.
+        :return: Description of the field as string.
+        :rtype: Optional[str]
         """
+
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
@@ -312,10 +312,20 @@ class Field:
 class Query:
     """A query to get information via the datenguide API for regionalstatistik.
     The query contains all fields and arguments.
+
+    :param start_field: The top node field; either allRegions or Region.
+    :type start_field: Field
+    :param region_field: A field of type 'Region' that is needed
+    if start_field is allRegions, defaults to None
+    :type region_field: Field, optional
+    :param default_fields: Wether default fields shall
+            be attached to the fields., defaults to True
+    :type default_fields: bool, optional
+    :raises RuntimeError: [description]
     """
 
-    """static variables based on QueryExecutioner
-    """
+    # static variables based on QueryExecutioner
+
     # static variable with all subfields of "Query"
     _query_fields: Optional[TypeMetaData] = QueryExecutioner().get_type_info("Query")
 
@@ -356,16 +366,6 @@ class Query:
         region_field: Field = None,
         default_fields: bool = True,
     ):
-        """Initialize the Query with a start Field, which is either
-        a region with a region ID or the field allRegions.
-
-        Arguments:
-            start_field -- The top node field; either allRegions or Region.
-            region_field -- If Top Node is allRegions
-            then the second node is "regions" accessible through this field.
-            default_field -- Wether default fields shall
-            be attached to the fields.
-        """
         self.start_field = start_field
         self.region_field = region_field
 
