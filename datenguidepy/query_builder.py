@@ -11,21 +11,24 @@ class Field:
     and the desired output information (fields)
     are specified.
 
-    Arguments:
-        name -- Name of Field or statistic
-        fields  --
-            desired output fields (e.g. value or year).
-        args -- Filters for the desired field (e.g. year = 2017).
-        If "ALL" is passed as a value,
-        then results are returned for all possible subgroups.
-        (e.g. for gender GES = "ALL" three data entris are returned - for
-        male, female and summed for both.
-        If the filter is not set, then only the summed result is returned.
-        Except for year: this is by default returned for each year.)
-        (default:{})
-        parent_field -- The field this field is attached to.
-        default_fields -- Wether default fields
-        should be attached or not.
+    :param name: Name of Field or statistic
+    :type name: str
+    :param field: desired output fields (e.g. value or year), defaults to []
+    :type field: list, optional
+    :param args: Filters for the desired field (e.g. year = 2017).
+    If "ALL" is passed as a value, then results are returned for all possible subgroups.
+    (e.g. for gender GES = "ALL" three data entris are returned - for
+    male, female and summed for both.
+    if the filter is not set, then only the summed result is returned.
+    Except for year: this is by default returned for each year.), defaults to {}
+    :type args: dict, optional
+    :param parent_field: The field this field is attached to, defaults to None
+    :type parent_field: class:`datenguidepy.Field`, optional
+    :param default_fields: Wether default fields should be attached or not,
+    defaults to True
+    :type default_fields: bool, optional
+    :param return_type: The graphQL return type of this field
+    :type return_type: str, optional
     """
 
     def __init__(
@@ -92,19 +95,13 @@ class Field:
     def add_field(
         self, field: Union[str, "Field"], default_fields: bool = True
     ) -> "Field":
-        """Ad a subfield to the field.
+        """Add a subfield to the field.
 
-        Arguments:
-            field -- field to be added
-            default_fields -- Wether default fields
-            should be attached or not.
-
-        Raises:
-            TypeError: If the added field is neither of type String nor Field.
-
-        Returns:
-            Field -- the added field.
+        :raises TypeError: If the added field is neither of type String nor Field.
+        :return: the added field
+        :rtype: class:`datenguidepy.Field`
         """
+
         if isinstance(field, str):
             self.fields[field] = Field(
                 name=field,
@@ -123,11 +120,10 @@ class Field:
     def drop_field(self, field: str):
         """Drop an attached subfield of the field.
 
-        Arguments:
-            field -- The name of the field to be droped.
-
-        Returns:
-            Field -- The field without the subfield.
+        :param field: The name of the field to be droped.
+        :type field: str
+        :return: The field without the subfield.
+        :rtype: class:`datenguidepy.Field`
         """
         if isinstance(field, str):
             self.fields.pop(field, None)
@@ -136,10 +132,9 @@ class Field:
         return self
 
     def add_args(self, args: dict):
-        """Ad arguments to the field.
-
-        Arguments:
-            args -- Arguments to be added.
+        """Add arguments to the field.
+        :param args: Arguments to be added.
+        :type args: dict
         """
         if self.args:
             self.args.update(args)
@@ -191,9 +186,10 @@ class Field:
         """Get all fields that are attached to this
         field or subfields of this field.
 
-        Returns:
-            list -- a list of all fields.
+        :return: a list of all fields
+        :rtype: list
         """
+
         field_list = [self.name]
         for value in self.fields.values():
             field_list.extend(Field._get_fields_helper(value))
@@ -202,7 +198,10 @@ class Field:
     def get_info(self) -> None:
         """Prints summarized information on a field's meta data.
 
+        :return: None
+        :rtype: None
         """
+
         kind: str = "kind:\n"
         meta = QueryExecutioner().get_type_info(self.name)
         if meta is not None:
@@ -238,9 +237,10 @@ class Field:
         If the argument is a list, the kind and name of the list elements are
         included in the brackets as well.
 
-        Returns:
-            str -- Possible arguments for the field as string and their input types.
+        :return: Possible arguments for the field as string and their input types.
+        :rtype: Optional[str]
         """
+
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
@@ -254,9 +254,10 @@ class Field:
     def fields_info(self) -> Optional[str]:
         """Get information on possible fields for field.
 
-        Returns:
-            str -- Possible fields for the field as string.
+        :return: Possible fields for the field as string
+        :rtype: Optional[str]
         """
+
         meta = QueryExecutioner().get_type_info(self.name)
         return Field._no_none_values(self._fields_info_helper, meta, "fields")
 
@@ -269,9 +270,10 @@ class Field:
     def enum_info(self) -> Optional[str]:
         """Get information on possible enum vaules for field.
 
-        Returns:
-            str -- Possible enum values for the field as string.
+        :return:  Possible enum values for the field as string.
+        :rtype: Optional[str]
         """
+
         meta = QueryExecutioner().get_type_info(self.name)
         return Field._no_none_values(self._enum_info_helper, meta, "enum_values")
 
@@ -283,9 +285,10 @@ class Field:
     def description(self) -> Optional[str]:
         """Get description of field.
 
-        Returns:
-            str -- Description of the field as string.
+        :return: Description of the field as string.
+        :rtype: Optional[str]
         """
+
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
@@ -309,10 +312,20 @@ class Field:
 class Query:
     """A query to get information via the datenguide API for regionalstatistik.
     The query contains all fields and arguments.
+
+    :param start_field: The top node field; either allRegions or Region.
+    :type start_field: Field
+    :param region_field: A field of type 'Region' that is needed
+    if start_field is allRegions, defaults to None
+    :type region_field: Field, optional
+    :param default_fields: Wether default fields shall
+            be attached to the fields., defaults to True
+    :type default_fields: bool, optional
+    :raises RuntimeError: [description]
     """
 
-    """static variables based on QueryExecutioner
-    """
+    # static variables based on QueryExecutioner
+
     # static variable with all subfields of "Query"
     _query_fields: Optional[TypeMetaData] = QueryExecutioner().get_type_info("Query")
 
@@ -353,16 +366,6 @@ class Query:
         region_field: Field = None,
         default_fields: bool = True,
     ):
-        """Initialize the Query with a start Field, which is either
-        a region with a region ID or the field allRegions.
-
-        Arguments:
-            start_field -- The top node field; either allRegions or Region.
-            region_field -- If Top Node is allRegions
-            then the second node is "regions" accessible through this field.
-            default_field -- Wether default fields shall
-            be attached to the fields.
-        """
         self.start_field = start_field
         self.region_field = region_field
 
@@ -374,20 +377,23 @@ class Query:
         default_fields: bool = True,
     ) -> "Query":
         """Factory method to instantiate a Query with a single region through
-        its region id.
+            its region id.
 
-        Arguments:
-            region -- The region id(s) the statistics shall
-            be queried for.
-            fields -- all fields that shall be
-            returned from the query for that region.
-            Can either be simple fields (e.g. name)
-            or fields with nested fields.
-            default_fields -- Wether default fields shall be attached
-            to the fields.
+        :param region: The region id(s) the statistics shall return
+        :type region: Union[str, List[str]]
+        :param fields: all fields that shall be
+                returned from the query for that region.
+                Can either be simple fields (e.g. name)
+                or fields with nested fields.
+        :type fields: list
+                or fields with nested fields.
+        :param default_fields: Wether default fields shall
+        :type default_fields: bool
 
-        Returns:
-            Query -- A query object with region as start Field.
+        :raises RuntimeError: [description]
+
+        :return: A query object with region as start Field.
+        :rtype: Query
         """
 
         if default_fields:
@@ -422,27 +428,33 @@ class Query:
         """Factory method to instantiate a Query with allRegions start field.
         A parent id, nuts or lau can be further specified for the query.
 
-        Arguments:
-            fields -- all fields that shall be returned
+        :param fields: all fields that shall be returned
             for that region. Can either be simple fields (e.g. name)
             or fields with nested fields.
-            parent -- The region id of the parent region
+        :param parent: The region id of the parent region
             the statistics shall be queried for.
             (E.g. the id for a state where all sub regions within the
             state shall be queried for.)
-            nuts -- [The administration level: 1 – Bundesländer
+        :type parent:
+        :param nuts: The administration level: 1 – Bundesländer
             2 – Regierungsbezirke / statistische Regionen
             3 – Kreise / kreisfreie Städte.
             Default None returns results for all levels.
-            lau -- The administration level: 1 - Verwaltungsgemeinschaften
+        :type nuts: int, optional
+        :param lau: The administration level: 1 - Verwaltungsgemeinschaften
             2 - Gemeinden.
             Default returns results for all levels.
-            default_field -- Wether default fields shall
+        :type lau: int, optional
+        :type fields: list
+        :param default_fields: Wether default fields shall
             be attached to the fields.
+        :type default_fields: bool
 
-        Returns:
-            Query -- A query object with allRegions as start Field.
+
+        :return:  A query object with allRegions as start Field.
+        :rtype: Query
         """
+
         # add page and itemsPerPage as arguments for QueryExecutioner
         args = {"page": "$page", "itemsPerPage": "$itemsPerPage"}
 
