@@ -11,21 +11,24 @@ class Field:
     and the desired output information (fields)
     are specified.
 
-    Arguments:
-        name -- Name of Field or statistic
-        fields  --
-            desired output fields (e.g. value or year).
-        args -- Filters for the desired field (e.g. year = 2017).
-        If "ALL" is passed as a value,
-        then results are returned for all possible subgroups.
-        (e.g. for gender GES = "ALL" three data entris are returned - for
-        male, female and summed for both.
-        If the filter is not set, then only the summed result is returned.
-        Except for year: this is by default returned for each year.)
-        (default:{})
-        parent_field -- The field this field is attached to.
-        default_fields -- Wether default fields
-        should be attached or not.
+    :param name: Name of Field or statistic
+    :type name: str
+    :param field: desired output fields (e.g. value or year), defaults to []
+    :type field: list, optional
+    :param args: Filters for the desired field (e.g. year = 2017).
+    If "ALL" is passed as a value, then results are returned for all possible subgroups.
+    (e.g. for gender GES = "ALL" three data entris are returned - for
+    male, female and summed for both.
+    if the filter is not set, then only the summed result is returned.
+    Except for year: this is by default returned for each year.), defaults to {}
+    :type args: dict, optional
+    :param parent_field: The field this field is attached to, defaults to None
+    :type parent_field: class:`datenguidepy.Field`, optional
+    :param default_fields: Wether default fields should be attached or not,
+    defaults to True
+    :type default_fields: bool, optional
+    :param return_type: The graphQL return type of this field
+    :type return_type: str, optional
     """
 
     def __init__(
