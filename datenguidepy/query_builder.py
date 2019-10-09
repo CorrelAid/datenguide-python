@@ -377,20 +377,23 @@ class Query:
         default_fields: bool = True,
     ) -> "Query":
         """Factory method to instantiate a Query with a single region through
-        its region id.
+            its region id.
 
-        Arguments:
-            region -- The region id(s) the statistics shall
-            be queried for.
-            fields -- all fields that shall be
-            returned from the query for that region.
-            Can either be simple fields (e.g. name)
-            or fields with nested fields.
-            default_fields -- Wether default fields shall be attached
-            to the fields.
+        :param region: The region id(s) the statistics shall return
+        :type region: Union[str, List[str]]
+        :param fields: all fields that shall be
+                returned from the query for that region.
+                Can either be simple fields (e.g. name)
+                or fields with nested fields.
+        :type fields: list
+                or fields with nested fields.
+        :param default_fields: Wether default fields shall
+        :type default_fields: bool
 
-        Returns:
-            Query -- A query object with region as start Field.
+        :raises RuntimeError: [description]
+
+        :return: A query object with region as start Field.
+        :rtype: Query
         """
 
         if default_fields:
@@ -425,27 +428,33 @@ class Query:
         """Factory method to instantiate a Query with allRegions start field.
         A parent id, nuts or lau can be further specified for the query.
 
-        Arguments:
-            fields -- all fields that shall be returned
+        :param fields: all fields that shall be returned
             for that region. Can either be simple fields (e.g. name)
             or fields with nested fields.
-            parent -- The region id of the parent region
+        :param parent: The region id of the parent region
             the statistics shall be queried for.
             (E.g. the id for a state where all sub regions within the
             state shall be queried for.)
-            nuts -- [The administration level: 1 – Bundesländer
+        :type parent:
+        :param nuts: The administration level: 1 – Bundesländer
             2 – Regierungsbezirke / statistische Regionen
             3 – Kreise / kreisfreie Städte.
             Default None returns results for all levels.
-            lau -- The administration level: 1 - Verwaltungsgemeinschaften
+        :type nuts: int, optional
+        :param lau: The administration level: 1 - Verwaltungsgemeinschaften
             2 - Gemeinden.
             Default returns results for all levels.
-            default_field -- Wether default fields shall
+        :type lau: int, optional
+        :type fields: list
+        :param default_fields: Wether default fields shall
             be attached to the fields.
+        :type default_fields: bool
 
-        Returns:
-            Query -- A query object with allRegions as start Field.
+
+        :return:  A query object with allRegions as start Field.
+        :rtype: Query
         """
+
         # add page and itemsPerPage as arguments for QueryExecutioner
         args = {"page": "$page", "itemsPerPage": "$itemsPerPage"}
 
