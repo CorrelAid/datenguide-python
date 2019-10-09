@@ -42,7 +42,10 @@ Install
 ============
 To use the package install the package (command line): 
 
-``pip install datenguidepy``
+.. code-block:: python
+   :linenos:
+
+   pip install datenguidepy
 
 ============
 Setup query
@@ -51,17 +54,26 @@ Within your python file or notebook:
 
 **1. Import the package**
 
-``from datenguidepy import Query``
+.. code-block:: python
+   :linenos:
+
+    from datenguidepy import Query
 
 **2. Creating a query**
 
 - either for single regions
 
-``query = Query.region('01')``
+.. code-block:: python
+   :linenos:
+
+    query = Query.region('01')
 
 - or for all subregions a region (e.g. all Kommunen in a Bundeland)
 
-``query_allregions = Query.allRegions(parent='01')``
+.. code-block:: python
+   :linenos:
+
+   query_allregions = Query.allRegions(parent='01')
 
 - How to get IDs for regions? see below "Get information on fields and meta data"
 
@@ -69,25 +81,37 @@ Within your python file or notebook:
 
 - Add statistics you want to get data on
 
-``query.add_field('BEV001')``
+.. code-block:: python
+   :linenos:
+
+    query.add_field('BEV001')
 
 - How do I find the short name of the statistics? see below "Get information on fields and meta data"
 
 **4. Add filters**
     A field can also be added with filters. E.g. you can specify, that only data from a specific year     shall    be returned.
 
-``query.add_field('BEV001', args={year:'2017'})``
+.. code-block:: python
+   :linenos:
+
+    query.add_field('BEV001', args={year:'2017'})
 
 **5. Add subfield**
     A set of default subfields are defined for all statistics (year, value, source). 
     If additional fields shall be returned, they can be specified as a field argument.
 
-``query.add_field('BEV001', field=['GES'])``
+.. code-block:: python
+   :linenos:
+
+    query.add_field('BEV001', field=['GES'])
 
 **6. Get results**
     Get the results as a Pandas DataFrame
 
-``df = query.results()``
+.. code-block:: python
+   :linenos:
+
+    df = query.results()
 
 
 =======================================
@@ -96,30 +120,42 @@ Get information on fields and meta data
 
 **Get information on region ids**
 
-``from datenguidepy import get_all_regions``
+.. code-block:: python
+   :linenos:
 
-``get_all_regions()``
+    from datenguidepy import get_all_regions
+
+    get_all_regions()
 
 Use pandas *query()* functionality to get specific regions. E.g., if you want to get all IDs on "Bundeländer" use.
 For more information on "nuts" levels see Wikipedia_.
 
-``get_all_regions().query("level == 'nuts1'")``
+.. code-block:: python
+   :linenos:
+
+    get_all_regions().query("level == 'nuts1'")
 
 
 
 **Get information on statistic shortnames**
 
-``from datenguidepy import get_statistics``
+.. code-block:: python
+   :linenos:
 
-``get_statistics()``
+    from datenguidepy import get_statistics
+
+    get_statistics()
 
 **Get information on single fields**
 
 You can further information about description, possible arguments, fields and enum values on a field you added to a query.
 
-query = Query.region("01")
-field = query.add_field("BEV001")
-field.get_info()
+.. code-block:: python
+   :linenos:
+
+    query = Query.region("01")
+    field = query.add_field("BEV001")
+    field.get_info()
 
 ===================
 Further information
