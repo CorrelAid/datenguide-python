@@ -1,7 +1,7 @@
 from typing import Optional, Union, List, Dict, Any
 from pandas import DataFrame
-from datenguide_python.query_execution import QueryExecutioner, TypeMetaData
-from datenguide_python.output_transformer import QueryOutputTransformer
+from datenguidepy.query_execution import QueryExecutioner, TypeMetaData
+from datenguidepy.output_transformer import QueryOutputTransformer
 
 
 class Field:

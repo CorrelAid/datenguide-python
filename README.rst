@@ -2,8 +2,8 @@ Datenguide Python
 =================
 
 
-.. image:: https://img.shields.io/pypi/v/datenguide_python.svg
-        :target: https://pypi.python.org/pypi/datenguide_python
+.. image:: https://img.shields.io/pypi/v/datenguidepy.svg
+        :target: https://pypi.python.org/pypi/datenguidepy
 
 .. image:: https://img.shields.io/travis/CorrelAid/datenguide-python.svg
         :target: https://travis-ci.org/CorrelAid/datenguide-python

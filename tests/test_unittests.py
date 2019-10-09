@@ -1,14 +1,6 @@
-from datenguide_python.query_execution import (
-    QueryExecutioner,
-    FieldMetaDict,
-    TypeMetaData,
-)
+from datenguidepy.query_execution import QueryExecutioner, FieldMetaDict, TypeMetaData
 
-from datenguide_python.query_helper import (
-    get_statistics,
-    get_all_regions,
-    federal_states,
-)
+from datenguidepy.query_helper import get_statistics, get_all_regions, federal_states
 
 import pytest
 from unittest.mock import Mock

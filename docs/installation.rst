@@ -12,7 +12,7 @@ To install Datenguide Python, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install datenguide_python
+    $ pip install datenguidepy
 
 This is the preferred method to install Datenguide Python, as it will always install the most recent stable release.
 
@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/AlexandraKapp/datenguide_python
+    $ git clone git://github.com/CorrelAid/datenguide-python
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/AlexandraKapp/datenguide_python/tarball/master
+    $ curl  -OL https://github.com/CorrelAid/datenguide-python/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/AlexandraKapp/datenguide_python
-.. _tarball: https://github.com/AlexandraKapp/datenguide_python/tarball/master
+.. _Github repo: https://github.com/CorrelAid/datenguide-python
+.. _tarball: https://github.com/CorrelAid/datenguide-python/tarball/master

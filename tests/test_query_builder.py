@@ -3,7 +3,7 @@ import re
 import sys
 import io
 import pandas as pd
-from datenguide_python import Field, Query
+from datenguidepy import Field, Query
 
 
 @pytest.fixture

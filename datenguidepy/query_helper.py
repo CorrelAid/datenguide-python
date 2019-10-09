@@ -1,5 +1,5 @@
-from datenguide_python.query_builder import Query
-from datenguide_python.query_execution import QueryExecutioner, ExecutionResults
+from datenguidepy.query_builder import Query
+from datenguidepy.query_execution import QueryExecutioner, ExecutionResults
 
 from typing import Dict, Any, cast, Optional, List
 import pandas as pd
