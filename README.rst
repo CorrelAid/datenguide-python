@@ -68,7 +68,7 @@ Within your python file or notebook:
 
     query = Query.region('01')
 
-- or for all subregions a region (e.g. all Kommunen in a Bundeland)
+- or for all subregions a region (e.g. all Kommunen in a Bundesland)
 
 .. code-block:: python
    :linenos:
