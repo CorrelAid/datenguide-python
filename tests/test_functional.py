@@ -3,9 +3,9 @@ import pandas as pd
 import sys
 import io
 import re
-from datenguide_python.query_execution import QueryExecutioner
-from datenguide_python.query_builder import Query, Field
-from datenguide_python.query_helper import (
+from datenguidepy.query_execution import QueryExecutioner
+from datenguidepy.query_builder import Query, Field
+from datenguidepy.query_helper import (
     federal_states,
     get_statistics,
     get_all_regions,

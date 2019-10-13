@@ -1,12 +1,16 @@
-from datenguide_python.query_builder import Query
-from datenguide_python.query_execution import QueryExecutioner, ExecutionResults
+from datenguidepy.query_builder import Query
+from datenguidepy.query_execution import QueryExecutioner, ExecutionResults
 
 from typing import Dict, Any, cast, Optional, List
 import pandas as pd
 from functools import partial
 
+import os
 
-ALL_REGIONS: pd.DataFrame = pd.read_csv("regions.csv", index_col="id")
+dir_path = os.path.dirname(os.path.realpath(__file__))
+ALL_REGIONS: pd.DataFrame = pd.read_csv(
+    os.path.join(dir_path, "regions.csv"), index_col="id"
+)
 
 
 class ConfigMapping:

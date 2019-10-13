@@ -11,41 +11,44 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = ["Click>=6.0", "pandas", "requests"]
+requirements = ["pandas", "requests"]
 
 setup_requirements = ["pytest-runner"]
 
 test_requirements = ["pytest"]
 
 setup(
-    author="Alexandra Kapp",
-    author_email="xxx@correlaid.org",
+    name="datenguidepy",
+    version="0.1.1",
+    packages=find_packages(include=["datenguidepy"]),
+    author="CorrelAid",
+    author_email="packages@correlaid.org",
     classifiers=[
-        "Development Status :: 2 - Pre-Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
+        "Intended Audience :: Education",
+        "Intended Audience :: Other Audience",
+        "Intended Audience :: Science/Research",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
+        "Natural Language :: German",
+        "Operating System :: OS Independent",
+        "Topic :: Education",
+        "Topic :: Sociology",
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
-    description="Python Wrapper for the Datenguide API.",
-    entry_points={"console_scripts": ["datenguide_python=datenguide_python.cli:main"]},
+    description=(
+        "Provids easy access to German " + "publically availible regional statistics"
+    ),
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,
     include_package_data=True,
-    keywords="datenguide_python",
-    name="datenguide_python",
-    packages=find_packages(include=["datenguide_python"]),
+    keywords="datenguidepy",
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    url="https://github.com/AlexandraKapp/datenguide_python",
-    version="0.1.0",
+    url="https://github.com/CorrelAid/datenguide-python",
     zip_safe=False,
 )

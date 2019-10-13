@@ -1,26 +1,31 @@
 from typing import Optional, Union, List, Dict, Any
 from pandas import DataFrame
-from datenguide_python.query_execution import QueryExecutioner, TypeMetaData
-from datenguide_python.output_transformer import QueryOutputTransformer
+from datenguidepy.query_execution import QueryExecutioner, TypeMetaData
+from datenguidepy.output_transformer import QueryOutputTransformer
 
 
 class Field:
     """A field of a query that specifies a statistic or
     (another information, e.g. source) to query.
     The name of the field (mostly statistic), the filters (specified with args)
-    and the desired output information (subfields)
+    and the desired output information (fields)
     are specified.
 
     Arguments:
-        name {str} -- Name of Field or statistic
-        subfields {list} -- desired output fields (e.g. value or year)
-        args Optional[Dict[str, Union[str, List[str]]]] --
-        Filters for the desired field (e.g. year = 2017).
+        name -- Name of Field or statistic
+        fields  --
+            desired output fields (e.g. value or year).
+        args -- Filters for the desired field (e.g. year = 2017).
         If "ALL" is passed as a value,
         then results are returned for all possible subgroups.
-        (e.g. for gender GES = "ALL" the data for male,
-        female and summed for both is returned.
-        If the filter is not set, then only the summed result is returned.)
+        (e.g. for gender GES = "ALL" three data entris are returned - for
+        male, female and summed for both.
+        If the filter is not set, then only the summed result is returned.
+        Except for year: this is by default returned for each year.)
+        (default:{})
+        parent_field -- The field this field is attached to.
+        default_fields -- Wether default fields
+        should be attached or not.
     """
 
     def __init__(
@@ -32,7 +37,6 @@ class Field:
         default_fields: bool = True,
         return_type: str = None,
     ):
-
         self.name = name
         self.parent_field = parent_field
         # TODO: use name as default?
@@ -88,6 +92,19 @@ class Field:
     def add_field(
         self, field: Union[str, "Field"], default_fields: bool = True
     ) -> "Field":
+        """Ad a subfield to the field.
+
+        Arguments:
+            field -- field to be added
+            default_fields -- Wether default fields
+            should be attached or not.
+
+        Raises:
+            TypeError: If the added field is neither of type String nor Field.
+
+        Returns:
+            Field -- the added field.
+        """
         if isinstance(field, str):
             self.fields[field] = Field(
                 name=field,
@@ -104,12 +121,26 @@ class Field:
         return self.fields[field.name]
 
     def drop_field(self, field: str):
+        """Drop an attached subfield of the field.
+
+        Arguments:
+            field -- The name of the field to be droped.
+
+        Returns:
+            Field -- The field without the subfield.
+        """
         if isinstance(field, str):
             self.fields.pop(field, None)
         else:
             self.fields.pop(field.name, None)
+        return self
 
     def add_args(self, args: dict):
+        """Ad arguments to the field.
+
+        Arguments:
+            args -- Arguments to be added.
+        """
         if self.args:
             self.args.update(args)
         else:
@@ -156,7 +187,13 @@ class Field:
             raise TypeError
         return substring
 
-    def get_fields(self):
+    def get_fields(self) -> list:
+        """Get all fields that are attached to this
+        field or subfields of this field.
+
+        Returns:
+            list -- a list of all fields.
+        """
         field_list = [self.name]
         for value in self.fields.values():
             field_list.extend(Field._get_fields_helper(value))
@@ -320,11 +357,11 @@ class Query:
         a region with a region ID or the field allRegions.
 
         Arguments:
-            start_field {Field} -- The top node field (allRegions or Region).
-            region_field {Field} -- If Top Node is allRegions
+            start_field -- The top node field; either allRegions or Region.
+            region_field -- If Top Node is allRegions
             then the second node is "regions" accessible through this field.
-
-            Either a single region or allRegions.
+            default_field -- Wether default fields shall
+            be attached to the fields.
         """
         self.start_field = start_field
         self.region_field = region_field
@@ -336,14 +373,18 @@ class Query:
         fields: List[Union[str, "Field"]] = [],
         default_fields: bool = True,
     ) -> "Query":
-        """Factory method to instantiate a Query with a single region through its region id.
+        """Factory method to instantiate a Query with a single region through
+        its region id.
 
         Arguments:
-            region {str} -- The region id the statistics shall be queried for.
-            fields {List[Union[str, Field]]} -- all fields that shall be
-            returned from the query
-            for that region. Can either be simple fields (e.g. name)
+            region -- The region id(s) the statistics shall
+            be queried for.
+            fields -- all fields that shall be
+            returned from the query for that region.
+            Can either be simple fields (e.g. name)
             or fields with nested fields.
+            default_fields -- Wether default fields shall be attached
+            to the fields.
 
         Returns:
             Query -- A query object with region as start Field.
@@ -382,21 +423,22 @@ class Query:
         A parent id, nuts or lau can be further specified for the query.
 
         Arguments:
-            fields {List[Union[str, Field]]} -- all fields that shall be returned
+            fields -- all fields that shall be returned
             for that region. Can either be simple fields (e.g. name)
             or fields with nested fields.
-            parent {str} -- The region id of the parent region
+            parent -- The region id of the parent region
             the statistics shall be queried for.
             (E.g. the id for a state where all sub regions within the
             state shall be queried for.)
-            (default: {None})
-            nuts {int} -- [The administration level: 1 – Bundesländer
+            nuts -- [The administration level: 1 – Bundesländer
             2 – Regierungsbezirke / statistische Regionen
             3 – Kreise / kreisfreie Städte.
-            Default None returns results for all levels. (default: {None})
-            lau {int} -- The administration level: 1 - Verwaltungsgemeinschaften
+            Default None returns results for all levels.
+            lau -- The administration level: 1 - Verwaltungsgemeinschaften
             2 - Gemeinden.
-            Default returns results for all levels. (default: {None})
+            Default returns results for all levels.
+            default_field -- Wether default fields shall
+            be attached to the fields.
 
         Returns:
             Query -- A query object with allRegions as start Field.
@@ -436,15 +478,39 @@ class Query:
         )
 
     def add_field(self, field: Union[str, Field], default_fields=True) -> Field:
+        """Ad a field to the query.
+
+        Arguments:
+            field -- Field to be added.
+            default_fields-- Wether default fields
+        should be attached or not.
+
+        Raises:
+            RuntimeError: If the allRegions Query has
+            no regions field a subfield can be attached to.
+
+        Returns:
+            Field -- The added field.
+        """
         if self.start_field.name == "allRegions":
             if self.region_field is not None:
                 return self.region_field.add_field(field, default_fields=default_fields)
             else:
-                raise TypeError("All Regions Query initialized without regions field.")
+                raise RuntimeError(
+                    "All Regions Query initialized without regions field."
+                )
         else:
             return self.start_field.add_field(field, default_fields=default_fields)
 
     def drop_field(self, field: str) -> "Query":
+        """Drop an attached field of the query.
+
+        Arguments:
+            field -- The name of the field to be droped.
+
+        Returns:
+            Query -- the query without the dropped field.
+        """
         if self.start_field.name == "allRegions":
             if self.region_field is not None:
                 self.region_field.drop_field(field)
@@ -461,7 +527,7 @@ class Query:
         """Formats the Query into a String that can be queried from the Datenguide API.
 
         Returns:
-            str -- the Query as a String.
+            List -- the Query as a String.
         """
         if self.start_field.name == "allRegions":
             query_prefix = "query ($page : Int, $itemsPerPage : Int) "
@@ -496,7 +562,7 @@ class Query:
         """Get all fields of a query.
 
         Returns:
-            List[Union[str, Field]] -- a list of strings and / or Fields
+            List -- a list field names.
         """
         return self.start_field.get_fields()
 
@@ -527,7 +593,7 @@ class Query:
             E.g. if the Query was ill-formed.
 
         Returns:
-            DataFrame --
+            Union[Dict[str, Any], List[Dict[str, Any]]] --
             A Dict with the queried meta data.
             If the query fails raise RuntimeError.
         """
@@ -544,8 +610,13 @@ class Query:
         If field is not specified return meta data for
         all statistics that can be queried.
 
+        Arguments:
+            field -- the field to get information on. If None,
+            then information on all possible fields of a query are
+            returned.
+
         Returns:
-            str -- Response from QueryExecutioner on meta data info
+            Optional[TypeMetaData] -- Response from QueryExecutioner on meta data info
         """
         if field:
             return QueryExecutioner().get_type_info(field)
