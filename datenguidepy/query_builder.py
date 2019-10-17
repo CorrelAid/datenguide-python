@@ -593,7 +593,7 @@ class Query:
         result = QueryExecutioner().run_query(self)
         if result:
             # TODO: adapt QueryOutputTransformer to process list of results
-            return QueryOutputTransformer(result[0].query_results[0]).transform()
+            return QueryOutputTransformer(result).transform()
         else:
             raise RuntimeError("No results could be returned for this Query.")
 

@@ -1,5 +1,5 @@
 from datenguidepy.query_execution import QueryExecutioner, FieldMetaDict, TypeMetaData
-
+from datenguidepy.output_transformer import QueryOutputTransformer
 from datenguidepy.query_helper import get_statistics, get_all_regions, federal_states
 
 import pytest
@@ -313,3 +313,67 @@ def test_statistic_overview_table():
         "long_description",
     ]
     assert stats.shape[0] > 400
+
+
+def test_determine_column_order():
+    input_columns = ["source_A", "source_B", "stat_A_value", "stat_B_value", "year"]
+    input_frame = pd.DataFrame([], columns=input_columns)
+    join_columns = set(["year"])
+
+    output = QueryOutputTransformer._determine_column_order(input_frame, join_columns)
+    expected_output = ["year", "stat_A_value", "stat_B_value", "source_A", "source_B"]
+
+    assert output == expected_output
+
+
+def test_prefix_frame_columns():
+    cols = ["year", "stat_value", "source"]
+    df = pd.DataFrame([], columns=cols)
+    output = list(
+        QueryOutputTransformer._prefix_frame_cols(
+            df, prefix="A", exceptions=["year"]
+        ).columns
+    )
+    expected_output = ["year", "A_stat_value", "A_source"]
+
+    assert output == expected_output
+
+
+def test_determine_join_columns():
+    df_1 = pd.DataFrame(
+        [], columns=["year", "source_detail1", "source_detail2", "value"]
+    )
+    df_2 = pd.DataFrame(
+        [], columns=["year", "GES", "source_detail1", "source_detail2", "value"]
+    )
+    df_3 = pd.DataFrame(
+        [], columns=["year", "source_detail1", "source_detail2", "value"]
+    )
+    frames_inp = [df_1, df_2, df_3]
+    output = QueryOutputTransformer._determine_join_columns(frames_inp)
+    expected_output = set(["year"])
+    assert output == expected_output
+
+    df_1 = pd.DataFrame(
+        [], columns=["year", "NAT", "GES", "source_detail1", "source_detail2", "value"]
+    )
+    df_2 = pd.DataFrame(
+        [], columns=["year", "GES", "source_detail1", "source_detail2", "value"]
+    )
+    frames_inp = [df_1, df_2]
+    output = QueryOutputTransformer._determine_join_columns(frames_inp)
+    expected_output = set(["year", "GES"])
+    assert output == expected_output
+
+
+def test_get_general_fields():
+    meta_dict = {"stat_1": "stat_1 description", "stat_2": "stat_2 description"}
+    region_json = {
+        "id": "11",
+        "stat_1": [],
+        "name": "Berlin",
+        "stat_2": [{"year": 2000, "value": 1}, {"year": 2001, "value": 2}],
+    }
+    output = QueryOutputTransformer._get_general_fields(region_json, meta_dict)
+    expected_output = ["id", "name"]
+    assert output == expected_output
