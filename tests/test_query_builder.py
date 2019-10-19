@@ -17,6 +17,16 @@ def query_default():
 
 
 @pytest.fixture
+def query_with_enum():
+    q = Query.region("09", default_fields=False)
+    stat = q.add_field("WAHL09")
+    stat.add_field("PART04")
+    stat.add_field("year")
+    stat.add_field("value")
+    return q
+
+
+@pytest.fixture
 def field():
     return Field(
         "WAHL09",
@@ -484,3 +494,28 @@ def test_get_info_stat(query_default):
         None""",
     )
     assert info == expected_info
+
+
+def test_get_fields_with_return_type(field, query_with_enum):
+    fields_and_types = field._get_fields_with_types()
+    expected_fields_and_types = set(
+        [
+            ("WAHL09", "WAHL09"),
+            ("value", "Float"),
+            ("year", "Int"),
+            ("PART04", "PART04"),
+        ]
+    )
+    assert set(fields_and_types) == expected_fields_and_types
+
+    fields_and_types = query_with_enum._get_fields_with_types()
+    expected_fields_and_types = set(
+        [
+            ("WAHL09", "WAHL09"),
+            ("region", "Region"),
+            ("value", "Float"),
+            ("year", "Int"),
+            ("PART04", "PART04"),
+        ]
+    )
+    assert set(fields_and_types) == expected_fields_and_types

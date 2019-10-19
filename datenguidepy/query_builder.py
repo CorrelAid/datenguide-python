@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict, Any
+from typing import Optional, Union, List, Dict, Any, Tuple
 from pandas import DataFrame
 from datenguidepy.query_execution import QueryExecutioner, TypeMetaData
 from datenguidepy.output_transformer import QueryOutputTransformer
@@ -42,6 +42,7 @@ class Field:
     ):
         self.name = name
         self.parent_field = parent_field
+        self.default_fields = default_fields
         # TODO: use name as default?
         self.return_type = return_type if return_type else name
 
@@ -93,7 +94,7 @@ class Field:
         )
 
     def add_field(
-        self, field: Union[str, "Field"], default_fields: bool = True
+        self, field: Union[str, "Field"], default_fields: bool = None
     ) -> "Field":
         """Add a subfield to the field.
 
@@ -101,6 +102,8 @@ class Field:
         :return: the added field
         :rtype: class:`datenguidepy.Field`
         """
+        if default_fields is None:
+            default_fields = self.default_fields
 
         if isinstance(field, str):
             self.fields[field] = Field(
@@ -182,18 +185,34 @@ class Field:
             raise TypeError
         return substring
 
-    def get_fields(self) -> list:
+    def get_fields(self) -> List[str]:
         """Get all fields that are attached to this
         field or subfields of this field.
 
         :return: a list of all fields
-        :rtype: list
+        :rtype: List[str]
         """
 
         field_list = [self.name]
         for value in self.fields.values():
             field_list.extend(Field._get_fields_helper(value))
         return field_list
+
+    def _get_fields_with_types(self) -> List[Tuple[str, str]]:
+        """ Gets all the fields and attached to
+            this field including all subfields. Additionally
+            returns the return type for each field. This will
+            allow internal functions to easily reques meta
+            data for specific fields.
+
+            :return: a list of tuples with field names and
+            their types
+            :rtype: List[Tuple[str,str]]
+        """
+        fields_with_types = [(self.name, self.return_type)]
+        for field in self.fields.values():
+            fields_with_types.extend(field._get_fields_with_types())
+        return fields_with_types
 
     def get_info(self) -> None:
         """Prints summarized information on a field's meta data.
@@ -475,6 +494,7 @@ class Query:
             fields=fields,
             args=region_args,
             return_type=Query._return_type_regions,
+            default_fields=default_fields,
         )
 
         # add fields page, itemsperPage and total for QueryExecutioner
@@ -489,7 +509,7 @@ class Query:
             region_field=regions,
         )
 
-    def add_field(self, field: Union[str, Field], default_fields=True) -> Field:
+    def add_field(self, field: Union[str, Field], default_fields=None) -> Field:
         """Ad a field to the query.
 
         Arguments:
@@ -504,6 +524,9 @@ class Query:
         Returns:
             Field -- The added field.
         """
+        if default_fields is None:
+            default_fields = self.start_field.default_fields
+
         if self.start_field.name == "allRegions":
             if self.region_field is not None:
                 return self.region_field.add_field(field, default_fields=default_fields)
@@ -577,6 +600,16 @@ class Query:
             List -- a list field names.
         """
         return self.start_field.get_fields()
+
+    def _get_fields_with_types(self) -> List[Tuple[str, str]]:
+        """Get all fields of a query including their
+        return type.
+
+        Returns:
+            List[Tuple[Str,Str]] -- a list of tuples with
+            field names and their types.
+        """
+        return self.start_field._get_fields_with_types()
 
     def results(self) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
