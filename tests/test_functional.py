@@ -82,9 +82,9 @@ def test_QueryExecutionerWorkflow(query):
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.
 
-    assert "BEVMK3" in meta_query1, "statistic absend"
+    assert "BEVMK3" in meta_query1["statistics"], "statistic absend"
     assert (
-        meta_query1["BEVMK3"] != "NO DESCRIPTION FOUND"
+        meta_query1["statistics"]["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
 
     # Being satisfied with the results he obtained for his simple query

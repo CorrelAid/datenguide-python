@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Dict, List, Any, Set, Container
+from typing import Dict, List, Any, Set, Container, cast
 
 from datenguidepy.query_execution import ExecutionResults
 
@@ -65,13 +65,17 @@ class QueryOutputTransformer:
     def convert_single_results_to_frame(
         region_json: Dict[str, Any], meta: Dict[str, str]
     ) -> pd.DataFrame:
+        if "error" in meta["statistics"]:
+            raise RuntimeError(
+                "No statistics meta data present. Try rerunning the query"
+            )
         statistic_frames = [
             QueryOutputTransformer._create_statistic_frame(region_json[stat])
-            for stat in meta.keys()
+            for stat in cast(Dict[str, str], meta["statistics"]).keys()
         ]
 
         joined_results, join_cols = QueryOutputTransformer._join_statistic_results(
-            statistic_frames, list(meta.keys())
+            statistic_frames, list(cast(Dict[str, str], meta["statistics"]).keys())
         )
         column_order = QueryOutputTransformer._determine_column_order(
             joined_results, join_cols
