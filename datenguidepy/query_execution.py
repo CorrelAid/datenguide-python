@@ -133,7 +133,7 @@ class QueryExecutioner(object):
             Optional[List[ExecutionResults]] -- [description]
         """
         all_results = [
-            self._run_single_query_json(query_json, query.get_fields())
+            self._run_single_query_json(query_json, query._get_fields_with_types())
             for query_json in self._generate_post_json(query)
         ]
         if not any(map(lambda r: r is None, all_results)):
@@ -142,9 +142,11 @@ class QueryExecutioner(object):
             return None
 
     def _run_single_query_json(
-        self, query_json: Json_Dict, query_fields: List[str]
+        self, query_json: Json_Dict, query_fields_with_types: List[Tuple[str, str]]
     ) -> Optional[ExecutionResults]:
-        if "allRegions" in query_fields:
+        if "allRegions" in [
+            field_with_types[0] for field_with_types in query_fields_with_types
+        ]:
             results = []
             page = 0
             while True:
@@ -167,22 +169,48 @@ class QueryExecutioner(object):
                 results = [single_result]
 
         if results:
-            # Region type contains all the statistics fields
-            stat_descriptions = self.get_stat_descriptions()
-            if stat_descriptions is not None:
-                meta = {
-                    stat: stat_descriptions[stat][0]
-                    for stat in stat_descriptions
-                    if stat in query_fields
-                }
-            else:
-                meta = {"error": "META DATA COULD NOT BE LOADED"}
-            # wrong casting as the result is a list of Json
+            meta: Json_Dict = dict()
+            meta
+            meta["statistics"] = self._get_query_stat_meta(query_fields_with_types)
+            meta["enums"] = self._get_query_enum_meta(query_fields_with_types)
             return ExecutionResults(
                 query_results=cast(Json_List, results), meta_data=meta
             )
         else:
             return None
+
+    def _get_query_stat_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> Dict[str, str]:
+        # Region type contains all the statistics fields
+        query_fields = [
+            field_with_type[0] for field_with_type in query_fields_with_types
+        ]
+        stat_descriptions = self.get_stat_descriptions()
+        if stat_descriptions is not None:
+            stat_meta = {
+                stat: stat_descriptions[stat][0]
+                for stat in stat_descriptions
+                if stat in query_fields
+            }
+        else:
+            stat_meta = {"error": "STAT META DATA COULD NOT BE LOADED"}
+            # wrong casting as the result is a list of Json
+        return stat_meta
+
+    def _get_query_enum_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> Union[Dict[str, str], Dict[str, Dict[str, str]]]:
+        enum_meta: Dict[str, Dict[str, str]] = {}
+        for field, field_type in query_fields_with_types:
+            type_info = self.get_type_info(field_type)
+            if type_info is None:
+                return {"error": "ENUM META DATA COULD NOT BE LOADED"}
+            if cast(TypeMetaData, type_info).kind == "ENUM":
+                enum_meta[field] = cast(
+                    Dict[str, str], cast(TypeMetaData, type_info).enum_values
+                )
+        return enum_meta
 
     def get_type_info(
         self, graph_ql_type: str, verbose=False

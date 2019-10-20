@@ -11,12 +11,27 @@ from datenguidepy.query_helper import (
     get_all_regions,
     download_all_regions,
 )
+from datenguidepy.output_transformer import QueryOutputTransformer
 
 
 @pytest.fixture
 def query():
     field = Field(name="BEVMK3", fields=["value", "year"])
     query = Query.region(region="05911", fields=["id", "name", field])
+    return query
+
+
+@pytest.fixture
+def query_multi_regions():
+    field = Field(name="BEVMK3", fields=["value", "year"])
+    query = Query.region(region=["01", "02"], fields=["id", "name", field])
+    return query
+
+
+@pytest.fixture
+def query_all_regions():
+    field = Field(name="BEVMK3", fields=["value", "year"])
+    query = Query.all_regions(nuts=1, fields=["id", "name", field])
     return query
 
 
@@ -30,14 +45,14 @@ def test_QueryExecutionerWorkflow(query):
     # it uses the right by default, so that he does not have to supply any
     # parameters.
 
-    qExec = QueryExecutioner()
+    q_exec = QueryExecutioner()
 
     # After creating the object Ira is actually a little sceptical whether
     # the endpoint will correct so he extracts the endpoint and compares it
     # with his expectations.
 
     assert (
-        qExec.endpoint == "https://api-next.datengui.de/graphql"
+        q_exec.endpoint == "https://api-next.datengui.de/graphql"
     ), "Default endpoint is wrong"
 
     # Being satisfied that everything is setup with the correct endpoint Ira
@@ -67,9 +82,9 @@ def test_QueryExecutionerWorkflow(query):
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.
 
-    assert "BEVMK3" in meta_query1, "statistic absend"
+    assert "BEVMK3" in meta_query1["statistics"], "statistic absend"
     assert (
-        meta_query1["BEVMK3"] != "NO DESCRIPTION FOUND"
+        meta_query1["statistics"]["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
 
     # Being satisfied with the results he obtained for his simple query
@@ -153,3 +168,42 @@ def test_queryHelper():
     filtered_statistics = get_statistics("scheidung")
     assert isinstance(filtered_statistics, pd.DataFrame)
     assert filtered_statistics.shape[0] < 50
+
+
+def test_build_execute_transform_integration(query):
+    """
+    Smoke test covering region query.
+    """
+
+    q_exec = QueryExecutioner()
+
+    res = q_exec.run_query(query)
+
+    output_transf = QueryOutputTransformer(res)
+    output_transf.transform()
+
+
+def test_build_execute_transform_integration_multi_region(query_multi_regions):
+    """
+    Smoke test covering multiple regions in
+    region query.
+    """
+
+    q_exec = QueryExecutioner()
+
+    res = q_exec.run_query(query_multi_regions)
+
+    output_transf = QueryOutputTransformer(res)
+    output_transf.transform()
+
+
+def test_build_execute_transform_integration_all_regions(query_all_regions):
+    """
+    Smoke test covering all_regions
+    """
+    q_exec = QueryExecutioner()
+
+    res = q_exec.run_query(query_all_regions)
+
+    output_transf = QueryOutputTransformer(res)
+    output_transf.transform()
