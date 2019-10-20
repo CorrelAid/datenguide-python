@@ -114,7 +114,7 @@ Get information on fields and meta data
 
 .. code-block:: python
 
-    from datenguidepy.query_helper import get_all_regions
+    from datenguidepy import get_all_regions
 
     get_all_regions()
 
@@ -131,7 +131,7 @@ For more information on "nuts" levels see Wikipedia_.
 
 .. code-block:: python
 
-    from datenguidepy.query_helper import get_statistics
+    from datenguidepy import get_statistics
 
     get_statistics()
 
