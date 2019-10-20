@@ -66,7 +66,6 @@ Within your python file or notebook:
     query = Query.region('01')
 
 - or for all subregions a region (e.g. all Kommunen in a Bundesland)
-(to be implemented in Version 0.1.2)
 
 .. code-block:: python
 
@@ -115,9 +114,6 @@ Get information on fields and meta data
 
 .. code-block:: python
 
-    # Version >= 0.1.2
-    from datenguidepy import get_all_regions
-    # Version < 0.1.2
     from datenguidepy.query_helper import get_all_regions
 
     get_all_regions()
@@ -135,9 +131,6 @@ For more information on "nuts" levels see Wikipedia_.
 
 .. code-block:: python
 
-    # Version >= 0.1.2
-    from datenguidepy import get_statistics
-    # Version < 0.1.2
     from datenguidepy.query_helper import get_statistics
 
     get_statistics()
