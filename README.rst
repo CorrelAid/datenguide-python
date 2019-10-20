@@ -43,7 +43,6 @@ Install
 To use the package install the package (command line): 
 
 .. code-block:: python
-   :linenos:
 
    pip install datenguidepy
 
@@ -55,7 +54,6 @@ Within your python file or notebook:
 **1. Import the package**
 
 .. code-block:: python
-   :linenos:
 
     from datenguidepy import Query
 
@@ -64,14 +62,12 @@ Within your python file or notebook:
 - either for single regions
 
 .. code-block:: python
-   :linenos:
 
     query = Query.region('01')
 
 - or for all subregions a region (e.g. all Kommunen in a Bundesland)
 
 .. code-block:: python
-   :linenos:
 
    query_allregions = Query.allRegions(parent='01')
 
@@ -82,7 +78,6 @@ Within your python file or notebook:
 - Add statistics you want to get data on
 
 .. code-block:: python
-   :linenos:
 
     query.add_field('BEV001')
 
@@ -92,7 +87,6 @@ Within your python file or notebook:
     A field can also be added with filters. E.g. you can specify, that only data from a specific year     shall    be returned.
 
 .. code-block:: python
-   :linenos:
 
     query.add_field('BEV001', args={year:'2017'})
 
@@ -101,7 +95,6 @@ Within your python file or notebook:
     If additional fields shall be returned, they can be specified as a field argument.
 
 .. code-block:: python
-   :linenos:
 
     query.add_field('BEV001', field=['GES'])
 
@@ -109,7 +102,6 @@ Within your python file or notebook:
     Get the results as a Pandas DataFrame
 
 .. code-block:: python
-   :linenos:
 
     df = query.results()
 
@@ -121,7 +113,6 @@ Get information on fields and meta data
 **Get information on region ids**
 
 .. code-block:: python
-   :linenos:
 
     from datenguidepy import get_all_regions
 
@@ -131,7 +122,6 @@ Use pandas *query()* functionality to get specific regions. E.g., if you want to
 For more information on "nuts" levels see Wikipedia_.
 
 .. code-block:: python
-   :linenos:
 
     get_all_regions().query("level == 'nuts1'")
 
@@ -140,7 +130,6 @@ For more information on "nuts" levels see Wikipedia_.
 **Get information on statistic shortnames**
 
 .. code-block:: python
-   :linenos:
 
     from datenguidepy import get_statistics
 
@@ -151,7 +140,6 @@ For more information on "nuts" levels see Wikipedia_.
 You can further information about description, possible arguments, fields and enum values on a field you added to a query.
 
 .. code-block:: python
-   :linenos:
 
     query = Query.region("01")
     field = query.add_field("BEV001")
