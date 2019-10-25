@@ -425,20 +425,60 @@ def test_multiple_regions_query():
 
 
 def test_arguments_info(query_default):
+    pass
     stat = query_default.add_field("BEV001")
     info = stat.arguments_info()
-    expected_info = re.sub(
-        r"\n\s+",
-        "",
-        """year('LIST', None, 'SCALAR', 'Int')
-        , statistics('LIST', None, 'ENUM', 'BEV001Statistics')
-        , ALTMT1('LIST', None, 'ENUM', 'ALTMT1')
-        , BEVM01('LIST', None, 'ENUM', 'BEVM01')
-        , GES('LIST', None, 'ENUM', 'GES')
-        , LEGIT2('LIST', None, 'ENUM', 'LEGIT2')
-        , NAT('LIST', None, 'ENUM', 'NAT')
-        , filter('INPUT_OBJECT', 'BEV001Filter', None, None)""",
-    )
+    expected_info = """year: LIST of type SCALAR(Int)
+
+statistics: LIST of type ENUM(BEV001Statistics)
+enum values:
+R12612: Statistik der Geburten
+
+ALTMT1: LIST of type ENUM(ALTMT1)
+enum values:
+ALT000B20: unter 20 Jahre
+ALT020B25: 20 bis unter 25 Jahre
+ALT025B30: 25 bis unter 30 Jahre
+ALT030B35: 30 bis unter 35 Jahre
+ALT035B40: 35 bis unter 40 Jahre
+ALT040UM: 40 Jahre und mehr
+GESAMT: Gesamt
+
+BEVM01: LIST of type ENUM(BEVM01)
+enum values:
+MONAT01: Januar
+MONAT02: Februar
+MONAT03: März
+MONAT04: April
+MONAT05: Mai
+MONAT06: Juni
+MONAT07: Juli
+MONAT08: August
+MONAT09: September
+MONAT10: Oktober
+MONAT11: November
+MONAT12: Dezember
+GESAMT: Gesamt
+
+GES: LIST of type ENUM(GES)
+enum values:
+GESM: männlich
+GESW: weiblich
+GESAMT: Gesamt
+
+LEGIT2: LIST of type ENUM(LEGIT2)
+enum values:
+LEGIT01A: Eltern miteinander verheiratet
+LEGIT02A: Eltern nicht miteinander verheiratet
+GESAMT: Gesamt
+
+NAT: LIST of type ENUM(NAT)
+enum values:
+NATA: Ausländer(innen)
+NATD: Deutsche
+GESAMT: Gesamt
+
+filter: INPUT_OBJECT(BEV001Filter)"""
     assert info == expected_info
 
 
@@ -452,7 +492,10 @@ def test_enum_info(query_default):
     stat = query_default.add_field("BEV001")
     ges = stat.add_field("GES")
     info = ges.enum_info()
-    assert info == "GESM: männlich, GESW: weiblich, GESAMT: Gesamt"
+    expected_info = """GESM: männlich
+GESW: weiblich
+GESAMT: Gesamt"""
+    assert info == expected_info
 
 
 def test_description(query_default):
@@ -470,23 +513,64 @@ def test_get_info_stat(query_default):
     expected_info = re.sub(
         r"\n\s+",
         "",
-        """
-        kind:
+        """kind:
         OBJECT
 
         description:
         Lebend Geborene
 
         arguments:
-        year('LIST', None, 'SCALAR', 'Int')
-        , statistics('LIST', None, 'ENUM', 'BEV001Statistics')
-        , ALTMT1('LIST', None, 'ENUM', 'ALTMT1')
-        , BEVM01('LIST', None, 'ENUM', 'BEVM01')
-        , GES('LIST', None, 'ENUM', 'GES')
-        , LEGIT2('LIST', None, 'ENUM', 'LEGIT2')
-        , NAT('LIST', None, 'ENUM', 'NAT')
-        , filter('INPUT_OBJECT', 'BEV001Filter', None, None)
+        year: LIST of type SCALAR(Int)
 
+        statistics: LIST of type ENUM(BEV001Statistics)
+        enum values:
+        R12612: Statistik der Geburten
+
+        ALTMT1: LIST of type ENUM(ALTMT1)
+        enum values:
+        ALT000B20: unter 20 Jahre
+        ALT020B25: 20 bis unter 25 Jahre
+        ALT025B30: 25 bis unter 30 Jahre
+        ALT030B35: 30 bis unter 35 Jahre
+        ALT035B40: 35 bis unter 40 Jahre
+        ALT040UM: 40 Jahre und mehr
+        GESAMT: Gesamt
+
+        BEVM01: LIST of type ENUM(BEVM01)
+        enum values:
+        MONAT01: Januar
+        MONAT02: Februar
+        MONAT03: März
+        MONAT04: April
+        MONAT05: Mai
+        MONAT06: Juni
+        MONAT07: Juli
+        MONAT08: August
+        MONAT09: September
+        MONAT10: Oktober
+        MONAT11: November
+        MONAT12: Dezember
+        GESAMT: Gesamt
+
+        GES: LIST of type ENUM(GES)
+        enum values:
+        GESM: männlich
+        GESW: weiblich
+        GESAMT: Gesamt
+
+        LEGIT2: LIST of type ENUM(LEGIT2)
+        enum values:
+        LEGIT01A: Eltern miteinander verheiratet
+        LEGIT02A: Eltern nicht miteinander verheiratet
+        GESAMT: Gesamt
+
+        NAT: LIST of type ENUM(NAT)
+        enum values:
+        NATA: Ausländer(innen)
+        NATD: Deutsche
+        GESAMT: Gesamt
+
+        filter: INPUT_OBJECT(BEV001Filter)
         fields:
         id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
 

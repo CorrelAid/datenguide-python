@@ -246,9 +246,24 @@ class Field:
         args = meta_fields[self.name].get_arguments()
         arg_list = []
         for key, value in args.items():
-            temp_arg = key + str(value)
+            temp_arg = key + ": "
+            # get description
+            # temp_arg = key + ': ' + args_field.description() + ' - '
+
+            # get type
+            if value[0] == "LIST":
+                temp_arg += value[0] + " of type " + value[2] + "(" + value[3] + ")"
+            else:
+                temp_arg += value[0] + "(" + value[1] + ")"
+
+            # get enum values
+            if "ENUM" in value:
+                args_field = Field(name=key, parent_field=self, return_type=value[3])
+                enum_values = args_field.enum_info()
+                temp_arg += "\nenum values:\n" + str(enum_values)
             arg_list.append(temp_arg)
-        return ", ".join(arg_list)
+
+        return "\n\n".join(arg_list)
 
     def arguments_info(self) -> Optional[str]:
         """Get information on possible arguments for field. The name of the argument is
@@ -284,7 +299,7 @@ class Field:
         enum_list = []
         for key, value in enum_meta.items():
             enum_list.append(key + ": " + value)
-        return ", ".join(enum_list)
+        return "\n".join(enum_list)
 
     def enum_info(self) -> Optional[str]:
         """Get information on possible enum vaules for field.
@@ -293,7 +308,7 @@ class Field:
         :rtype: Optional[str]
         """
 
-        meta = QueryExecutioner().get_type_info(self.name)
+        meta = QueryExecutioner().get_type_info(self.return_type)
         return Field._no_none_values(self._enum_info_helper, meta, "enum_values")
 
     def _description_helper(self, meta_fields) -> Optional[str]:
