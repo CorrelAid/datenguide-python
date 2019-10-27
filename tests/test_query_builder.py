@@ -425,16 +425,15 @@ def test_multiple_regions_query():
 
 
 def test_arguments_info(query_default):
-    pass
     stat = query_default.add_field("BEV001")
     info = stat.arguments_info()
-    expected_info = """year: LIST of type SCALAR(Int)
+    expected_info = """\x1b[4myear\x1b[0m: LIST of type SCALAR(Int)
 
-statistics: LIST of type ENUM(BEV001Statistics)
+\x1b[4mstatistics\x1b[0m: LIST of type ENUM(BEV001Statistics)
 enum values:
 R12612: Statistik der Geburten
 
-ALTMT1: LIST of type ENUM(ALTMT1)
+\x1b[4mALTMT1\x1b[0m: LIST of type ENUM(ALTMT1)
 enum values:
 ALT000B20: unter 20 Jahre
 ALT020B25: 20 bis unter 25 Jahre
@@ -444,7 +443,7 @@ ALT035B40: 35 bis unter 40 Jahre
 ALT040UM: 40 Jahre und mehr
 GESAMT: Gesamt
 
-BEVM01: LIST of type ENUM(BEVM01)
+\x1b[4mBEVM01\x1b[0m: LIST of type ENUM(BEVM01)
 enum values:
 MONAT01: Januar
 MONAT02: Februar
@@ -460,32 +459,43 @@ MONAT11: November
 MONAT12: Dezember
 GESAMT: Gesamt
 
-GES: LIST of type ENUM(GES)
+\x1b[4mGES\x1b[0m: LIST of type ENUM(GES)
 enum values:
 GESM: männlich
 GESW: weiblich
 GESAMT: Gesamt
 
-LEGIT2: LIST of type ENUM(LEGIT2)
+\x1b[4mLEGIT2\x1b[0m: LIST of type ENUM(LEGIT2)
 enum values:
 LEGIT01A: Eltern miteinander verheiratet
 LEGIT02A: Eltern nicht miteinander verheiratet
 GESAMT: Gesamt
 
-NAT: LIST of type ENUM(NAT)
+\x1b[4mNAT\x1b[0m: LIST of type ENUM(NAT)
 enum values:
 NATA: Ausländer(innen)
 NATD: Deutsche
 GESAMT: Gesamt
 
-filter: INPUT_OBJECT(BEV001Filter)"""
+\x1b[4mfilter\x1b[0m: INPUT_OBJECT(BEV001Filter)"""
     assert info == expected_info
 
 
 def test_field_info(query_default):
     stat = query_default.add_field("BEV001")
     info = stat.fields_info()
-    assert info == "id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT"
+    assert (
+        info
+        == """id: Interne eindeutige ID
+year: Jahr des Stichtages
+value: Wert
+source: Quellenverweis zur GENESIS Regionaldatenbank
+ALTMT1: Altersgruppen der Mutter (unter 20 bis 40 u.m.)
+BEVM01: Monat der Geburt
+GES: Geschlecht
+LEGIT2: Legitimität
+NAT: Nationalität"""
+    )
 
 
 def test_enum_info(query_default):
@@ -510,23 +520,24 @@ def test_get_info_stat(query_default):
     stat = query_default.add_field("BEV001")
     stat.get_info()
     info = re.sub(r"\n", "", stringio.getvalue())
+    print(info)
     expected_info = re.sub(
         r"\n\s+",
         "",
-        """kind:
+        """\x1b[1mkind:\x1b[0m
         OBJECT
 
-        description:
+        \x1b[1mdescription:\x1b[0m
         Lebend Geborene
 
-        arguments:
-        year: LIST of type SCALAR(Int)
+        \x1b[1marguments:\x1b[0m
+        \x1b[4myear\x1b[0m: LIST of type SCALAR(Int)
 
-        statistics: LIST of type ENUM(BEV001Statistics)
+        \x1b[4mstatistics\x1b[0m: LIST of type ENUM(BEV001Statistics)
         enum values:
         R12612: Statistik der Geburten
 
-        ALTMT1: LIST of type ENUM(ALTMT1)
+        \x1b[4mALTMT1\x1b[0m: LIST of type ENUM(ALTMT1)
         enum values:
         ALT000B20: unter 20 Jahre
         ALT020B25: 20 bis unter 25 Jahre
@@ -536,7 +547,7 @@ def test_get_info_stat(query_default):
         ALT040UM: 40 Jahre und mehr
         GESAMT: Gesamt
 
-        BEVM01: LIST of type ENUM(BEVM01)
+        \x1b[4mBEVM01\x1b[0m: LIST of type ENUM(BEVM01)
         enum values:
         MONAT01: Januar
         MONAT02: Februar
@@ -552,29 +563,38 @@ def test_get_info_stat(query_default):
         MONAT12: Dezember
         GESAMT: Gesamt
 
-        GES: LIST of type ENUM(GES)
+        \x1b[4mGES\x1b[0m: LIST of type ENUM(GES)
         enum values:
         GESM: männlich
         GESW: weiblich
         GESAMT: Gesamt
 
-        LEGIT2: LIST of type ENUM(LEGIT2)
+        \x1b[4mLEGIT2\x1b[0m: LIST of type ENUM(LEGIT2)
         enum values:
         LEGIT01A: Eltern miteinander verheiratet
         LEGIT02A: Eltern nicht miteinander verheiratet
         GESAMT: Gesamt
 
-        NAT: LIST of type ENUM(NAT)
+        \x1b[4mNAT\x1b[0m: LIST of type ENUM(NAT)
         enum values:
         NATA: Ausländer(innen)
         NATD: Deutsche
         GESAMT: Gesamt
 
-        filter: INPUT_OBJECT(BEV001Filter)
-        fields:
-        id, year, value, source, ALTMT1, BEVM01, GES, LEGIT2, NAT
+        \x1b[4mfilter\x1b[0m: INPUT_OBJECT(BEV001Filter)
 
-        enum values:
+        \x1b[1mfields:\x1b[0m
+        id: Interne eindeutige ID
+        year: Jahr des Stichtages
+        value: Wert
+        source: Quellenverweis zur GENESIS Regionaldatenbank
+        ALTMT1: Altersgruppen der Mutter (unter 20 bis 40 u.m.)
+        BEVM01: Monat der Geburt
+        GES: Geschlecht
+        LEGIT2: Legitimität
+        NAT: Nationalität
+
+        \x1b[1menum values:\x1b[0m
         None""",
     )
     assert info == expected_info

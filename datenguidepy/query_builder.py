@@ -220,17 +220,19 @@ class Field:
         :return: None
         :rtype: None
         """
+        BOLD = "\033[1m"
+        NORMAL = "\033[0m"
 
-        kind: str = "kind:\n"
+        kind: str = BOLD + "kind:" + NORMAL + "\n"
         meta = QueryExecutioner().get_type_info(self.name)
         if meta is not None:
             kind += meta.kind
         else:
             kind += "None"
-        description = "description:\n" + str(self.description())
-        arguments = "arguments:\n" + str(self.arguments_info())
-        fields = "fields:\n" + str(self.fields_info())
-        enum_values = "enum values:\n" + str(self.enum_info())
+        description = BOLD + "description:" + NORMAL + "\n" + str(self.description())
+        arguments = BOLD + "arguments:" + NORMAL + "\n" + str(self.arguments_info())
+        fields = BOLD + "fields:" + NORMAL + "\n" + str(self.fields_info())
+        enum_values = BOLD + "enum values:" + NORMAL + "\n" + str(self.enum_info())
         print("\n\n".join([kind, description, arguments, fields, enum_values]))
 
     @staticmethod
@@ -243,22 +245,24 @@ class Field:
         return base_function(value)
 
     def _arguments_info_helper(self, meta_fields) -> Optional[str]:
+        UNDERLINE = "\033[4m"
+        NORMAL = "\033[0m"
         args = meta_fields[self.name].get_arguments()
         arg_list = []
+
         for key, value in args.items():
-            temp_arg = key + ": "
-            # get description
-            # temp_arg = key + ': ' + args_field.description() + ' - '
+            args_field = Field(name=key, parent_field=self, return_type=value[3])
+
+            temp_arg = UNDERLINE + key + NORMAL + ": " + str(value[0])
 
             # get type
             if value[0] == "LIST":
-                temp_arg += value[0] + " of type " + value[2] + "(" + value[3] + ")"
+                temp_arg += " of type " + str(value[2]) + "(" + str(value[3]) + ")"
             else:
-                temp_arg += value[0] + "(" + value[1] + ")"
+                temp_arg += "(" + str(value[1]) + ")"
 
             # get enum values
             if "ENUM" in value:
-                args_field = Field(name=key, parent_field=self, return_type=value[3])
                 enum_values = args_field.enum_info()
                 temp_arg += "\nenum values:\n" + str(enum_values)
             arg_list.append(temp_arg)
@@ -283,7 +287,10 @@ class Field:
             return None
 
     def _fields_info_helper(self, meta_fields) -> Optional[str]:
-        return ", ".join(meta_fields.keys())
+        args_info = []
+        for meta_field in meta_fields:
+            args_info.append(meta_field + ": " + meta_fields[meta_field]["description"])
+        return "\n".join(args_info)
 
     def fields_info(self) -> Optional[str]:
         """Get information on possible fields for field.
