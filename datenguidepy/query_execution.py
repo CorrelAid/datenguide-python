@@ -29,10 +29,10 @@ class FieldMetaDict(dict):
     """
 
     def get_return_type(self) -> str:
-        """[summary]
+        """Returns the return type of the field of the FieldMetaDict.
 
-        Returns:
-            str -- [description]
+        :return: The return type of the field.
+        :rtype: str
         """
         if self["type"]["kind"] == "LIST":
             return self["type"]["ofType"]["name"]
@@ -42,8 +42,8 @@ class FieldMetaDict(dict):
     def get_arguments(self) -> Dict[str, Tuple[Optional[str], ...]]:
         """[summary]
 
-        Returns:
-            Dict[str, Tuple[Optional[str], ...]] -- [description]
+        :return: [description]
+        :rtype: Dict[str, Tuple[Optional[str], ...]]
         """
 
         def get_type_of(
@@ -68,10 +68,12 @@ class FieldMetaDict(dict):
 
 
 class QueryExecutioner(object):
-    """[description]
+    """Queries the Datenguide API for data and meta data.
 
-    Arguments:
-        alternative_endpoint -- [description]
+    :param alternative_endpoint: [description], defaults to None
+    :type alternative_endpoint: Optional[str], optional
+    :return: [description]
+    :rtype: None
     """
 
     REQUEST_HEADER: Dict[str, str] = {"Content-Type": "application/json"}
@@ -126,11 +128,10 @@ class QueryExecutioner(object):
     def run_query(self, query) -> Optional[List[ExecutionResults]]:
         """[summary]
 
-        Arguments:
-            query -- [description]
-
-        Returns:
-            Optional[List[ExecutionResults]] -- [description]
+        :param query: [description]
+        :type query: [type]
+        :return: [description]
+        :rtype: Optional[List[ExecutionResults]]
         """
         all_results = [
             self._run_single_query_json(query_json, query._get_fields_with_types())
@@ -216,15 +217,16 @@ class QueryExecutioner(object):
         self, graph_ql_type: str, verbose=False
     ) -> Optional[TypeMetaData]:
         """Returns a json which at top level is a dict with all the
-                fields of the type
+        fields of the type
 
-        Arguments:
-            graph_ql_type -- [description]
-            verbose -- [description]
-
-        Returns:
-            Optional[TypeMetaData] -- [description]
+        :param graph_ql_type: [description]
+        :type graph_ql_type: str
+        :param verbose: [description], defaults to False
+        :type verbose: bool, optional
+        :return: [description]
+        :rtype: Optional[TypeMetaData]
         """
+
         if graph_ql_type in self.__class__._META_DATA_CACHE:
             if verbose:
                 print("use cache")
@@ -299,8 +301,8 @@ class QueryExecutioner(object):
     def get_stat_descriptions(self):
         """[summary]
 
-        Returns:
-            TYPE -- [description]
+        :return: [description]
+        :rtype: [type]
         """
         stat_meta = self.get_type_info("Region")
         if stat_meta:

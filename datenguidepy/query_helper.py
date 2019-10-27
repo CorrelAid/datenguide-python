@@ -14,7 +14,14 @@ ALL_REGIONS: pd.DataFrame = pd.read_csv(
 
 
 class ConfigMapping:
+    """[summary]
+
+    :param mapping: [description]
+    :type mapping: Dict[str, Any]
+    """
+
     def __init__(self, mapping: Dict[str, Any]):
+
         self._mapping = mapping
 
     def __getattr__(self, k: str) -> Any:
@@ -35,6 +42,17 @@ class ConfigMapping:
 def hirachy_up(
     lowestids: str, hirachy_frame: pd.DataFrame = ALL_REGIONS
 ) -> pd.DataFrame:
+    """[summary]
+
+    :param lowestids: [description]
+    :type lowestids: str
+    :param hirachy_frame: [description], defaults to ALL_REGIONS
+    :type hirachy_frame: pd.DataFrame, optional
+    :raises RuntimeError: [description]
+    :raises RuntimeError: [description]
+    :return: [description]
+    :rtype: pd.DataFrame
+    """
     anscestors = []
     current_ids = lowestids
     while len(current_ids) > 0:
@@ -49,6 +67,19 @@ def hirachy_down(
     lowest_level: str = "lau",
     hirachy_frame: pd.DataFrame = ALL_REGIONS,
 ) -> pd.DataFrame:
+    """[summary]
+
+    :param highest_ids: [description]
+    :type highest_ids: str
+    :param lowest_level: [description], defaults to "lau"
+    :type lowest_level: str, optional
+    :param hirachy_frame: [description], defaults to ALL_REGIONS
+    :type hirachy_frame: pd.DataFrame, optional
+    :raises RuntimeError: [description]
+    :raises RuntimeError: [description]
+    :return: [description]
+    :rtype: pd.DataFrame
+    """
     descendents = [hirachy_frame.query("index.isin(@highest_ids)")]
     current_ids = highest_ids
     while len(current_ids) > 0:
@@ -63,6 +94,17 @@ def hirachy_down(
 def siblings(
     region_id: pd.DataFrame, hirachy_frame: pd.DataFrame = ALL_REGIONS
 ) -> pd.DataFrame:
+    """[summary]
+
+    :param region_id: [description]
+    :type region_id: pd.DataFrame
+    :param hirachy_frame: [description], defaults to ALL_REGIONS
+    :type hirachy_frame: pd.DataFrame, optional
+    :raises RuntimeError: [description]
+    :raises RuntimeError: [description]
+    :return: [description]
+    :rtype: pd.DataFrame
+    """
     parent = (  # noqa: F841
         hirachy_frame.query("index == @region_id").loc[:, "parent"].iloc[0]
     )
@@ -70,12 +112,14 @@ def siblings(
 
 
 def get_all_regions() -> pd.DataFrame:
-    """
-        This function returns a DataFrame of all the regions.
+    """This function returns a DataFrame of all the regions.
         For performance reasons this is simply read from disk.
         The regions are not expected to change significantly over time.
         Nonetheless an up to date DataFrame can be obtained with
         download_all_regions
+
+    :return: DataFrame with all regions
+    :rtype: pd.DataFrame
     """
     return ALL_REGIONS.copy()
 
@@ -89,6 +133,13 @@ federal_states = ConfigMapping(federal_state_dictionary)
 
 
 def get_statistics(search: Optional[str] = None) -> pd.DataFrame:
+    """[summary]
+
+    :param search: [description], defaults to None
+    :type search: Optional[str], optional
+    :return: [description]
+    :rtype: pd.DataFrame
+    """
     stat_descr = QueryExecutioner().get_stat_descriptions()
     stat_frame = pd.DataFrame(
         [(stat, *stat_descr[stat]) for stat in stat_descr],
@@ -104,6 +155,14 @@ def get_statistics(search: Optional[str] = None) -> pd.DataFrame:
 
 
 def download_all_regions() -> pd.DataFrame:
+    """[summary]
+
+    :raises RuntimeError: [description]
+    :raises RuntimeError: [description]
+    :return: [description]
+    :rtype: pd.DataFrame
+    """
+
     def nuts_query(nuts_level):
         q = Query.all_regions(nuts=nuts_level)
         return q
@@ -139,9 +198,27 @@ def download_all_regions() -> pd.DataFrame:
     }
 
     def isAnscestor(region_id, candidate):
+        """[summary]
+
+        :param region_id: [description]
+        :type region_id: [type]
+        :param candidate: [description]
+        :type candidate: [type]
+        :return: [description]
+        :rtype: [type]
+        """
         return region_id.startswith(candidate) and candidate != region_id
 
     def parent(region_id, region_details):
+        """[summary]
+
+        :param region_id: [description]
+        :type region_id: [type]
+        :param region_details: [description]
+        :type region_details: [type]
+        :return: [description]
+        :rtype: [type]
+        """
         desc = region_details.assign(
             ansc=lambda df: df.index.map(lambda i: isAnscestor(region_id, i))
         ).query("ansc")
