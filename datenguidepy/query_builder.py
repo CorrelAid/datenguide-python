@@ -150,39 +150,31 @@ class Field:
     def _set_parent_field(self, parent_field):
         self.parent_field = parent_field
 
-    def _get_fields_to_query(
-        self, field: Union[str, "Field"], region_id: str = None
-    ) -> str:
-        substring = ""
-        if isinstance(field, str):
-            substring += field + " "
-        elif isinstance(field, Field):
-            substring += field.name + " "
+    def _get_fields_to_query(self, field: "Field", region_id: str = None) -> str:
+        substring = field.name + " "
 
-            if field.args:
-                # make copy, so original field id is not overwritten
-                this_query_args = field.args
+        if field.args:
+            # make copy, so original field id is not overwritten
+            this_query_args = field.args
 
-                if (field.args.get("id", None) is not None) & (region_id is not None):
-                    # set region id to given single id to not use list
-                    this_query_args["id"] = region_id
+            if (field.args.get("id", None) is not None) & (region_id is not None):
+                # set region id to given single id to not use list
+                this_query_args["id"] = region_id
 
-                filters = []
-                for key, value in this_query_args.items():
-                    if value == "ALL":
-                        filters.append("filter:{ " + key + ": { nin: []}}")
-                    else:
-                        # delete quotation marks for query arguments
-                        filters.append(key + ": " + str(value).replace("'", ""))
-                substring += "(" + ", ".join(filters) + ")"
+            filters = []
+            for key, value in this_query_args.items():
+                if value == "ALL":
+                    filters.append("filter:{ " + key + ": { nin: []}}")
+                else:
+                    # delete quotation marks for query arguments
+                    filters.append(key + ": " + str(value).replace("'", ""))
+            substring += "(" + ", ".join(filters) + ")"
 
-            if field.fields:
-                substring += "{"
-                for field_item in field.fields.values():
-                    substring += field._get_fields_to_query(field_item)
-                substring += "}"
-        else:
-            raise TypeError
+        if field.fields:
+            substring += "{"
+            for field_item in field.fields.values():
+                substring += field._get_fields_to_query(field_item)
+            substring += "}"
         return substring
 
     def get_fields(self) -> List[str]:
@@ -316,15 +308,12 @@ class Field:
             return None
 
     @staticmethod
-    def _get_fields_helper(field: Union[str, "Field"]) -> List[str]:
+    def _get_fields_helper(field: "Field") -> List[str]:
         field_list = []
-        if isinstance(field, str):
-            field_list.append(field)
-        else:
-            field_list.append(field.name)
-            if field.fields:
-                for value in field.fields.values():
-                    field_list.extend(Field._get_fields_helper(value))
+        field_list.append(field.name)
+        if field.fields:
+            for value in field.fields.values():
+                field_list.extend(Field._get_fields_helper(value))
         return field_list
 
 
