@@ -5,26 +5,21 @@ from datenguidepy.query_execution import ExecutionResults
 
 
 class QueryOutputTransformer:
-    """[description]
+    """Transforms the query results into a DataFrame.
 
-    Arguments:
-             query_response: List[ExecutionResults] --
-             Accepts the return type of the query executioner
+        :param query_response: Accepts the return type of the query executioner
              in case a non None value was return.
              This is a list of ExecutionResults as some
              python querys may internally be converted into
              several GraphQL queries to be executed,
              returnning one result each.
-    """
+        :type query_response: List[ExecutionResults]
+        """
 
     def __init__(
         self, query_response: List[ExecutionResults]
     ):  # query_response_json: Dict[str, Any]):
-        """[summary]
 
-        Arguments:
-            query_response_json (Dict[str, Any]) -- [description]
-        """
         self.query_response = query_response
 
     @staticmethod
@@ -65,6 +60,16 @@ class QueryOutputTransformer:
     def convert_single_results_to_frame(
         region_json: Dict[str, Any], meta: Dict[str, str]
     ) -> pd.DataFrame:
+        """[summary]
+
+        :param region_json: [description]
+        :type region_json: Dict[str, Any]
+        :param meta: [description]
+        :type meta: Dict[str, str]
+        :raises RuntimeError: [description]
+        :return: [description]
+        :rtype: pd.DataFrame
+        """
         if "error" in meta["statistics"]:
             raise RuntimeError(
                 "No statistics meta data present. Try rerunning the query"
@@ -102,8 +107,7 @@ class QueryOutputTransformer:
 
     @staticmethod
     def _determine_join_columns(statistic_results: List[pd.DataFrame]) -> Set[str]:
-        """
-        Dertermines the columns over which to join
+        """Dertermines the columns over which to join
         multiple statistics data frames.
         Currently has hardcoded exclusion criteria
         to never join across columns containing "value"
@@ -111,6 +115,11 @@ class QueryOutputTransformer:
         limmitation as such joins are considered corner cases
         and can be achieved by post-join filters should
         the need arise.
+
+        :param statistic_results: [description]
+        :type statistic_results: List[pd.DataFrame]
+        :return: [description]
+        :rtype: Set[str]
         """
         candidates = {
             column
@@ -165,19 +174,18 @@ class QueryOutputTransformer:
     def _determine_column_order(
         joined_frame: pd.DataFrame, join_columns: Set[str]
     ) -> List[str]:
-        """
-        Determines a rearrangement of the DataFrames column list
+        """Determines a rearrangement of the DataFrames column list
         grouping all source columns to the right and other information
         particularly the statistics values to the left.
 
-        Arguments:
-            joinded_frame DataFrame -- DataFrame with columns for all the
+        :param joined_frame: DataFrame with columns for all the
             statistics from the executed query
-            join_columns Set[str] -- The columns that where used for joining
+        :type joined_frame: pd.DataFrame
+        :param join_columns: The columns that where used for joining
             different statistics
-
-        Returns:
-            List[str] -- List of ordered columns
+        :type join_columns: Set[str]
+        :return: List of ordered columns
+        :rtype: List[str]
         """
         join_col_list = list(join_columns)
         value_columns = [col for col in joined_frame if "value" in col]
@@ -191,8 +199,8 @@ class QueryOutputTransformer:
     def transform(self) -> pd.DataFrame:
         """Transform the queries results into a Pandas DataFrame.
 
-        Returns:
-            DataFrame -- Returns a pandas DataFrame of the queries results.
+        :return: Returns a pandas DataFrame of the queries results.
+        :rtype: pd.DataFrame
         """
         output = self._convert_results_to_frame(self.query_response)
         return output
