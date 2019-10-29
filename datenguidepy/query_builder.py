@@ -157,7 +157,7 @@ class Field:
             # make copy, so original field id is not overwritten
             this_query_args = field.args
 
-            if (field.args.get("id", None) is not None) & (region_id is not None):
+            if ('id' in field.args) & (region_id is not None):
                 # set region id to given single id to not use list
                 this_query_args["id"] = region_id
 
