@@ -220,19 +220,17 @@ class Field:
         :return: None
         :rtype: None
         """
-        BOLD = "\033[1m"
-        NORMAL = "\033[0m"
 
-        kind: str = BOLD + "kind:" + NORMAL + "\n"
+        kind: str = _bold_font("kind:") + "\n"
         meta = QueryExecutioner().get_type_info(self.name)
         if meta is not None:
             kind += meta.kind
         else:
             kind += "None"
-        description = BOLD + "description:" + NORMAL + "\n" + str(self.description())
-        arguments = BOLD + "arguments:" + NORMAL + "\n" + str(self.arguments_info())
-        fields = BOLD + "fields:" + NORMAL + "\n" + str(self.fields_info())
-        enum_values = BOLD + "enum values:" + NORMAL + "\n" + str(self.enum_info())
+        description = _bold_font("description:") + "\n" + str(self.description())
+        arguments = _bold_font("arguments:") + "\n" + str(self.arguments_info())
+        fields = _bold_font("fields:") + "\n" + str(self.fields_info())
+        enum_values = _bold_font("enum values:") + "\n" + str(self.enum_info())
         print("\n\n".join([kind, description, arguments, fields, enum_values]))
 
     @staticmethod
@@ -251,7 +249,6 @@ class Field:
         arg_list = []
 
         for key, value in args.items():
-            args_field = Field(name=key, parent_field=self, return_type=value[3])
 
             temp_arg = UNDERLINE + key + NORMAL + ": " + str(value[0])
 
@@ -263,6 +260,7 @@ class Field:
 
             # get enum values
             if "ENUM" in value:
+                args_field = Field(name=key, parent_field=self, return_type=value[3])
                 enum_values = args_field.enum_info()
                 temp_arg += "\nenum values:\n" + str(enum_values)
             arg_list.append(temp_arg)
@@ -348,6 +346,12 @@ class Field:
                 for value in field.fields.values():
                     field_list.extend(Field._get_fields_helper(value))
         return field_list
+
+
+def _bold_font(text: str) -> str:
+    BOLD = "\033[1m"
+    NORMAL = "\033[0m"
+    return BOLD + text + NORMAL
 
 
 class Query:
