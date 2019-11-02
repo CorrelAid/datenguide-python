@@ -79,7 +79,7 @@ Within your python file or notebook:
 
 .. code-block:: python
 
-    query.add_field('BEV001')
+    field = query.add_field('BEV001')
 
 - How do I find the short name of the statistics? see below "Get information on fields and meta data"
 
@@ -88,15 +88,27 @@ Within your python file or notebook:
 
 .. code-block:: python
 
-    query.add_field('BEV001', args={year:'2017'})
+    field.add_args({'year': [2014, 2015]})
 
 **5. Add subfield**
     A set of default subfields are defined for all statistics (year, value, source). 
-    If additional fields shall be returned, they can be specified as a field argument.
+    If additional fields (columns in the results table) shall be returned, they can be specified as a field argument.
 
 .. code-block:: python
 
-    query.add_field('BEV001', field=['GES'])
+    field.add_field('GES') # Geschlecht
+
+    # by default the summed value for a field is returned. 
+    # E.g. if the field "Geschlecht" is added, the results table will show "None" in each row, 
+    # which means total value for women and man.
+    # To get disaggregated values, they speficically need to be passed as args. 
+    # If e.g. only values for women shall be returned, use:
+
+    field.add_args({'GES': 'GESW'})
+
+    # if all possible enum values shall be returned disaggregated, pass 'ALL':
+
+    field.add_args({'GES': 'ALL'})
 
 **6. Get results**
     Get the results as a Pandas DataFrame

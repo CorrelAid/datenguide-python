@@ -5,29 +5,29 @@ from datenguidepy.output_transformer import QueryOutputTransformer
 
 
 class Field:
-    """A field of a query that specifies a statistic or
-    (another information, e.g. source) to query.
+    """A field of a query that specifies a statistic
+    (or another information, e.g. source) to query.
     The name of the field (mostly statistic), the filters (specified with args)
     and the desired output information (fields)
     are specified.
 
-    :param name: Name of Field or statistic
+    :param name: Name of Field (statistic)
     :type name: str
-    :param field: desired output fields (e.g. value or year), defaults to []
-    :type field: list, optional
-    :param args: Filters for the desired field (e.g. year = 2017).
+    :param fields: desired output fields (e.g. year or NAT), defaults to []
+    :type fields: list, optional
+    :param args: Filters for the desired field (e.g. {'year': 2017}).
     If "ALL" is passed as a value, then results are returned for all possible subgroups.
-    (e.g. for gender GES = "ALL" three data entris are returned - for
+    (e.g. for gender 'GES': 'ALL' three data entries are returned - for
     male, female and summed for both.
     if the filter is not set, then only the summed result is returned.
-    Except for year: this is by default returned for each year.), defaults to {}
+    Except for year: this is by default returned for each year), defaults to {}
     :type args: dict, optional
     :param parent_field: The field this field is attached to, defaults to None
-    :type parent_field: class:`datenguidepy.Field`, optional
+    :type parent_field: Field, optional
     :param default_fields: Wether default fields should be attached or not,
     defaults to True
     :type default_fields: bool, optional
-    :param return_type: The graphQL return type of this field
+    :param return_type: The graphQL return type of this field, defaults to None
     :type return_type: str, optional
     """
 
@@ -100,7 +100,7 @@ class Field:
 
         :raises TypeError: If the added field is neither of type String nor Field.
         :return: the added field
-        :rtype: class:`datenguidepy.Field`
+        :rtype: Field
         """
         if default_fields is None:
             default_fields = self.default_fields
@@ -120,13 +120,13 @@ class Field:
         self.fields[field.name] = field
         return self.fields[field.name]
 
-    def drop_field(self, field: str):
+    def drop_field(self, field: str) -> "Field":
         """Drop an attached subfield of the field.
 
         :param field: The name of the field to be droped.
         :type field: str
         :return: The field without the subfield.
-        :rtype: class:`datenguidepy.Field`
+        :rtype: Field
         """
         if isinstance(field, str):
             self.fields.pop(field, None)
@@ -150,39 +150,31 @@ class Field:
     def _set_parent_field(self, parent_field):
         self.parent_field = parent_field
 
-    def _get_fields_to_query(
-        self, field: Union[str, "Field"], region_id: str = None
-    ) -> str:
-        substring = ""
-        if isinstance(field, str):
-            substring += field + " "
-        elif isinstance(field, Field):
-            substring += field.name + " "
+    def _get_fields_to_query(self, field: "Field", region_id: str = None) -> str:
+        substring = field.name + " "
 
-            if field.args:
-                # make copy, so original field id is not overwritten
-                this_query_args = field.args
+        if field.args:
+            # make copy, so original field id is not overwritten
+            this_query_args = field.args
 
-                if (field.args.get("id", None) is not None) & (region_id is not None):
-                    # set region id to given single id to not use list
-                    this_query_args["id"] = region_id
+            if ('id' in field.args) & (region_id is not None):
+                # set region id to given single id to not use list
+                this_query_args["id"] = region_id
 
-                filters = []
-                for key, value in this_query_args.items():
-                    if value == "ALL":
-                        filters.append("filter:{ " + key + ": { nin: []}}")
-                    else:
-                        # delete quotation marks for query arguments
-                        filters.append(key + ": " + str(value).replace("'", ""))
-                substring += "(" + ", ".join(filters) + ")"
+            filters = []
+            for key, value in this_query_args.items():
+                if value == "ALL":
+                    filters.append("filter:{ " + key + ": { nin: []}}")
+                else:
+                    # delete quotation marks for query arguments
+                    filters.append(key + ": " + str(value).replace("'", ""))
+            substring += "(" + ", ".join(filters) + ")"
 
-            if field.fields:
-                substring += "{"
-                for field_item in field.fields.values():
-                    substring += field._get_fields_to_query(field_item)
-                substring += "}"
-        else:
-            raise TypeError
+        if field.fields:
+            substring += "{"
+            for field_item in field.fields.values():
+                substring += field._get_fields_to_query(field_item)
+            substring += "}"
         return substring
 
     def get_fields(self) -> List[str]:
@@ -338,15 +330,12 @@ class Field:
             return None
 
     @staticmethod
-    def _get_fields_recursion(field: Union[str, "Field"]) -> List[str]:
+    def _get_fields_recursion(field: "Field") -> List[str]:
         field_list = []
-        if isinstance(field, str):
-            field_list.append(field)
-        else:
-            field_list.append(field.name)
-            if field.fields:
-                for value in field.fields.values():
-                    field_list.extend(Field._get_fields_recursion(value))
+        field_list.append(field.name)
+        if field.fields:
+            for value in field.fields.values():
+                field_list.extend(Field._get_fields_recursion(value))
         return field_list
 
 
@@ -537,21 +526,22 @@ class Query:
             region_field=regions,
         )
 
-    def add_field(self, field: Union[str, Field], default_fields=None) -> Field:
-        """Ad a field to the query.
+    def add_field(
+        self, field: Union[str, Field], default_fields: bool = None
+    ) -> "Field":
+        """Add a field to the query.
 
-        Arguments:
-            field -- Field to be added.
-            default_fields-- Wether default fields
-        should be attached or not.
-
-        Raises:
-            RuntimeError: If the allRegions Query has
+        :param field: Field to be added
+        :type field: Union[str, Field]
+        :param default_fields: Wether default fields
+        should be attached or not, defaults to None
+        :type default_fields: bool, optional
+        :raises RuntimeError: If the allRegions Query has
             no regions field a subfield can be attached to.
-
-        Returns:
-            Field -- The added field.
+        :return: The added field.
+        :rtype: Field
         """
+
         if default_fields is None:
             default_fields = self.start_field.default_fields
 
@@ -568,12 +558,14 @@ class Query:
     def drop_field(self, field: str) -> "Query":
         """Drop an attached field of the query.
 
-        Arguments:
-            field -- The name of the field to be droped.
-
-        Returns:
-            Query -- the query without the dropped field.
+        :param field: The name of the field to be droped
+        :type field: str
+        :raises RuntimeError: Raises Error if Query is
+        initialized without regions field.
+        :return: the query without the dropped field
+        :rtype: Query
         """
+
         if self.start_field.name == "allRegions":
             if self.region_field is not None:
                 self.region_field.drop_field(field)
@@ -589,8 +581,8 @@ class Query:
     def get_graphql_query(self) -> List[str]:
         """Formats the Query into a String that can be queried from the Datenguide API.
 
-        Returns:
-            List -- the Query as a String.
+        :return: the Query formatted for the GraphQL API as a List of query strings
+        :rtype: List[str]
         """
         if self.start_field.name == "allRegions":
             query_prefix = "query ($page : Int, $itemsPerPage : Int) "
@@ -624,8 +616,8 @@ class Query:
     def get_fields(self) -> List[str]:
         """Get all fields of a query.
 
-        Returns:
-            List -- a list field names.
+        :return: a list field names
+        :rtype: List[str]
         """
         return self.start_field.get_fields()
 
@@ -633,24 +625,20 @@ class Query:
         """Get all fields of a query including their
         return type.
 
-        Returns:
-            List[Tuple[Str,Str]] -- a list of tuples with
+        :return: a list of tuples with
             field names and their types.
+        :rtype: List[Tuple[str, str]]
         """
         return self.start_field._get_fields_with_types()
 
     def results(self) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
 
-        Raises:
-            RuntimeError: If the Query did not return any results.
-            E.g. if the Query was ill-formed.
-
-        Returns:
-            DataFrame --
-            A DataFrame with the queried data.
-            If the query fails raise RuntimeError.
+        :raises RuntimeError: If the query fails raise RuntimeError.
+        :return: A DataFrame with the queried data.
+        :rtype: DataFrame
         """
+
         result = QueryExecutioner().run_query(self)
         if result:
             # TODO: adapt QueryOutputTransformer to process list of results
@@ -661,15 +649,13 @@ class Query:
     def meta_data(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """Runs the query and returns a Dict with the meta data of the queries results.
 
-        Raises:
-            RuntimeError: If the Query did not return any results.
-            E.g. if the Query was ill-formed.
-
-        Returns:
-            Union[Dict[str, Any], List[Dict[str, Any]]] --
-            A Dict with the queried meta data.
+        :raises RuntimeError: If the Query did not return any results.
+        E.g. if the Query was ill-formed.
+        :return: A Dict with the queried meta data.
             If the query fails raise RuntimeError.
+        :rtype: Union[Dict[str, Any], List[Dict[str, Any]]]
         """
+
         result = QueryExecutioner().run_query(self)
         if result:
             # TODO: correct indexing?
@@ -683,13 +669,12 @@ class Query:
         If field is not specified return meta data for
         all statistics that can be queried.
 
-        Arguments:
-            field -- the field to get information on. If None,
+        :param field: the field to get information on. If None,
             then information on all possible fields of a query are
-            returned.
-
-        Returns:
-            Optional[TypeMetaData] -- Response from QueryExecutioner on meta data info
+            returned, defaults to None
+        :type field: str, optional
+        :return: Response from QueryExecutioner on meta data info
+        :rtype: Optional[TypeMetaData]
         """
         if field:
             return QueryExecutioner().get_type_info(field)
