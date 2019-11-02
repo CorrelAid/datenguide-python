@@ -1,7 +1,8 @@
 import pandas as pd
 from typing import Dict, List, Any, Set, Container, cast
 
-from datenguidepy.query_execution import ExecutionResults
+from datenguidepy.query_execution import ExecutionResults, StatMeta, EnumMeta, Meta
+import copy
 
 
 class QueryOutputTransformer:
@@ -188,11 +189,42 @@ class QueryOutputTransformer:
         ]
         return join_col_list + value_columns + remaining_cols
 
-    def transform(self) -> pd.DataFrame:
+    @staticmethod
+    def _make_verbose_statistic_names(output: pd.DataFrame, meta: Meta) -> pd.DataFrame:
+        descriptions = cast(StatMeta, meta["statistics"])
+        name_changes = {
+            statistic: f"{descriptions[statistic]} ({statistic})"
+            for statistic in descriptions
+        }
+        return output.rename(columns=name_changes)
+
+    @staticmethod
+    def _make_verbose_enum_values(output: pd.DataFrame, meta: Meta) -> pd.DataFrame:
+        enum_mappings = copy.deepcopy(cast(EnumMeta, meta["enums"]))
+        for enum in enum_mappings:
+            enum_mappings[enum][None] = "Gesamt"
+        return output.assign(
+            **{
+                col: lambda df: df[col].map(description_map)
+                for col, description_map in enum_mappings.items()
+            }
+        )
+
+    def transform(
+        self, verbose_statistic_names=False, verbose_enum_values=False
+    ) -> pd.DataFrame:
         """Transform the queries results into a Pandas DataFrame.
 
         Returns:
             DataFrame -- Returns a pandas DataFrame of the queries results.
         """
         output = self._convert_results_to_frame(self.query_response)
+        if verbose_statistic_names:
+            output = self._make_verbose_statistic_names(
+                output, self.query_response[0].meta_data
+            )
+        if verbose_enum_values:
+            output = self._make_verbose_enum_values(
+                output, self.query_response[0].meta_data
+            )
         return output

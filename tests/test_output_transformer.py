@@ -13,7 +13,18 @@ def query_result():
     return QueryExecutioner().run_query(query)
 
 
-def test_output_transformer(query_result):
+@pytest.fixture
+def query_results_with_enum():
+    q = Query.region("09", default_fields=False)
+    stat = q.add_field("WAHL09")
+    stat.add_args({"PART04": "ALL"})
+    stat.add_field("PART04")
+    stat.add_field("year")
+    stat.add_field("value")
+    return QueryExecutioner().run_query(q)
+
+
+def test_output_transformer_defaults(query_result):
 
     """ start test of output transformer """
     qOutTrans = QueryOutputTransformer(query_result)
@@ -26,8 +37,60 @@ def test_output_transformer(query_result):
     assert "id" in data_transformed.columns, "no id colum"
     assert "name" in data_transformed.columns, "no name colum"
     assert "year" in data_transformed.columns, "no year colum"
+    assert "BEVMK3" in data_transformed.columns, "statistic values are missing"
 
     # columns of outdata should not contain json format
     lenlist = len(data_transformed.columns)
     checklist = ["." in data_transformed.columns[x] for x in range(lenlist)]
-    assert True not in checklist, "hierarchy not properly transformed"
+    assert not any(checklist), "hierarchy not properly transformed"
+
+
+def test_output_transformer_format_options(query_result, query_results_with_enum):
+
+    qOutTrans = QueryOutputTransformer(query_result)
+    data_transformed = qOutTrans.transform(verbose_statistic_names=True)
+    assert (
+        "Von der Scheidung betroffene Kinder (BEVMK3)" in data_transformed.columns
+    ), "statistic values are missing"
+
+    enum_values = {
+        "AFD",
+        "B90_GRUENE",
+        "CDU",
+        "DIELINKE",
+        "FDP",
+        "SONSTIGE",
+        "SPD",
+        "GESAMT",
+        None,
+    }
+    enum_descriptions = {
+        "AfD",
+        "GRÜNE",
+        "CDU/CSU",
+        "DIE LINKE",
+        "FDP",
+        "Sonstige Parteien",
+        "SPD",
+        "Gesamt",
+    }
+
+    qOutTrans = QueryOutputTransformer(query_results_with_enum)
+    data_transformed = qOutTrans.transform()
+    print(set(data_transformed["PART04"]))
+    print(enum_values)
+    print(set(data_transformed["PART04"]).difference(enum_values))
+    assert set(data_transformed["PART04"]).issubset(enum_values)
+
+    qOutTrans = QueryOutputTransformer(query_results_with_enum)
+    data_transformed = qOutTrans.transform(verbose_enum_values=True)
+    print(set(data_transformed["PART04"]))
+    print(enum_descriptions)
+    print(set(data_transformed["PART04"]).difference(enum_descriptions))
+    assert set(data_transformed["PART04"]).issubset(enum_descriptions)
+
+    qOutTrans = QueryOutputTransformer(query_results_with_enum)
+    data_transformed = qOutTrans.transform(
+        verbose_enum_values=True, verbose_statistic_names=True
+    )
+    assert "Gültige Zweitstimmen (WAHL09)" in data_transformed
