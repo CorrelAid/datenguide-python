@@ -91,6 +91,15 @@ def test_QueryExecutionerWorkflow(query):
         meta_query1 == meta_query1_alternative
     ), "meta_data_query_alternatives_should be equal"
 
+    # Although he is satisfied with having access to the meta information
+    # already he would like to try the functionality where this information
+    # is used directly to get more verbose query results.
+
+    res_query1_verbose_cols = query.results(verbose_statistics=True)
+    assert (
+        "Von der Scheidung betroffene Kinder (BEVMK3)" in res_query1_verbose_cols
+    ), "verbose statistic name is not present"
+
     # Being satisfied with the results he obtained for his simple query
     # he actually wants to try a larger one across several regions. He heard
     # that this might be an issue for the server in general, but that the

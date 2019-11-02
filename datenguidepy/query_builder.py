@@ -616,10 +616,18 @@ class Query:
         """
         return self.start_field._get_fields_with_types()
 
-    def results(self) -> DataFrame:
+    def results(
+        self, verbose_statistics: bool = False, verbose_enums: bool = False
+    ) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
            It also fills the instance variable result_meta_data with meta
            data specific to the query instance.
+
+        Arguments:
+            verbose_statistics -- Toggles whether statistic column names
+            displayed with their short description in the result data frame
+            verbose_enums -- Toggles whether enum values are displayed
+            with their short description in the result data frame
 
         Raises:
             RuntimeError: If the Query did not return any results.
@@ -636,7 +644,10 @@ class Query:
             # that are generated internally for the Query instance
             # at hand yield the same meta data.
             self.result_meta_data = result[0].meta_data
-            return QueryOutputTransformer(result).transform()
+            return QueryOutputTransformer(result).transform(
+                verbose_statistic_names=verbose_statistics,
+                verbose_enum_values=verbose_enums,
+            )
         else:
             raise RuntimeError("No results could be returned for this Query.")
 
