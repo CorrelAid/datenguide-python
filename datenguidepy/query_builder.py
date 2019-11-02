@@ -195,7 +195,7 @@ class Field:
 
         field_list = [self.name]
         for value in self.fields.values():
-            field_list.extend(Field._get_fields_helper(value))
+            field_list.extend(Field._get_fields_recursion(value))
         return field_list
 
     def _get_fields_with_types(self) -> List[Tuple[str, str]]:
@@ -242,7 +242,7 @@ class Field:
             return None
         return base_function(value)
 
-    def _arguments_info_helper(self, meta_fields) -> Optional[str]:
+    def _arguments_info_formatter(self, meta_fields) -> Optional[str]:
         UNDERLINE = "\033[4m"
         NORMAL = "\033[0m"
         args = meta_fields[self.name].get_arguments()
@@ -250,20 +250,22 @@ class Field:
 
         for key, value in args.items():
 
-            temp_arg = UNDERLINE + key + NORMAL + ": " + str(value[0])
+            single_arg_string = UNDERLINE + key + NORMAL + ": " + str(value[0])
 
             # get type
             if value[0] == "LIST":
-                temp_arg += " of type " + str(value[2]) + "(" + str(value[3]) + ")"
+                single_arg_string += (
+                    " of type " + str(value[2]) + "(" + str(value[3]) + ")"
+                )
             else:
-                temp_arg += "(" + str(value[1]) + ")"
+                single_arg_string += "(" + str(value[1]) + ")"
 
             # get enum values
             if "ENUM" in value:
                 args_field = Field(name=key, parent_field=self, return_type=value[3])
                 enum_values = args_field.enum_info()
-                temp_arg += "\nenum values:\n" + str(enum_values)
-            arg_list.append(temp_arg)
+                single_arg_string += "\nenum values:\n" + str(enum_values)
+            arg_list.append(single_arg_string)
 
         return "\n\n".join(arg_list)
 
@@ -280,11 +282,11 @@ class Field:
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
-            return Field._no_none_values(self._arguments_info_helper, meta, "fields")
+            return Field._no_none_values(self._arguments_info_formatter, meta, "fields")
         else:
             return None
 
-    def _fields_info_helper(self, meta_fields) -> Optional[str]:
+    def _fields_info_formatter(self, meta_fields) -> Optional[str]:
         args_info = []
         for meta_field in meta_fields:
             args_info.append(meta_field + ": " + meta_fields[meta_field]["description"])
@@ -298,9 +300,9 @@ class Field:
         """
 
         meta = QueryExecutioner().get_type_info(self.name)
-        return Field._no_none_values(self._fields_info_helper, meta, "fields")
+        return Field._no_none_values(self._fields_info_formatter, meta, "fields")
 
-    def _enum_info_helper(self, enum_meta) -> Optional[str]:
+    def _enum_info_formatter(self, enum_meta) -> Optional[str]:
         enum_list = []
         for key, value in enum_meta.items():
             enum_list.append(key + ": " + value)
@@ -314,9 +316,9 @@ class Field:
         """
 
         meta = QueryExecutioner().get_type_info(self.return_type)
-        return Field._no_none_values(self._enum_info_helper, meta, "enum_values")
+        return Field._no_none_values(self._enum_info_formatter, meta, "enum_values")
 
-    def _description_helper(self, meta_fields) -> Optional[str]:
+    def _get_description(self, meta_fields) -> Optional[str]:
         return QueryExecutioner._extract_main_description(
             meta_fields[self.name]["description"]
         )
@@ -331,12 +333,12 @@ class Field:
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
-            return Field._no_none_values(self._description_helper, meta, "fields")
+            return Field._no_none_values(self._get_description, meta, "fields")
         else:
             return None
 
     @staticmethod
-    def _get_fields_helper(field: Union[str, "Field"]) -> List[str]:
+    def _get_fields_recursion(field: Union[str, "Field"]) -> List[str]:
         field_list = []
         if isinstance(field, str):
             field_list.append(field)
@@ -344,7 +346,7 @@ class Field:
             field_list.append(field.name)
             if field.fields:
                 for value in field.fields.values():
-                    field_list.extend(Field._get_fields_helper(value))
+                    field_list.extend(Field._get_fields_recursion(value))
         return field_list
 
 
