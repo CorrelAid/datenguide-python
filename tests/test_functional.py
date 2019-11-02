@@ -78,6 +78,7 @@ def test_QueryExecutionerWorkflow(query):
     # meta data related to his query
 
     meta_query1 = query.meta_data()
+    meta_query1_alternative = query.result_meta_data
 
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.
@@ -86,6 +87,9 @@ def test_QueryExecutionerWorkflow(query):
     assert (
         meta_query1["statistics"]["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
+    assert (
+        meta_query1 == meta_query1_alternative
+    ), "meta_data_query_alternatives_should be equal"
 
     # Being satisfied with the results he obtained for his simple query
     # he actually wants to try a larger one across several regions. He heard

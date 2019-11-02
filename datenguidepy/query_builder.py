@@ -1,6 +1,10 @@
 from typing import Optional, Union, List, Dict, Any, Tuple
 from pandas import DataFrame
-from datenguidepy.query_execution import QueryExecutioner, TypeMetaData
+from datenguidepy.query_execution import (
+    QueryExecutioner,
+    TypeMetaData,
+    QueryResultsMeta,
+)
 from datenguidepy.output_transformer import QueryOutputTransformer
 
 
@@ -387,6 +391,7 @@ class Query:
     ):
         self.start_field = start_field
         self.region_field = region_field
+        self.result_meta_data: Optional[QueryResultsMeta] = None
 
     @classmethod
     def region(
@@ -613,6 +618,8 @@ class Query:
 
     def results(self) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
+           It also fills the instance variable result_meta_data with meta
+           data specific to the query instance.
 
         Raises:
             RuntimeError: If the Query did not return any results.
@@ -625,12 +632,15 @@ class Query:
         """
         result = QueryExecutioner().run_query(self)
         if result:
-            # TODO: adapt QueryOutputTransformer to process list of results
+            # It is currently assumed that all graphql queries
+            # that are generated internally for the Query instance
+            # at hand yield the same meta data.
+            self.result_meta_data = result[0].meta_data
             return QueryOutputTransformer(result).transform()
         else:
             raise RuntimeError("No results could be returned for this Query.")
 
-    def meta_data(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    def meta_data(self) -> QueryResultsMeta:
         """Runs the query and returns a Dict with the meta data of the queries results.
 
         Raises:

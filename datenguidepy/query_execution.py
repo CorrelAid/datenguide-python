@@ -8,7 +8,7 @@ Json = Union[Json_Dict, Json_List]
 
 StatMeta = Dict[str, str]
 EnumMeta = Dict[str, Dict[Optional[str], str]]
-Meta = Dict[str, Union[StatMeta, EnumMeta]]
+QueryResultsMeta = Dict[str, Union[StatMeta, EnumMeta]]
 
 
 class ExecutionResults(NamedTuple):
@@ -16,7 +16,7 @@ class ExecutionResults(NamedTuple):
     """
 
     query_results: Json_List
-    meta_data: Meta
+    meta_data: QueryResultsMeta
 
 
 class TypeMetaData(NamedTuple):
@@ -173,7 +173,7 @@ class QueryExecutioner(object):
                 results = [single_result]
 
         if results:
-            meta: Meta = dict()
+            meta: QueryResultsMeta = dict()
             meta
             meta["statistics"] = self._get_query_stat_meta(query_fields_with_types)
             meta["enums"] = self._get_query_enum_meta(query_fields_with_types)

@@ -1,7 +1,12 @@
 import pandas as pd
 from typing import Dict, List, Any, Set, Container, cast
 
-from datenguidepy.query_execution import ExecutionResults, StatMeta, EnumMeta, Meta
+from datenguidepy.query_execution import (
+    ExecutionResults,
+    StatMeta,
+    EnumMeta,
+    QueryResultsMeta,
+)
 import copy
 
 
@@ -190,7 +195,9 @@ class QueryOutputTransformer:
         return join_col_list + value_columns + remaining_cols
 
     @staticmethod
-    def _make_verbose_statistic_names(output: pd.DataFrame, meta: Meta) -> pd.DataFrame:
+    def _make_verbose_statistic_names(
+        output: pd.DataFrame, meta: QueryResultsMeta
+    ) -> pd.DataFrame:
         descriptions = cast(StatMeta, meta["statistics"])
         name_changes = {
             statistic: f"{descriptions[statistic]} ({statistic})"
@@ -199,7 +206,9 @@ class QueryOutputTransformer:
         return output.rename(columns=name_changes)
 
     @staticmethod
-    def _make_verbose_enum_values(output: pd.DataFrame, meta: Meta) -> pd.DataFrame:
+    def _make_verbose_enum_values(
+        output: pd.DataFrame, meta: QueryResultsMeta
+    ) -> pd.DataFrame:
         enum_mappings = copy.deepcopy(cast(EnumMeta, meta["enums"]))
         for enum in enum_mappings:
             enum_mappings[enum][None] = "Gesamt"
