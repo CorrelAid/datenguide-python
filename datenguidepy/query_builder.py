@@ -187,7 +187,7 @@ class Field:
 
         field_list = [self.name]
         for value in self.fields.values():
-            field_list.extend(Field._get_fields_helper(value))
+            field_list.extend(Field._get_fields_recursion(value))
         return field_list
 
     def _get_fields_with_types(self) -> List[Tuple[str, str]]:
@@ -213,16 +213,16 @@ class Field:
         :rtype: None
         """
 
-        kind: str = "kind:\n"
+        kind: str = _bold_font("kind:") + "\n"
         meta = QueryExecutioner().get_type_info(self.name)
         if meta is not None:
             kind += meta.kind
         else:
             kind += "None"
-        description = "description:\n" + str(self.description())
-        arguments = "arguments:\n" + str(self.arguments_info())
-        fields = "fields:\n" + str(self.fields_info())
-        enum_values = "enum values:\n" + str(self.enum_info())
+        description = _bold_font("description:") + "\n" + str(self.description())
+        arguments = _bold_font("arguments:") + "\n" + str(self.arguments_info())
+        fields = _bold_font("fields:") + "\n" + str(self.fields_info())
+        enum_values = _bold_font("enum values:") + "\n" + str(self.enum_info())
         print("\n\n".join([kind, description, arguments, fields, enum_values]))
 
     @staticmethod
@@ -234,13 +234,32 @@ class Field:
             return None
         return base_function(value)
 
-    def _arguments_info_helper(self, meta_fields) -> Optional[str]:
+    def _arguments_info_formatter(self, meta_fields) -> Optional[str]:
+        UNDERLINE = "\033[4m"
+        NORMAL = "\033[0m"
         args = meta_fields[self.name].get_arguments()
         arg_list = []
+
         for key, value in args.items():
-            temp_arg = key + str(value)
-            arg_list.append(temp_arg)
-        return ", ".join(arg_list)
+
+            single_arg_string = UNDERLINE + key + NORMAL + ": " + str(value[0])
+
+            # get type
+            if value[0] == "LIST":
+                single_arg_string += (
+                    " of type " + str(value[2]) + "(" + str(value[3]) + ")"
+                )
+            else:
+                single_arg_string += "(" + str(value[1]) + ")"
+
+            # get enum values
+            if "ENUM" in value:
+                args_field = Field(name=key, parent_field=self, return_type=value[3])
+                enum_values = args_field.enum_info()
+                single_arg_string += "\nenum values:\n" + str(enum_values)
+            arg_list.append(single_arg_string)
+
+        return "\n\n".join(arg_list)
 
     def arguments_info(self) -> Optional[str]:
         """Get information on possible arguments for field. The name of the argument is
@@ -255,12 +274,15 @@ class Field:
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
-            return Field._no_none_values(self._arguments_info_helper, meta, "fields")
+            return Field._no_none_values(self._arguments_info_formatter, meta, "fields")
         else:
             return None
 
-    def _fields_info_helper(self, meta_fields) -> Optional[str]:
-        return ", ".join(meta_fields.keys())
+    def _fields_info_formatter(self, meta_fields) -> Optional[str]:
+        args_info = []
+        for meta_field in meta_fields:
+            args_info.append(meta_field + ": " + meta_fields[meta_field]["description"])
+        return "\n".join(args_info)
 
     def fields_info(self) -> Optional[str]:
         """Get information on possible fields for field.
@@ -270,13 +292,13 @@ class Field:
         """
 
         meta = QueryExecutioner().get_type_info(self.name)
-        return Field._no_none_values(self._fields_info_helper, meta, "fields")
+        return Field._no_none_values(self._fields_info_formatter, meta, "fields")
 
-    def _enum_info_helper(self, enum_meta) -> Optional[str]:
+    def _enum_info_formatter(self, enum_meta) -> Optional[str]:
         enum_list = []
         for key, value in enum_meta.items():
             enum_list.append(key + ": " + value)
-        return ", ".join(enum_list)
+        return "\n".join(enum_list)
 
     def enum_info(self) -> Optional[str]:
         """Get information on possible enum vaules for field.
@@ -285,10 +307,10 @@ class Field:
         :rtype: Optional[str]
         """
 
-        meta = QueryExecutioner().get_type_info(self.name)
-        return Field._no_none_values(self._enum_info_helper, meta, "enum_values")
+        meta = QueryExecutioner().get_type_info(self.return_type)
+        return Field._no_none_values(self._enum_info_formatter, meta, "enum_values")
 
-    def _description_helper(self, meta_fields) -> Optional[str]:
+    def _get_description(self, meta_fields) -> Optional[str]:
         return QueryExecutioner._extract_main_description(
             meta_fields[self.name]["description"]
         )
@@ -303,18 +325,24 @@ class Field:
         parent = self.parent_field
         if parent is not None:
             meta = QueryExecutioner().get_type_info(parent.return_type)
-            return Field._no_none_values(self._description_helper, meta, "fields")
+            return Field._no_none_values(self._get_description, meta, "fields")
         else:
             return None
 
     @staticmethod
-    def _get_fields_helper(field: "Field") -> List[str]:
+    def _get_fields_recursion(field: "Field") -> List[str]:
         field_list = []
         field_list.append(field.name)
         if field.fields:
             for value in field.fields.values():
-                field_list.extend(Field._get_fields_helper(value))
+                field_list.extend(Field._get_fields_recursion(value))
         return field_list
+
+
+def _bold_font(text: str) -> str:
+    BOLD = "\033[1m"
+    NORMAL = "\033[0m"
+    return BOLD + text + NORMAL
 
 
 class Query:
