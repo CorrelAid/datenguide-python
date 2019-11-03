@@ -38,6 +38,9 @@ def test_output_transformer_defaults(query_result):
     assert "name" in data_transformed.columns, "no name colum"
     assert "year" in data_transformed.columns, "no year colum"
     assert "BEVMK3" in data_transformed.columns, "statistic values are missing"
+    assert (
+        "BEVMK3_value" not in data_transformed.columns
+    ), "old statistics name still present"
 
     # columns of outdata should not contain json format
     lenlist = len(data_transformed.columns)
@@ -77,16 +80,10 @@ def test_output_transformer_format_options(query_result, query_results_with_enum
 
     qOutTrans = QueryOutputTransformer(query_results_with_enum)
     data_transformed = qOutTrans.transform()
-    print(set(data_transformed["PART04"]))
-    print(enum_values)
-    print(set(data_transformed["PART04"]).difference(enum_values))
     assert set(data_transformed["PART04"]).issubset(enum_values)
 
     qOutTrans = QueryOutputTransformer(query_results_with_enum)
     data_transformed = qOutTrans.transform(verbose_enum_values=True)
-    print(set(data_transformed["PART04"]))
-    print(enum_descriptions)
-    print(set(data_transformed["PART04"]).difference(enum_descriptions))
     assert set(data_transformed["PART04"]).issubset(enum_descriptions)
 
     qOutTrans = QueryOutputTransformer(query_results_with_enum)
