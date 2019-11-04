@@ -78,6 +78,7 @@ def test_QueryExecutionerWorkflow(query):
     # meta data related to his query
 
     meta_query1 = query.meta_data()
+    meta_query1_alternative = query.result_meta_data
 
     # In particular Ira would like to have a more human readable description
     # of the statistic he asked for.
@@ -86,6 +87,18 @@ def test_QueryExecutionerWorkflow(query):
     assert (
         meta_query1["statistics"]["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
+    assert (
+        meta_query1 == meta_query1_alternative
+    ), "meta_data_query_alternatives_should be equal"
+
+    # Although he is satisfied with having access to the meta information
+    # already he would like to try the functionality where this information
+    # is used directly to get more verbose query results.
+
+    res_query1_verbose_cols = query.results(verbose_statistics=True)
+    assert (
+        "Von der Scheidung betroffene Kinder (BEVMK3)" in res_query1_verbose_cols
+    ), "verbose statistic name is not present"
 
     # Being satisfied with the results he obtained for his simple query
     # he actually wants to try a larger one across several regions. He heard

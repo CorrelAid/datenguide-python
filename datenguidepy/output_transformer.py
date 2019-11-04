@@ -1,7 +1,13 @@
 import pandas as pd
 from typing import Dict, List, Any, Set, Container, cast
 
-from datenguidepy.query_execution import ExecutionResults
+from datenguidepy.query_execution import (
+    ExecutionResults,
+    StatMeta,
+    EnumMeta,
+    QueryResultsMeta,
+)
+import copy
 
 
 class QueryOutputTransformer:
@@ -36,17 +42,17 @@ class QueryOutputTransformer:
 
     @staticmethod
     def _convert_regions_to_frame(
-        query_page: Dict[str, Any], meta_data: Dict[str, str]
+        query_page: Dict[str, Any], meta_data: QueryResultsMeta
     ) -> pd.DataFrame:
         if "region" in query_page["data"]:
-            return QueryOutputTransformer.convert_single_results_to_frame(
+            return QueryOutputTransformer._convert_single_results_to_frame(
                 query_page["data"]["region"], meta_data
             )
         elif "allRegions" in query_page["data"]:
             allRegions = []
             for region in query_page["data"]["allRegions"]["regions"]:
                 allRegions.append(
-                    QueryOutputTransformer.convert_single_results_to_frame(
+                    QueryOutputTransformer._convert_single_results_to_frame(
                         region, meta_data
                     )
                 )
@@ -57,8 +63,8 @@ class QueryOutputTransformer:
             )
 
     @staticmethod
-    def convert_single_results_to_frame(
-        region_json: Dict[str, Any], meta: Dict[str, str]
+    def _convert_single_results_to_frame(
+        region_json: Dict[str, Any], meta: QueryResultsMeta
     ) -> pd.DataFrame:
         """[summary]
 
@@ -76,30 +82,48 @@ class QueryOutputTransformer:
             )
         statistic_frames = [
             QueryOutputTransformer._create_statistic_frame(region_json[stat])
-            for stat in cast(Dict[str, str], meta["statistics"]).keys()
+            for stat in cast(Dict[str, str], cast(StatMeta, meta["statistics"])).keys()
         ]
 
         joined_results, join_cols = QueryOutputTransformer._join_statistic_results(
-            statistic_frames, list(cast(Dict[str, str], meta["statistics"]).keys())
+            statistic_frames,
+            list(cast(Dict[str, str], cast(StatMeta, meta["statistics"])).keys()),
         )
         column_order = QueryOutputTransformer._determine_column_order(
             joined_results, join_cols
         )
-        general_fields = QueryOutputTransformer._get_general_fields(region_json, meta)
+        general_fields = QueryOutputTransformer._get_general_fields(
+            region_json, cast(StatMeta, meta["statistics"])
+        )
         for field in general_fields:
             joined_results[field] = region_json[field]
 
-        return joined_results[general_fields + column_order]
+        renamed_results = QueryOutputTransformer._rename_statistic_fields(
+            joined_results[general_fields + column_order],
+            cast(StatMeta, meta["statistics"]),
+        )
+
+        return renamed_results
 
     @staticmethod
     def _get_general_fields(
-        region_json: Dict[str, Any], meta: Dict[str, str]
+        region_json: Dict[str, Any], stat_meta: Dict[str, str]
     ) -> List[str]:
         return [
             field
             for field in region_json
-            if all(stat not in field for stat in meta.keys())
+            if all(stat not in field for stat in stat_meta.keys())
         ]
+
+    @staticmethod
+    def _rename_statistic_fields(
+        statistic_result: pd.DataFrame, stat_meta: Dict[str, str]
+    ) -> pd.DataFrame:
+        """
+        Renames STATISTIC_value columns into STATISTIC columns
+        """
+        rename_mapping = {f"{stat}_value": stat for stat in stat_meta}
+        return statistic_result.rename(columns=rename_mapping)
 
     @staticmethod
     def _create_statistic_frame(statistic_sub_json: Dict[str, Any]) -> pd.DataFrame:
@@ -196,11 +220,46 @@ class QueryOutputTransformer:
         ]
         return join_col_list + value_columns + remaining_cols
 
-    def transform(self) -> pd.DataFrame:
+    @staticmethod
+    def _make_verbose_statistic_names(
+        output: pd.DataFrame, meta: QueryResultsMeta
+    ) -> pd.DataFrame:
+        descriptions = cast(StatMeta, meta["statistics"])
+        name_changes = {
+            statistic: f"{descriptions[statistic]} ({statistic})"
+            for statistic in descriptions
+        }
+        return output.rename(columns=name_changes)
+
+    @staticmethod
+    def _make_verbose_enum_values(
+        output: pd.DataFrame, meta: QueryResultsMeta
+    ) -> pd.DataFrame:
+        enum_mappings = copy.deepcopy(cast(EnumMeta, meta["enums"]))
+        for enum in enum_mappings:
+            enum_mappings[enum][None] = "Gesamt"
+        return output.assign(
+            **{
+                col: lambda df: df[col].map(description_map)
+                for col, description_map in enum_mappings.items()
+            }
+        )
+
+    def transform(
+        self, verbose_statistic_names=False, verbose_enum_values=False
+    ) -> pd.DataFrame:
         """Transform the queries results into a Pandas DataFrame.
 
         :return: Returns a pandas DataFrame of the queries results.
         :rtype: pd.DataFrame
         """
         output = self._convert_results_to_frame(self.query_response)
+        if verbose_statistic_names:
+            output = self._make_verbose_statistic_names(
+                output, self.query_response[0].meta_data
+            )
+        if verbose_enum_values:
+            output = self._make_verbose_enum_values(
+                output, self.query_response[0].meta_data
+            )
         return output

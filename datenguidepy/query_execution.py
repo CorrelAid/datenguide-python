@@ -6,13 +6,17 @@ Json_Dict = Dict[str, Any]
 Json_List = List[Json_Dict]
 Json = Union[Json_Dict, Json_List]
 
+StatMeta = Dict[str, str]
+EnumMeta = Dict[str, Dict[Optional[str], str]]
+QueryResultsMeta = Dict[str, Union[StatMeta, EnumMeta]]
+
 
 class ExecutionResults(NamedTuple):
     """Results of a query with the results itself and the according meta data.
     """
 
     query_results: Json_List
-    meta_data: Json
+    meta_data: QueryResultsMeta
 
 
 class TypeMetaData(NamedTuple):
@@ -170,7 +174,7 @@ class QueryExecutioner(object):
                 results = [single_result]
 
         if results:
-            meta: Json_Dict = dict()
+            meta: QueryResultsMeta = dict()
             meta
             meta["statistics"] = self._get_query_stat_meta(query_fields_with_types)
             meta["enums"] = self._get_query_enum_meta(query_fields_with_types)
@@ -182,7 +186,7 @@ class QueryExecutioner(object):
 
     def _get_query_stat_meta(
         self, query_fields_with_types: List[Tuple[str, str]]
-    ) -> Dict[str, str]:
+    ) -> StatMeta:
         # Region type contains all the statistics fields
         query_fields = [
             field_with_type[0] for field_with_type in query_fields_with_types
@@ -201,15 +205,15 @@ class QueryExecutioner(object):
 
     def _get_query_enum_meta(
         self, query_fields_with_types: List[Tuple[str, str]]
-    ) -> Union[Dict[str, str], Dict[str, Dict[str, str]]]:
-        enum_meta: Dict[str, Dict[str, str]] = {}
+    ) -> EnumMeta:
+        enum_meta: EnumMeta = {}
         for field, field_type in query_fields_with_types:
             type_info = self.get_type_info(field_type)
             if type_info is None:
-                return {"error": "ENUM META DATA COULD NOT BE LOADED"}
+                enum_meta[field] = {"error": "ENUM META DATA COULD NOT BE LOADED"}
             if cast(TypeMetaData, type_info).kind == "ENUM":
                 enum_meta[field] = cast(
-                    Dict[str, str], cast(TypeMetaData, type_info).enum_values
+                    Dict[Optional[str], str], cast(TypeMetaData, type_info).enum_values
                 )
         return enum_meta
 

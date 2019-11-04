@@ -1,6 +1,10 @@
 from typing import Optional, Union, List, Dict, Any, Tuple
 from pandas import DataFrame
-from datenguidepy.query_execution import QueryExecutioner, TypeMetaData
+from datenguidepy.query_execution import (
+    QueryExecutioner,
+    TypeMetaData,
+    QueryResultsMeta,
+)
 from datenguidepy.output_transformer import QueryOutputTransformer
 
 
@@ -404,6 +408,7 @@ class Query:
     ):
         self.start_field = start_field
         self.region_field = region_field
+        self.result_meta_data: Optional[QueryResultsMeta] = None
 
     @classmethod
     def region(
@@ -631,8 +636,18 @@ class Query:
         """
         return self.start_field._get_fields_with_types()
 
-    def results(self) -> DataFrame:
+    def results(
+        self, verbose_statistics: bool = False, verbose_enums: bool = False
+    ) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
+           It also fills the instance variable result_meta_data with meta
+           data specific to the query instance.
+
+        Arguments:
+            verbose_statistics -- Toggles whether statistic column names
+            displayed with their short description in the result data frame
+            verbose_enums -- Toggles whether enum values are displayed
+            with their short description in the result data frame
 
         :raises RuntimeError: If the query fails raise RuntimeError.
         :return: A DataFrame with the queried data.
@@ -641,12 +656,18 @@ class Query:
 
         result = QueryExecutioner().run_query(self)
         if result:
-            # TODO: adapt QueryOutputTransformer to process list of results
-            return QueryOutputTransformer(result).transform()
+            # It is currently assumed that all graphql queries
+            # that are generated internally for the Query instance
+            # at hand yield the same meta data.
+            self.result_meta_data = result[0].meta_data
+            return QueryOutputTransformer(result).transform(
+                verbose_statistic_names=verbose_statistics,
+                verbose_enum_values=verbose_enums,
+            )
         else:
             raise RuntimeError("No results could be returned for this Query.")
 
-    def meta_data(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    def meta_data(self) -> QueryResultsMeta:
         """Runs the query and returns a Dict with the meta data of the queries results.
 
         :raises RuntimeError: If the Query did not return any results.
