@@ -1,0 +1,16 @@
+TOPIC: Economy
+- Bruttoinlandsprodukt (BIP802)
+- Verarbeitendes Gewerbe Betriebe (BETR01)
+- Verarbeitendes Gewerbe Umsatz (UMS002)
+- Bevölkerungsstand (BEVSTD)
+- Beschäftigte (ERW012)
+- Arbeitslose (ERWP06)
+
+TOPIC: Demographic Development
+- Bevölkerungsstand (BEVSTD)
+- Lebendgeborene (BEV001)
+- Gestorbene (BEV002)
+- Eheschließungen (BEV003)
+- Ehescheidungen (BEV004)
+- Zuzüge, Wanderungen über die Kreisgrenzen (BEV085)
+- Fortzüge, Wanderungen über die Kreisgrenzen (BEV086)
