@@ -69,7 +69,7 @@ Within your python file or notebook:
 
 .. code-block:: python
 
-   query_allregions = Query.allRegions(parent='01')
+   query_allregions = Query.all_regions(parent='01')
 
 - How to get IDs for regions? see below "Get information on fields and meta data"
 
