@@ -11,7 +11,7 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = ["pandas", "requests"]
+requirements = ["pandas>=0.25.0", "requests"]
 
 setup_requirements = ["pytest-runner"]
 
@@ -19,7 +19,7 @@ test_requirements = ["pytest"]
 
 setup(
     name="datenguidepy",
-    version="0.1.1",
+    version="0.1.2",
     packages=find_packages(include=["datenguidepy"]),
     author="CorrelAid",
     author_email="packages@correlaid.org",

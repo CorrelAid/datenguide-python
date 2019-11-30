@@ -6,13 +6,17 @@ Json_Dict = Dict[str, Any]
 Json_List = List[Json_Dict]
 Json = Union[Json_Dict, Json_List]
 
+StatMeta = Dict[str, str]
+EnumMeta = Dict[str, Dict[Optional[str], str]]
+QueryResultsMeta = Dict[str, Union[StatMeta, EnumMeta]]
+
 
 class ExecutionResults(NamedTuple):
     """Results of a query with the results itself and the according meta data.
     """
 
     query_results: Json_List
-    meta_data: Json
+    meta_data: QueryResultsMeta
 
 
 class TypeMetaData(NamedTuple):
@@ -29,10 +33,10 @@ class FieldMetaDict(dict):
     """
 
     def get_return_type(self) -> str:
-        """[summary]
+        """Returns the return type of the field of the FieldMetaDict.
 
-        Returns:
-            str -- [description]
+        :return: The return type of the field.
+        :rtype: str
         """
         if self["type"]["kind"] == "LIST":
             return self["type"]["ofType"]["name"]
@@ -42,8 +46,8 @@ class FieldMetaDict(dict):
     def get_arguments(self) -> Dict[str, Tuple[Optional[str], ...]]:
         """[summary]
 
-        Returns:
-            Dict[str, Tuple[Optional[str], ...]] -- [description]
+        :return: [description]
+        :rtype: Dict[str, Tuple[Optional[str], ...]]
         """
 
         def get_type_of(
@@ -68,10 +72,12 @@ class FieldMetaDict(dict):
 
 
 class QueryExecutioner(object):
-    """[description]
+    """Queries the Datenguide API for data and meta data.
 
-    Arguments:
-        alternative_endpoint -- [description]
+    :param alternative_endpoint: [description], defaults to None
+    :type alternative_endpoint: Optional[str], optional
+    :return: [description]
+    :rtype: None
     """
 
     REQUEST_HEADER: Dict[str, str] = {"Content-Type": "application/json"}
@@ -126,14 +132,13 @@ class QueryExecutioner(object):
     def run_query(self, query) -> Optional[List[ExecutionResults]]:
         """[summary]
 
-        Arguments:
-            query -- [description]
-
-        Returns:
-            Optional[List[ExecutionResults]] -- [description]
+        :param query: [description]
+        :type query: [type]
+        :return: [description]
+        :rtype: Optional[List[ExecutionResults]]
         """
         all_results = [
-            self._run_single_query_json(query_json, query.get_fields())
+            self._run_single_query_json(query_json, query._get_fields_with_types())
             for query_json in self._generate_post_json(query)
         ]
         if not any(map(lambda r: r is None, all_results)):
@@ -142,9 +147,11 @@ class QueryExecutioner(object):
             return None
 
     def _run_single_query_json(
-        self, query_json: Json_Dict, query_fields: List[str]
+        self, query_json: Json_Dict, query_fields_with_types: List[Tuple[str, str]]
     ) -> Optional[ExecutionResults]:
-        if "allRegions" in query_fields:
+        if "allRegions" in [
+            field_with_types[0] for field_with_types in query_fields_with_types
+        ]:
             results = []
             page = 0
             while True:
@@ -167,36 +174,63 @@ class QueryExecutioner(object):
                 results = [single_result]
 
         if results:
-            # Region type contains all the statistics fields
-            stat_descriptions = self.get_stat_descriptions()
-            if stat_descriptions is not None:
-                meta = {
-                    stat: stat_descriptions[stat][0]
-                    for stat in stat_descriptions
-                    if stat in query_fields
-                }
-            else:
-                meta = {"error": "META DATA COULD NOT BE LOADED"}
-            # wrong casting as the result is a list of Json
+            meta: QueryResultsMeta = dict()
+            meta
+            meta["statistics"] = self._get_query_stat_meta(query_fields_with_types)
+            meta["enums"] = self._get_query_enum_meta(query_fields_with_types)
             return ExecutionResults(
                 query_results=cast(Json_List, results), meta_data=meta
             )
         else:
             return None
 
+    def _get_query_stat_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> StatMeta:
+        # Region type contains all the statistics fields
+        query_fields = [
+            field_with_type[0] for field_with_type in query_fields_with_types
+        ]
+        stat_descriptions = self.get_stat_descriptions()
+        if stat_descriptions is not None:
+            stat_meta = {
+                stat: stat_descriptions[stat][0]
+                for stat in stat_descriptions
+                if stat in query_fields
+            }
+        else:
+            stat_meta = {"error": "STAT META DATA COULD NOT BE LOADED"}
+            # wrong casting as the result is a list of Json
+        return stat_meta
+
+    def _get_query_enum_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> EnumMeta:
+        enum_meta: EnumMeta = {}
+        for field, field_type in query_fields_with_types:
+            type_info = self.get_type_info(field_type)
+            if type_info is None:
+                enum_meta[field] = {"error": "ENUM META DATA COULD NOT BE LOADED"}
+            if cast(TypeMetaData, type_info).kind == "ENUM":
+                enum_meta[field] = cast(
+                    Dict[Optional[str], str], cast(TypeMetaData, type_info).enum_values
+                )
+        return enum_meta
+
     def get_type_info(
         self, graph_ql_type: str, verbose=False
     ) -> Optional[TypeMetaData]:
         """Returns a json which at top level is a dict with all the
-                fields of the type
+        fields of the type
 
-        Arguments:
-            graph_ql_type -- [description]
-            verbose -- [description]
-
-        Returns:
-            Optional[TypeMetaData] -- [description]
+        :param graph_ql_type: [description]
+        :type graph_ql_type: str
+        :param verbose: [description], defaults to False
+        :type verbose: bool, optional
+        :return: [description]
+        :rtype: Optional[TypeMetaData]
         """
+
         if graph_ql_type in self.__class__._META_DATA_CACHE:
             if verbose:
                 print("use cache")
@@ -271,8 +305,8 @@ class QueryExecutioner(object):
     def get_stat_descriptions(self):
         """[summary]
 
-        Returns:
-            TYPE -- [description]
+        :return: [description]
+        :rtype: [type]
         """
         stat_meta = self.get_type_info("Region")
         if stat_meta:

@@ -8,9 +8,8 @@ Datenguide Python
 .. image:: https://img.shields.io/travis/CorrelAid/datenguide-python.svg
         :target: https://travis-ci.org/CorrelAid/datenguide-python
 
-.. image:: https://readthedocs.org/projects/datenguide-python/badge/?version=latest
-        :target: https://datenguide-python.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
+.. image:: https://readthedocs.org/projects/datenguidepy/badge/?version=latest
+        :target: https://datenguidepy.readthedocs.io/en/latest/readme/#quick-start
 
 
 
@@ -19,7 +18,7 @@ It does so by providing a wrapper for the `GraphQL API of the Datenguide project
 
 
 * Free software: MIT license
-* Documentation: https://datenguide-python.readthedocs.io.
+* Documentation:  https://datenguidepy.readthedocs.io/
 
 
 Features
@@ -36,69 +35,135 @@ Features
   further analysis.
 
 Quick Start
---------
+-----------
 
 ============
 Install
 ============
-  To use the package install the package (command line): 
+To use the package install the package (command line): 
 
-``pip install datenguidepy``
+.. code-block:: python
+
+   pip install datenguidepy
 
 ============
 Setup query
 ============
-    Within your python file or notebook:
+Within your python file or notebook:
 
-1. **Import the package**
+**1. Import the package**
 
-``from datenguidepy.query_builder import Query``
+.. code-block:: python
 
-2. **Creating a query**
+    from datenguidepy import Query
+
+**2. Creating a query**
 
 - either for single regions
-``query = Query.region('01')``
 
-- or for all subregions a region (e.g. all Kommunen in a Bundeland)``
+.. code-block:: python
 
-``query_allregions = Query.allRegions(parent='01')``
+    query = Query.region('01')
 
-3. **Add statistics (fields)**
-    Add statistics you want to get data on
-    (How do I find the short name of the statistics?(LINK))
+- or for all subregions a region (e.g. all Kommunen in a Bundesland)
 
-``query.add_field('BEV001')``
+.. code-block:: python
 
-4. **Add filters**
+   query_allregions = Query.allRegions(parent='01')
+
+- How to get IDs for regions? see below "Get information on fields and meta data"
+
+**3. Add statistics (fields)**
+
+- Add statistics you want to get data on
+
+.. code-block:: python
+
+    field = query.add_field('BEV001')
+
+- How do I find the short name of the statistics? see below "Get information on fields and meta data"
+
+**4. Add filters**
     A field can also be added with filters. E.g. you can specify, that only data from a specific year     shall    be returned.
 
-``query.add_field('BEV001', args={year:'2017'})``
+.. code-block:: python
 
-5. **Add subfield**
+    field.add_args({'year': [2014, 2015]})
+
+**5. Add subfield**
     A set of default subfields are defined for all statistics (year, value, source). 
-    If additional fields shall be returned, they can be specified as a field argument.
+    If additional fields (columns in the results table) shall be returned, they can be specified as a field argument.
 
-``query.add_field('BEV001', field=['GES'])``
+.. code-block:: python
 
-6. **Get results**
+    field.add_field('GES') # Geschlecht
+
+    # by default the summed value for a field is returned. 
+    # E.g. if the field "Geschlecht" is added, the results table will show "None" in each row, 
+    # which means total value for women and man.
+    # To get disaggregated values, they speficically need to be passed as args. 
+    # If e.g. only values for women shall be returned, use:
+
+    field.add_args({'GES': 'GESW'})
+
+    # if all possible enum values shall be returned disaggregated, pass 'ALL':
+
+    field.add_args({'GES': 'ALL'})
+
+**6. Get results**
     Get the results as a Pandas DataFrame
 
-``df = query.results()``
+.. code-block:: python
+
+    df = query.results()
 
 
-============
+=======================================
 Get information on fields and meta data
-============
+=======================================
 
-*TODO*
+**Get information on region ids**
 
-============
+.. code-block:: python
+
+    from datenguidepy import get_all_regions
+
+    get_all_regions()
+
+Use pandas *query()* functionality to get specific regions. E.g., if you want to get all IDs on "Bundeländer" use.
+For more information on "nuts" levels see Wikipedia_.
+
+.. code-block:: python
+
+    get_all_regions().query("level == 'nuts1'")
+
+
+
+**Get information on statistic shortnames**
+
+.. code-block:: python
+
+    from datenguidepy import get_statistics
+
+    get_statistics()
+
+**Get information on single fields**
+
+You can further information about description, possible arguments, fields and enum values on a field you added to a query.
+
+.. code-block:: python
+
+    query = Query.region("01")
+    field = query.add_field("BEV001")
+    field.get_info()
+
+===================
 Further information
-============
+===================
 
-  For detailed examples see the notebooks in the use_case folder.
+For detailed examples see the notebooks within the use_case_ folder.
 
-  For a detailed documentation of all statistics and fields see the _Datenguide API.
+For a detailed documentation of all statistics and fields see the Datenguide API.
 
 
 
@@ -117,4 +182,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _Datenguide: https://datengui.de/
 .. _`GraphQL API of the Datenguide project`: https://github.com/datenguide/datenguide-api
 .. _`regional statistics`: https://www.regionalstatistik.de/genesis/online/logon
+.. _use_case: https://github.com/CorrelAid/datenguide-python/tree/master/use_case
 .. _`credited according to the "Datenlizenz Deutschland – Namensnennung – Version 2.0"`: https://www.regionalstatistik.de/genesis/online;sid=C636A83329D19AF20E3A4F9E767576A9.reg2?Menu=Impressum
+.. _Wikipedia: https://de.wikipedia.org/wiki/NUTS:DE#Liste_der_NUTS-Regionen_in_Deutschland_(NUTS_2016)
