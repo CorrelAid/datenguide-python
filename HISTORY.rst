@@ -11,3 +11,8 @@ History
 ------------------
 
 * Cleanup of the first release regarding naming, authors and docs.
+
+0.2.0 (2019-11-30)
+------------------
+
+* Added functionality to use meta data for displaying descriptive statistics names and enum values

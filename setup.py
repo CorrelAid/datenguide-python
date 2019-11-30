@@ -19,7 +19,7 @@ test_requirements = ["pytest"]
 
 setup(
     name="datenguidepy",
-    version="0.1.2",
+    version="0.2.0",
     packages=find_packages(include=["datenguidepy"]),
     author="CorrelAid",
     author_email="packages@correlaid.org",
