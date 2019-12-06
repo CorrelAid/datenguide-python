@@ -70,7 +70,7 @@ def test_QueryExecutionerWorkflow(query):
         type(res_query1) is pd.DataFrame
     ), "query results are not a python json representation"
 
-    stats = Query.get_info()
+    stats = query.get_info()
 
     # Ira remembers that he read about the executioners functionality to
     # return metadata along with the query results. So he wants to check
@@ -97,7 +97,9 @@ def test_QueryExecutionerWorkflow(query):
 
     res_query1_verbose_cols = query.results(verbose_statistics=True)
     assert (
-        "Von der Scheidung betroffene Kinder (BEVMK3)" in res_query1_verbose_cols
+        # "Von der Scheidung betroffene Kinder (BEVMK3)" in res_query1_verbose_cols
+        "BEVMK3 (BEVMK3)"
+        in res_query1_verbose_cols
     ), "verbose statistic name is not present"
 
     # Being satisfied with the results he obtained for his simple query
@@ -117,7 +119,7 @@ def test_QueryExecutionerWorkflow(query):
     # one of the arguments is an ENUM and he would like to know
     # the possible values that he can use for it.
 
-    enum_vals = Query.get_info("BEVMK3Statistics").enum_values
+    enum_vals = query.get_info("BEVMK3Statistics").enum_values
     assert type(enum_vals) == dict, "Enum values should be dict"
     assert len(enum_vals) > 0, "Enums should have values"
 
@@ -138,7 +140,7 @@ def test_QueryExecutionerWorkflow(query):
     assert "OBJECT" in stats_info, "BEV001 should be an object"
 
 
-def test_queryHelper():
+def test_query_helper():
     # Ira is happy with the functionality so far but is worried a bit
     # about the difficuilty of finding the right technichal ids for regions
     # and statistics.

@@ -1,4 +1,9 @@
-from datenguidepy.query_execution import QueryExecutioner, FieldMetaDict, TypeMetaData
+from datenguidepy.query_execution import (
+    QueryExecutioner,
+    FieldMetaDict,
+    TypeMetaData,
+    GraphQlMetaDataProvider,
+)
 from datenguidepy.output_transformer import QueryOutputTransformer
 from datenguidepy.query_helper import get_statistics, get_all_regions, federal_states
 
@@ -25,7 +30,15 @@ def sample_queries():
     }
     """
     ]
-    q1.get_fileds.return_value = ["region", "id", "name", "BEVMK3", "value", "year"]
+    q1.get_fields.return_value = ["region", "id", "name", "BEVMK3", "value", "year"]
+    q1._get_fields_with_types.return_value = [
+        ("region", "Region"),
+        ("id", "String"),
+        ("name", "String"),
+        ("BEVMK3", "BEVMK3"),
+        ("value", "Float"),
+        ("year", "Int"),
+    ]
 
     mq1 = Mock()
     mq1.get_graphql_query.return_value = """
@@ -160,7 +173,7 @@ def stat_description():
 
 
 def test_filter_stat_metatdata(sample_stat_meta_response):
-    processed_stat_meta = QueryExecutioner._process_stat_meta_data(
+    processed_stat_meta = GraphQlMetaDataProvider._process_stat_meta_data(
         sample_stat_meta_response
     )
     assert all(
@@ -185,14 +198,16 @@ def test_generate_post_json(sample_queries):
 
 
 def test_extract_stat_desc(stat_description):
-    extracted_text = QueryExecutioner._extract_main_description(stat_description[0])
+    extracted_text = GraphQlMetaDataProvider._extract_main_description(
+        stat_description[0]
+    )
     assert (
         extracted_text == stat_description[1]
     ), "extracted text does not match bold part"
 
 
 def test_create_stat_desc_dic(sample_stat_meta_response):
-    desc_dict = QueryExecutioner._create_stat_desc_dic(sample_stat_meta_response)
+    desc_dict = GraphQlMetaDataProvider._create_stat_desc_dic(sample_stat_meta_response)
     assert desc_dict["AENW01"][0] == "Description 1", "first dict entry is wrong"
     assert (
         desc_dict["AENW02"][0] == "NO DESCRIPTION FOUND"
@@ -209,66 +224,71 @@ def test_get_args(sample_stat_meta_response):
 
 def test_get_type_info_caches_results(type_request_response):
     req_mock, expected_result = type_request_response
-    qe = QueryExecutioner()
-    qe._send_request = req_mock
-    qe.__class__._META_DATA_CACHE = dict()  # clear cache
+    mdp = GraphQlMetaDataProvider()
+    mdp._send_request = req_mock
+    mdp.__class__._META_DATA_CACHE = dict()  # clear cache
     assert (
-        "BEVMK3Statistics" not in qe.__class__._META_DATA_CACHE
+        "BEVMK3Statistics" not in mdp.__class__._META_DATA_CACHE
     ), "statistics should not be in cache"
-    res = qe.get_type_info("BEVMK3Statistics")
+    res = mdp.get_type_info("BEVMK3Statistics")
     assert res == expected_result, "incorrect response processing"
-    qe._send_request.assert_called_once()
-    assert "BEVMK3Statistics" in qe.__class__._META_DATA_CACHE
+    mdp._send_request.assert_called_once()
+    assert "BEVMK3Statistics" in mdp.__class__._META_DATA_CACHE
     assert (
-        qe.__class__._META_DATA_CACHE["BEVMK3Statistics"] == expected_result
+        mdp.__class__._META_DATA_CACHE["BEVMK3Statistics"] == expected_result
     ), "cache results are wrong"
 
 
-def test_get_type_info_uses_cached_resutls(type_request_response):
+def test_get_type_info_uses_cached_results(type_request_response):
     req_mock, expected_result = type_request_response
-    qe = QueryExecutioner()
-    qe._send_request = req_mock
-    qe.__class__._META_DATA_CACHE = {"BEVMK3Statistics": expected_result}
-    res = qe.get_type_info("BEVMK3Statistics")
+    mdp = GraphQlMetaDataProvider()
+    mdp._send_request = req_mock
+    mdp.__class__._META_DATA_CACHE = {"BEVMK3Statistics": expected_result}
+    res = mdp.get_type_info("BEVMK3Statistics")
     assert res == expected_result
-    qe._send_request.assert_not_called()
+    mdp._send_request.assert_not_called()
 
-    def test_QueryExecutionerWorkflow(sample_queries):
-        qExec = QueryExecutioner()
 
-        assert (
-            qExec.endpoint == "https://api-next.datengui.de/graphql"
-        ), "Default endpoint is wrong"
+def test_query_executioner_workflow(sample_queries):
+    qExec = QueryExecutioner()
 
-        res_query1 = qExec.run_query(sample_queries.data_query1)
-        assert res_query1 is not None, "query did not return results"
+    assert (
+        qExec.endpoint == "https://api-next.datengui.de/graphql"
+    ), "Default endpoint is wrong"
 
-        assert len(res_query1.query_results) > 0, "query did not return results"
-        assert (
-            type(res_query1.query_results) is dict
-        ), "query results are not a python json representation"
+    res_query1 = qExec.run_query(sample_queries.data_query1)
+    assert res_query1 is not None, "query did not return results"
 
-        assert type(res_query1.meta_data) == dict, "meta data not a dict"
-        assert len(res_query1.meta_data) > 0, "meta data absent"
-        assert len(res_query1.meta_data) == 1, "too much meta data"
+    assert len(res_query1[0].query_results) > 0, "query did not return results"
+    assert (
+        type(res_query1[0].query_results[0]) is dict
+    ), "query results are not a python json representation"
 
-        assert "BEVMK3" in res_query1.meta_data, "statistic absend"
-        assert (
-            res_query1.meta_data["BEVMK3"] != "NO DESCRIPTION FOUND"
-        ), "descrption was not obtained"
+    assert type(res_query1[0].meta_data) == dict, "meta data not a dict"
+    assert "enums" in (res_query1[0].meta_data), "enums missing from meta data"
+    assert "statistics" in (
+        res_query1[0].meta_data
+    ), "statistics missing fomr meta data"
+    assert len(res_query1[0].meta_data["statistics"]) > 0, "stats meta data absent"
+    assert len(res_query1[0].meta_data["statistics"]) == 1, "too much stats meta data"
 
-        info = qExec.get_type_info("Region")
-        assert info.kind == "OBJECT", "Region should be an object"
-        assert info.enum_values is None, "Region doesn't have enum values"
-        assert type(info.fields) == dict, "Fields should be a dict"
+    assert "BEVMK3" in res_query1[0].meta_data["statistics"], "statistic absent"
+    assert (
+        res_query1[0].meta_data["statistics"]["BEVMK3"] != "NO DESCRIPTION FOUND"
+    ), "descrption was not obtained"
 
-        stat_args = info.fields["BEVMK3"].get_arguments()
-        assert len(stat_args) > 0
-        assert "statistics" in stat_args
+    info = qExec.get_type_info("Region")
+    assert info.kind == "OBJECT", "Region should be an object"
+    assert info.enum_values is None, "Region doesn't have enum values"
+    assert type(info.fields) == dict, "Fields should be a dict"
 
-        enum_vals = qExec.get_type_info("BEVMK3Statistics").enum_values
-        assert type(enum_vals) == dict, "Enum values should be dict"
-        assert len(enum_vals) > 0, "Enums should have values"
+    stat_args = info.fields["BEVMK3"].get_arguments()
+    assert len(stat_args) > 0
+    assert "statistics" in stat_args
+
+    enum_vals = qExec.get_type_info("BEVMK3Statistics").enum_values
+    assert type(enum_vals) == dict, "Enum values should be dict"
+    assert len(enum_vals) > 0, "Enums should have values"
 
 
 def test_federal_states():
@@ -388,8 +408,9 @@ def test_get_query_specific_stat_meta():
         ("year", "Int"),
         ("value", "Float"),
     ]
-    query_stat_meta = QueryExecutioner()._get_query_stat_meta(field_type_list)
-    expected_stat_meta = {"WAHL09": "Gültige Zweitstimmen"}
+    query_stat_meta = GraphQlMetaDataProvider()._get_query_stat_meta(field_type_list)
+    # "Gültige Zweitstimmen" uninformative due to API changes
+    expected_stat_meta = {"WAHL09": "WAHL09"}
     assert query_stat_meta == expected_stat_meta
 
 
@@ -402,7 +423,7 @@ def test_get_query_specific_enum_meta():
         ("year", "Int"),
         ("value", "Float"),
     ]
-    query_stat_meta = QueryExecutioner()._get_query_enum_meta(field_type_list)
+    query_stat_meta = GraphQlMetaDataProvider()._get_query_enum_meta(field_type_list)
     expected_stat_meta = {
         "PART04": dict(
             [
