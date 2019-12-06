@@ -53,7 +53,9 @@ def test_output_transformer_format_options(query_result, query_results_with_enum
     qOutTrans = QueryOutputTransformer(query_result)
     data_transformed = qOutTrans.transform(verbose_statistic_names=True)
     assert (
-        "Von der Scheidung betroffene Kinder (BEVMK3)" in data_transformed.columns
+        # "Von der Scheidung betroffene Kinder (BEVMK3)" in data_transformed.columns
+        "BEVMK3 (BEVMK3)"
+        in data_transformed.columns
     ), "statistic values are missing"
 
     enum_values = {
@@ -90,4 +92,5 @@ def test_output_transformer_format_options(query_result, query_results_with_enum
     data_transformed = qOutTrans.transform(
         verbose_enum_values=True, verbose_statistic_names=True
     )
-    assert "Gültige Zweitstimmen (WAHL09)" in data_transformed
+    # assert "Gültige Zweitstimmen (WAHL09)" in data_transformed
+    assert "WAHL09 (WAHL09)" in data_transformed
