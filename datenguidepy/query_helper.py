@@ -2,7 +2,7 @@ from datenguidepy.query_builder import Query
 from datenguidepy.query_execution import (
     QueryExecutioner,
     ExecutionResults,
-    GraphQlMetaDataProvider,
+    StatisticsGraphQlMetaDataProvider,
 )
 
 from typing import Dict, Any, cast, Optional, List
@@ -137,7 +137,7 @@ federal_states = ConfigMapping(federal_state_dictionary)
 
 
 def get_statistics(
-    search: Optional[str] = None, meta_data_provider=None
+    search: Optional[str] = None, stat_meta_data_provider=None
 ) -> pd.DataFrame:
     """[summary]
 
@@ -146,10 +146,10 @@ def get_statistics(
     :return: [description]
     :rtype: pd.DataFrame
     """
-    if meta_data_provider is None:
-        meta_data_provider = GraphQlMetaDataProvider()
+    if stat_meta_data_provider is None:
+        stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
 
-    stat_descr = meta_data_provider.get_stat_descriptions()
+    stat_descr = stat_meta_data_provider.get_stat_descriptions()
     stat_frame = pd.DataFrame(
         [(stat, *stat_descr[stat]) for stat in stat_descr],
         columns=["statistics", "short_description", "long_description"],

@@ -2,7 +2,8 @@ from datenguidepy.query_execution import (
     QueryExecutioner,
     FieldMetaDict,
     TypeMetaData,
-    GraphQlMetaDataProvider,
+    StatisticsGraphQlMetaDataProvider,
+    GraphQlSchemaMetaDataProvider,
 )
 from datenguidepy.output_transformer import QueryOutputTransformer
 from datenguidepy.query_helper import get_statistics, get_all_regions, federal_states
@@ -173,7 +174,7 @@ def stat_description():
 
 
 def test_filter_stat_metatdata(sample_stat_meta_response):
-    processed_stat_meta = GraphQlMetaDataProvider._process_stat_meta_data(
+    processed_stat_meta = StatisticsGraphQlMetaDataProvider._process_stat_meta_data(
         sample_stat_meta_response
     )
     assert all(
@@ -198,7 +199,7 @@ def test_generate_post_json(sample_queries):
 
 
 def test_extract_stat_desc(stat_description):
-    extracted_text = GraphQlMetaDataProvider._extract_main_description(
+    extracted_text = StatisticsGraphQlMetaDataProvider._extract_main_description(
         stat_description[0]
     )
     assert (
@@ -207,7 +208,9 @@ def test_extract_stat_desc(stat_description):
 
 
 def test_create_stat_desc_dic(sample_stat_meta_response):
-    desc_dict = GraphQlMetaDataProvider._create_stat_desc_dic(sample_stat_meta_response)
+    desc_dict = StatisticsGraphQlMetaDataProvider._create_stat_desc_dic(
+        sample_stat_meta_response
+    )
     assert desc_dict["AENW01"][0] == "Description 1", "first dict entry is wrong"
     assert (
         desc_dict["AENW02"][0] == "NO DESCRIPTION FOUND"
@@ -224,7 +227,7 @@ def test_get_args(sample_stat_meta_response):
 
 def test_get_type_info_caches_results(type_request_response):
     req_mock, expected_result = type_request_response
-    mdp = GraphQlMetaDataProvider()
+    mdp = GraphQlSchemaMetaDataProvider()
     mdp._send_request = req_mock
     mdp.__class__._META_DATA_CACHE = dict()  # clear cache
     assert (
@@ -241,7 +244,7 @@ def test_get_type_info_caches_results(type_request_response):
 
 def test_get_type_info_uses_cached_results(type_request_response):
     req_mock, expected_result = type_request_response
-    mdp = GraphQlMetaDataProvider()
+    mdp = GraphQlSchemaMetaDataProvider()
     mdp._send_request = req_mock
     mdp.__class__._META_DATA_CACHE = {"BEVMK3Statistics": expected_result}
     res = mdp.get_type_info("BEVMK3Statistics")
@@ -408,7 +411,9 @@ def test_get_query_specific_stat_meta():
         ("year", "Int"),
         ("value", "Float"),
     ]
-    query_stat_meta = GraphQlMetaDataProvider()._get_query_stat_meta(field_type_list)
+    query_stat_meta = StatisticsGraphQlMetaDataProvider().get_query_stat_meta(
+        field_type_list
+    )
     # "Gültige Zweitstimmen" uninformative due to API changes
     expected_stat_meta = {"WAHL09": "WAHL09"}
     assert query_stat_meta == expected_stat_meta
@@ -423,7 +428,9 @@ def test_get_query_specific_enum_meta():
         ("year", "Int"),
         ("value", "Float"),
     ]
-    query_stat_meta = GraphQlMetaDataProvider()._get_query_enum_meta(field_type_list)
+    query_stat_meta = StatisticsGraphQlMetaDataProvider().get_query_enum_meta(
+        field_type_list
+    )
     expected_stat_meta = {
         "PART04": dict(
             [
