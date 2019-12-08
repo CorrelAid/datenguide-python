@@ -2,6 +2,8 @@ from typing import Dict, Any, cast, Optional, NamedTuple, List, Tuple, Union
 import requests
 import re
 
+from datenguidepy.schema_json_meta import get_schema_json, get_json_path
+
 Json_Dict = Dict[str, Any]
 Json_List = List[Json_Dict]
 Json = Union[Json_Dict, Json_List]
@@ -71,7 +73,15 @@ class FieldMetaDict(dict):
         }
 
 
-class GraphQlMetaDataProvider(object):
+class GraphQlSchemaMetaDataProvider(object):
+    """
+        The GraphQlSchema meta data priovider helps to obtain
+        meta data about the structure of the Graph QL api. As such
+        it helps to privde information as to how structurally correct
+        queries are build. It does not directly supply information
+        about statistics.
+    """
+
     endpoint: str = "https://api-next.datengui.de/graphql"
 
     REQUEST_HEADER: Dict[str, str] = {"Content-Type": "application/json"}
@@ -117,39 +127,6 @@ class GraphQlMetaDataProvider(object):
     def __init__(self, endpoint=None):
         if endpoint is not None:
             self.endpoint = endpoint
-
-    def get_query_stat_meta(
-        self, query_fields_with_types: List[Tuple[str, str]]
-    ) -> StatMeta:
-        # Region type contains all the statistics fields
-        query_fields = [
-            field_with_type[0] for field_with_type in query_fields_with_types
-        ]
-        stat_descriptions = self.get_stat_descriptions()
-        if stat_descriptions is not None:
-            stat_meta = {
-                stat: stat_descriptions[stat][0]
-                for stat in stat_descriptions
-                if stat in query_fields
-            }
-        else:
-            stat_meta = {"error": "STAT META DATA COULD NOT BE LOADED"}
-            # wrong casting as the result is a list of Json
-        return stat_meta
-
-    def get_query_enum_meta(
-        self, query_fields_with_types: List[Tuple[str, str]]
-    ) -> EnumMeta:
-        enum_meta: EnumMeta = {}
-        for field, field_type in query_fields_with_types:
-            type_info = self.get_type_info(field_type)
-            if type_info is None:
-                enum_meta[field] = {"error": "ENUM META DATA COULD NOT BE LOADED"}
-            if cast(TypeMetaData, type_info).kind == "ENUM":
-                enum_meta[field] = cast(
-                    Dict[Optional[str], str], cast(TypeMetaData, type_info).enum_values
-                )
-        return enum_meta
 
     def get_type_info(
         self, graph_ql_type: str, verbose=False
@@ -200,6 +177,62 @@ class GraphQlMetaDataProvider(object):
         else:
             return None
 
+    def _send_request(self, query_json: Json_Dict) -> Optional[Json_Dict]:
+        resp = requests.post(
+            self.endpoint, headers=self.REQUEST_HEADER, json=query_json
+        )
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            print(self.endpoint)
+            print(f"No result, got HTML status code {resp.status_code}")
+            return None
+
+
+class StatisticsGraphQlMetaDataProvider(object):
+    """
+        Statistics meta data providers help to supply informations about details
+        pertaining to certain statistics that can be obtained via the API. This
+        type of meta information is not API specific and can be obtained from
+        different sources.
+        This particular data provider uses graphql meta data information to provide
+        results.
+    """
+
+    def __init__(self, endpoint=None):
+        self.schema_meta_data_provider = GraphQlSchemaMetaDataProvider(
+            endpoint=endpoint
+        )
+
+    def get_query_stat_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> StatMeta:
+        # Region type contains all the statistics fields
+        query_fields = [
+            field_with_type[0] for field_with_type in query_fields_with_types
+        ]
+        stat_descriptions = self.get_stat_descriptions()
+        stat_meta = {
+            stat: stat_descriptions[stat][0]
+            for stat in stat_descriptions
+            if stat in query_fields
+        }
+        return stat_meta
+
+    def get_query_enum_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> EnumMeta:
+        enum_meta: EnumMeta = {}
+        for field, field_type in query_fields_with_types:
+            type_info = self.schema_meta_data_provider.get_type_info(field_type)
+            if type_info is None:
+                enum_meta[field] = {"error": "ENUM META DATA COULD NOT BE LOADED"}
+            if cast(TypeMetaData, type_info).kind == "ENUM":
+                enum_meta[field] = cast(
+                    Dict[Optional[str], str], cast(TypeMetaData, type_info).enum_values
+                )
+        return enum_meta
+
     @staticmethod
     def _process_stat_meta_data(type_fields: Json_Dict) -> List[Json_Dict]:
         return [
@@ -222,7 +255,7 @@ class GraphQlMetaDataProvider(object):
         :return: [description]
         :rtype: [type]
         """
-        stat_meta = self.get_type_info("Region")
+        stat_meta = self.schema_meta_data_provider.get_type_info("Region")
         if stat_meta:
             stat_descriptions = self._create_stat_desc_dic(
                 # casting given "Regions" type
@@ -241,43 +274,54 @@ class GraphQlMetaDataProvider(object):
             (
                 field["name"],
                 (
-                    GraphQlMetaDataProvider._extract_main_description(
+                    StatisticsGraphQlMetaDataProvider._extract_main_description(
                         field["description"]
                     ),
                     field["description"],
                 ),
             )
-            for field in GraphQlMetaDataProvider._process_stat_meta_data(raw_response)
+            for field in StatisticsGraphQlMetaDataProvider._process_stat_meta_data(
+                raw_response
+            )
         )
 
-    def _send_request(self, query_json: Json_Dict) -> Optional[Json_Dict]:
-        resp = requests.post(
-            self.endpoint, headers=self.REQUEST_HEADER, json=query_json
-        )
-        if resp.status_code == 200:
-            return resp.json()
-        else:
-            print(self.endpoint)
-            print(f"No result, got HTML status code {resp.status_code}")
-            return None
 
+class StatisticsSchemaJsonMetaDataProvider(object):
+    """
+        Statistics meta data providers help to supply informations about details
+        pertaining to certain statistics that can be obtained via the API. This
+        type of meta information is not API specific and can be obtained from
+        different sources.
+        This particular data provider the hard copy of a schema file from the SOAP
+        cubes that datenguide extracts fron GENESIS and transfers into their API.
+    """
 
-class SchemaJsonMetaDataProvider(object):
+    def __init__(self):
+        self._full_data_json = get_schema_json()
+
     def get_query_stat_meta(
         self, query_fields_with_types: List[Tuple[str, str]]
     ) -> StatMeta:
         pass
 
     def is_statistic(self, stat_candidate: str) -> bool:
-        return stat_candidate in self.get_stat_descriptions()
-        pass
+        return stat_candidate in get_json_path(
+            [self._full_data_json], ["..", "measures", "..", "name"]
+        )
 
     def get_stat_descriptions(self) -> Dict[str, Tuple[str, str]]:
-        pass
+        stat_names = get_json_path(
+            [self._full_data_json], ["..", "measures", "..", "name"]
+        )
+        stat_descriptions_long = get_json_path(
+            [self._full_data_json], ["..", "measures", "..", "definition_de"]
+        )
+        return {
+            name: (desc.split("\n", 1)[0], desc)
+            for name, desc in zip(stat_names, stat_descriptions_long)
+        }
 
-    def get_type_info(
-        self, graph_ql_type: str, verbose=False
-    ) -> Optional[TypeMetaData]:
+    def get_enum_descriptions(self, enum_value):
         pass
 
 
@@ -294,15 +338,23 @@ class QueryExecutioner(object):
     endpoint: str = "https://api-next.datengui.de/graphql"
 
     def __init__(
-        self, alternative_endpoint: Optional[str] = None, meta_data_provider=None
+        self,
+        alternative_endpoint: Optional[str] = None,
+        statistics_meta_data_provider=None,
     ) -> None:
         if alternative_endpoint:
             self.endpoint = cast(str, alternative_endpoint)
 
-        if meta_data_provider is None:
-            self.meta_data_provider = GraphQlMetaDataProvider(self.endpoint)
+        self.graph_ql_schema_meta_data_provider = GraphQlSchemaMetaDataProvider(
+            self.endpoint
+        )
+
+        if statistics_meta_data_provider is None:
+            self.stat_meta_data_provider = StatisticsGraphQlMetaDataProvider(
+                self.endpoint
+            )
         else:
-            meta_data_provider = meta_data_provider
+            self.stat_meta_data_provider = statistics_meta_data_provider
 
     def get_type_info(
         self, graph_ql_type: str, verbose=False
@@ -317,7 +369,9 @@ class QueryExecutioner(object):
         :return: [description]
         :rtype: Optional[TypeMetaData]
         """
-        return self.meta_data_provider.get_type_info(graph_ql_type, verbose)
+        return self.graph_ql_schema_meta_data_provider.get_type_info(
+            graph_ql_type, verbose
+        )
 
     @staticmethod
     def _pagination_json(page: int) -> Json_Dict:
@@ -370,10 +424,10 @@ class QueryExecutioner(object):
         if results:
             meta: QueryResultsMeta = dict()
             meta
-            meta["statistics"] = self.meta_data_provider.get_query_stat_meta(
+            meta["statistics"] = self.stat_meta_data_provider.get_query_stat_meta(
                 query_fields_with_types
             )
-            meta["enums"] = self.meta_data_provider.get_query_enum_meta(
+            meta["enums"] = self.stat_meta_data_provider.get_query_enum_meta(
                 query_fields_with_types
             )
             return ExecutionResults(

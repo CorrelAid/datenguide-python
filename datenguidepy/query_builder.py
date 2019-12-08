@@ -2,7 +2,8 @@ from typing import Optional, Union, List, Dict, Any, Tuple
 from pandas import DataFrame
 from datenguidepy.query_execution import (
     QueryExecutioner,
-    GraphQlMetaDataProvider,
+    GraphQlSchemaMetaDataProvider,
+    StatisticsGraphQlMetaDataProvider,
     TypeMetaData,
     QueryResultsMeta,
 )
@@ -44,7 +45,7 @@ class Field:
         parent_field: "Field" = None,
         default_fields: bool = True,
         return_type: str = None,
-        meta_data_provider=None,
+        stat_meta_data_provider=None,
     ):
         self.name = name
         self.parent_field = parent_field
@@ -53,15 +54,17 @@ class Field:
         self.return_type = return_type if return_type else name
 
         self.fields: Dict[str, "Field"] = {}
-        if meta_data_provider is None:
-            self._meta_data_provider = GraphQlMetaDataProvider()
+        if stat_meta_data_provider is None:
+            self._stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
         else:
-            self._meta_data_provider = meta_data_provider
+            self._stat_meta_data_provider = stat_meta_data_provider
+
+        self._graphql_schema_meta_data_provider = GraphQlSchemaMetaDataProvider()
 
         for field in fields:
             self.add_field(field, default_fields=default_fields)
 
-        if default_fields and self._meta_data_provider.is_statistic(self.name):
+        if default_fields and self._stat_meta_data_provider.is_statistic(self.name):
 
             self.fields["year"] = Field(
                 "year", return_type=self._get_return_type("year")
@@ -79,7 +82,7 @@ class Field:
 
     def _get_return_type(self, fieldname):
         return (
-            self._meta_data_provider.get_type_info(self.return_type)
+            self._graphql_schema_meta_data_provider.get_type_info(self.return_type)
             .fields[fieldname]
             .get_return_type()
         )
@@ -103,13 +106,13 @@ class Field:
                 fields=[],
                 return_type=self._get_return_type(field),
                 default_fields=default_fields,
-                meta_data_provider=self._meta_data_provider,
+                stat_meta_data_provider=self._stat_meta_data_provider,
             )
             return self.fields[field]
         else:
             field._set_return_type(self)
             field._set_parent_field(self)
-            field._meta_data_provider = self._meta_data_provider
+            field._stat_meta_data_provider = self._stat_meta_data_provider
             self.fields[field.name] = field
             return self.fields[field.name]
 
@@ -207,7 +210,7 @@ class Field:
         """
 
         kind: str = _bold_font("kind:") + "\n"
-        meta = self._meta_data_provider.get_type_info(self.name)
+        meta = self._graphql_schema_meta_data_provider.get_type_info(self.name)
         if meta is not None:
             kind += meta.kind
         else:
@@ -266,7 +269,9 @@ class Field:
 
         parent = self.parent_field
         if parent is not None:
-            meta = self._meta_data_provider.get_type_info(parent.return_type)
+            meta = self._graphql_schema_meta_data_provider.get_type_info(
+                parent.return_type
+            )
             return Field._no_none_values(self._arguments_info_formatter, meta, "fields")
         else:
             return None
@@ -284,7 +289,7 @@ class Field:
         :rtype: Optional[str]
         """
 
-        meta = self._meta_data_provider.get_type_info(self.name)
+        meta = self._graphql_schema_meta_data_provider.get_type_info(self.name)
         return Field._no_none_values(self._fields_info_formatter, meta, "fields")
 
     def _enum_info_formatter(self, enum_meta) -> Optional[str]:
@@ -300,11 +305,13 @@ class Field:
         :rtype: Optional[str]
         """
 
-        meta = self._meta_data_provider.get_type_info(self.return_type)
+        meta = self._graphql_schema_meta_data_provider.get_type_info(self.return_type)
         return Field._no_none_values(self._enum_info_formatter, meta, "enum_values")
 
+    # inteface issue, in such that the private
+    # function for the meta_data_provider is used
     def _get_description(self, meta_fields) -> Optional[str]:
-        return self._meta_data_provider._extract_main_description(
+        return self._stat_meta_data_provider._extract_main_description(
             meta_fields[self.name]["description"]
         )
 
@@ -317,7 +324,9 @@ class Field:
 
         parent = self.parent_field
         if parent is not None:
-            meta = self._meta_data_provider.get_type_info(parent.return_type)
+            meta = self._graphql_schema_meta_data_provider.get_type_info(
+                parent.return_type
+            )
             return Field._no_none_values(self._get_description, meta, "fields")
         else:
             return None
@@ -363,15 +372,17 @@ class Query:
         start_field: Field,
         region_field: Field = None,
         default_fields: bool = True,
-        meta_data_provider=None,
+        stat_meta_data_provider=None,
     ):
         self.start_field = start_field
         self.region_field = region_field
         self.result_meta_data: Optional[QueryResultsMeta] = None
-        if meta_data_provider is None:
-            self._meta_data_provider = GraphQlMetaDataProvider()
+        if stat_meta_data_provider is None:
+            self._stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
         else:
-            self._meta_data_provider = meta_data_provider
+            self._stat_meta_data_provider = stat_meta_data_provider
+
+        self._graphql_schema_meta_data_provider = GraphQlSchemaMetaDataProvider()
 
     @classmethod
     def region(
@@ -379,7 +390,7 @@ class Query:
         region: Union[str, List[str]],
         fields: List[Union[str, "Field"]] = [],
         default_fields: bool = True,
-        meta_data_provider=None,
+        stat_meta_data_provider=None,
     ) -> "Query":
         """Factory method to instantiate a Query with a single region through
             its region id.
@@ -418,7 +429,7 @@ class Query:
                 args={"id": region_arg},
                 return_type=Query._return_type_region,
                 default_fields=default_fields,
-                meta_data_provider=meta_data_provider,
+                stat_meta_data_provider=stat_meta_data_provider,
             )
         )
 
@@ -430,7 +441,7 @@ class Query:
         nuts: int = None,
         lau: int = None,
         default_fields: bool = True,
-        meta_data_provider=None,
+        stat_meta_data_provider=None,
     ) -> "Query":
         """Factory method to instantiate a Query with allRegions start field.
         A parent id, nuts or lau can be further specified for the query.
@@ -483,7 +494,7 @@ class Query:
             args=region_args,
             return_type=Query._return_type_regions,
             default_fields=default_fields,
-            meta_data_provider=meta_data_provider,
+            stat_meta_data_provider=stat_meta_data_provider,
         )
 
         # add fields page, itemsperPage and total for QueryExecutioner
@@ -494,7 +505,7 @@ class Query:
                 args=args,
                 return_type=Query._return_type_allreg,
                 default_fields=default_fields,
-                meta_data_provider=meta_data_provider,
+                stat_meta_data_provider=stat_meta_data_provider,
             ),
             region_field=regions,
         )
@@ -665,6 +676,8 @@ class Query:
         :rtype: Optional[TypeMetaData]
         """
         if field:
-            return self._meta_data_provider.get_type_info(field)
+            return self._graphql_schema_meta_data_provider.get_type_info(field)
         else:
-            return self._meta_data_provider.get_type_info(Query._return_type_region)
+            return self._graphql_schema_meta_data_provider.get_type_info(
+                Query._return_type_region
+            )
