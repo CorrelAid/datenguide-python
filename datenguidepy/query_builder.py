@@ -430,7 +430,8 @@ class Query:
                 return_type=Query._return_type_region,
                 default_fields=default_fields,
                 stat_meta_data_provider=stat_meta_data_provider,
-            )
+            ),
+            stat_meta_data_provider=stat_meta_data_provider,
         )
 
     @classmethod
@@ -508,6 +509,7 @@ class Query:
                 stat_meta_data_provider=stat_meta_data_provider,
             ),
             region_field=regions,
+            stat_meta_data_provider=stat_meta_data_provider,
         )
 
     def add_field(
@@ -633,7 +635,9 @@ class Query:
         :rtype: DataFrame
         """
 
-        result = QueryExecutioner().run_query(self)
+        result = QueryExecutioner(
+            statistics_meta_data_provider=self._stat_meta_data_provider
+        ).run_query(self)
         if result:
             # It is currently assumed that all graphql queries
             # that are generated internally for the Query instance
@@ -656,7 +660,9 @@ class Query:
         :rtype: Union[Dict[str, Any], List[Dict[str, Any]]]
         """
 
-        result = QueryExecutioner().run_query(self)
+        result = QueryExecutioner(
+            statistics_meta_data_provider=self._stat_meta_data_provider
+        ).run_query(self)
         if result:
             # TODO: correct indexing?
             return result[0].meta_data

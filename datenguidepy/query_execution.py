@@ -297,32 +297,55 @@ class StatisticsSchemaJsonMetaDataProvider(object):
     """
 
     def __init__(self):
-        self._full_data_json = get_schema_json()
+        self._full_data_json = [get_schema_json()]
 
     def get_query_stat_meta(
         self, query_fields_with_types: List[Tuple[str, str]]
     ) -> StatMeta:
-        pass
+        fields = [field for field, _ in query_fields_with_types]
+        sd = self.get_stat_descriptions()
+        return {stat: sd[stat][0] for stat in sd if stat in fields}
+
+    def get_query_enum_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> EnumMeta:
+        enum_meta: EnumMeta = {}
+        for field, _ in query_fields_with_types:
+            enum_values = get_json_path(
+                self._full_data_json,
+                ["..", "measures", "..", "dimensions", field, "value_names"],
+            )
+            if len(enum_values) > 0:
+                enum_meta[field] = enum_values[0]
+        return enum_meta
 
     def is_statistic(self, stat_candidate: str) -> bool:
         return stat_candidate in get_json_path(
-            [self._full_data_json], ["..", "measures", "..", "name"]
+            self._full_data_json, ["..", "measures", "..", "name"]
         )
 
     def get_stat_descriptions(self) -> Dict[str, Tuple[str, str]]:
         stat_names = get_json_path(
-            [self._full_data_json], ["..", "measures", "..", "name"]
+            self._full_data_json, ["..", "measures", "..", "name"]
         )
         stat_descriptions_long = get_json_path(
-            [self._full_data_json], ["..", "measures", "..", "definition_de"]
+            self._full_data_json, ["..", "measures", "..", "definition_de"]
         )
         return {
             name: (desc.split("\n", 1)[0], desc)
             for name, desc in zip(stat_names, stat_descriptions_long)
         }
 
-    def get_enum_descriptions(self, enum_value):
-        pass
+    def get_enum_values(self) -> Dict[str, Dict[str, str]]:
+        names = (
+            self._full_data_json,
+            ["..", "measures", "..", "dimensions", "..", "name"],
+        )
+        values = (
+            self._full_data_json,
+            ["..", "measures", "..", "dimensions", "..", "value_names"],
+        )
+        return {name: vs for name, vs in zip(names, values)}
 
 
 class QueryExecutioner(object):
