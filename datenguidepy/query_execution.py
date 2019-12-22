@@ -460,7 +460,6 @@ class QueryExecutioner(object):
                     page += 1
         else:
             single_result = self._send_request(query_json)
-            print(single_result)
             if single_result is None:
                 return None
             else:
@@ -494,7 +493,6 @@ class QueryExecutioner(object):
         resp = requests.post(
             self.endpoint, headers=self.REQUEST_HEADER, json=query_json
         )
-        print(resp.status_code)
         if resp.status_code == 200:
             body_json = resp.json()
             check_http200_body_error(body_json)

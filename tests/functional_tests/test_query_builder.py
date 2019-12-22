@@ -175,7 +175,9 @@ def test_description(query_default):
     stat = query_default.add_field("BEV001")
     descr = stat.description()
     # assert descr == "Lebend Geborene"
-    assert descr == "BEV001"
+    assert (
+        descr == '**BEV001**\n*aus GENESIS-Statistik "Statistik der Geburten" 12612)*'
+    )
 
 
 @pytest.mark.xfail

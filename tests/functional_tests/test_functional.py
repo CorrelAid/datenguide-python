@@ -99,9 +99,10 @@ def test_query_executioner_workflow(query):
     # is used directly to get more verbose query results.
 
     res_query1_verbose_cols = query.results(verbose_statistics=True)
+    print(res_query1_verbose_cols.columns)
     assert (
         # "Von der Scheidung betroffene Kinder (BEVMK3)" in res_query1_verbose_cols
-        "BEVMK3 (BEVMK3)"
+        "Von der Scheidung betroffene Kinder (BEVMK3)"
         in res_query1_verbose_cols
     ), "verbose statistic name is not present"
 
