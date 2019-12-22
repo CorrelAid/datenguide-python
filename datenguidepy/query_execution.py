@@ -73,6 +73,13 @@ class FieldMetaDict(dict):
         }
 
 
+def check_http200_body_error(body_json: Json_Dict) -> None:
+    if "errors" in body_json:
+        raise RuntimeError(
+            "Body continas the following error content\n" + str(body_json)
+        )
+
+
 class GraphQlSchemaMetaDataProvider(object):
     """
         The GraphQlSchema meta data priovider helps to obtain
@@ -182,11 +189,15 @@ class GraphQlSchemaMetaDataProvider(object):
             self.endpoint, headers=self.REQUEST_HEADER, json=query_json
         )
         if resp.status_code == 200:
-            return resp.json()
+            body_json = resp.json()
+            check_http200_body_error(body_json)
+            return body_json
         else:
-            print(self.endpoint)
-            print(f"No result, got HTML status code {resp.status_code}")
-            return None
+            raise RuntimeError(
+                self.endpoint
+                + "\n"
+                + f"No result, got HTML status code {resp.status_code}"
+            )
 
 
 class StatisticsGraphQlMetaDataProvider(object):
@@ -316,7 +327,8 @@ class StatisticsSchemaJsonMetaDataProvider(object):
                 ["..", "measures", "..", "dimensions", field, "value_names"],
             )
             if len(enum_values) > 0:
-                enum_meta[field] = enum_values[0]
+                gesamt_update = {"GESAMT": "Gesamt"}
+                enum_meta[field] = dict(enum_values[0], **gesamt_update)
         return enum_meta
 
     def is_statistic(self, stat_candidate: str) -> bool:
@@ -328,24 +340,33 @@ class StatisticsSchemaJsonMetaDataProvider(object):
         stat_names = get_json_path(
             self._full_data_json, ["..", "measures", "..", "name"]
         )
+        stat_descriptions_short = get_json_path(
+            self._full_data_json, ["..", "measures", "..", "title_de"]
+        )
         stat_descriptions_long = get_json_path(
             self._full_data_json, ["..", "measures", "..", "definition_de"]
         )
         return {
-            name: (desc.split("\n", 1)[0], desc)
-            for name, desc in zip(stat_names, stat_descriptions_long)
+            name: (short, long)
+            for name, short, long in zip(
+                stat_names, stat_descriptions_short, stat_descriptions_long
+            )
         }
 
     def get_enum_values(self) -> Dict[str, Dict[str, str]]:
-        names = (
-            self._full_data_json,
-            ["..", "measures", "..", "dimensions", "..", "name"],
+        names = get_json_path(
+            self._full_data_json, ["..", "measures", "..", "dimensions", "..", "name"]
         )
-        values = (
+        values = get_json_path(
             self._full_data_json,
             ["..", "measures", "..", "dimensions", "..", "value_names"],
         )
-        return {name: vs for name, vs in zip(names, values)}
+        gesamt_update = {"GESAMT": "Gesamt"}
+
+        return {name: dict(vs, **gesamt_update) for name, vs in zip(names, values)}
+
+
+DEFAULT_STATISTICS_META_DATA_PROVIDER = StatisticsSchemaJsonMetaDataProvider()
 
 
 class QueryExecutioner(object):
@@ -439,6 +460,7 @@ class QueryExecutioner(object):
                     page += 1
         else:
             single_result = self._send_request(query_json)
+            print(single_result)
             if single_result is None:
                 return None
             else:
@@ -472,9 +494,14 @@ class QueryExecutioner(object):
         resp = requests.post(
             self.endpoint, headers=self.REQUEST_HEADER, json=query_json
         )
+        print(resp.status_code)
         if resp.status_code == 200:
-            return resp.json()
+            body_json = resp.json()
+            check_http200_body_error(body_json)
+            return body_json
         else:
-            print(self.endpoint)
-            print(f"No result, got HTML status code {resp.status_code}")
-            return None
+            raise RuntimeError(
+                self.endpoint
+                + "\n"
+                + f"No result, got HTML status code {resp.status_code}"
+            )

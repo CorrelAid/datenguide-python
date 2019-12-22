@@ -4,6 +4,7 @@ from datenguidepy.query_execution import (
     TypeMetaData,
     StatisticsGraphQlMetaDataProvider,
     GraphQlSchemaMetaDataProvider,
+    StatisticsSchemaJsonMetaDataProvider,
 )
 from datenguidepy.output_transformer import QueryOutputTransformer
 from datenguidepy.query_helper import get_statistics, get_all_regions, federal_states
@@ -252,48 +253,6 @@ def test_get_type_info_uses_cached_results(type_request_response):
     mdp._send_request.assert_not_called()
 
 
-def test_query_executioner_workflow(sample_queries):
-    qExec = QueryExecutioner()
-
-    assert (
-        qExec.endpoint == "https://api-next.datengui.de/graphql"
-    ), "Default endpoint is wrong"
-
-    res_query1 = qExec.run_query(sample_queries.data_query1)
-    assert res_query1 is not None, "query did not return results"
-
-    assert len(res_query1[0].query_results) > 0, "query did not return results"
-    assert (
-        type(res_query1[0].query_results[0]) is dict
-    ), "query results are not a python json representation"
-
-    assert type(res_query1[0].meta_data) == dict, "meta data not a dict"
-    assert "enums" in (res_query1[0].meta_data), "enums missing from meta data"
-    assert "statistics" in (
-        res_query1[0].meta_data
-    ), "statistics missing fomr meta data"
-    assert len(res_query1[0].meta_data["statistics"]) > 0, "stats meta data absent"
-    assert len(res_query1[0].meta_data["statistics"]) == 1, "too much stats meta data"
-
-    assert "BEVMK3" in res_query1[0].meta_data["statistics"], "statistic absent"
-    assert (
-        res_query1[0].meta_data["statistics"]["BEVMK3"] != "NO DESCRIPTION FOUND"
-    ), "descrption was not obtained"
-
-    info = qExec.get_type_info("Region")
-    assert info.kind == "OBJECT", "Region should be an object"
-    assert info.enum_values is None, "Region doesn't have enum values"
-    assert type(info.fields) == dict, "Fields should be a dict"
-
-    stat_args = info.fields["BEVMK3"].get_arguments()
-    assert len(stat_args) > 0
-    assert "statistics" in stat_args
-
-    enum_vals = qExec.get_type_info("BEVMK3Statistics").enum_values
-    assert type(enum_vals) == dict, "Enum values should be dict"
-    assert len(enum_vals) > 0, "Enums should have values"
-
-
 def test_federal_states():
     state_mappings = [
         ("Schleswig_Holstein", "01"),
@@ -328,7 +287,9 @@ def test_regions_overview_table():
 
 
 def test_statistic_overview_table():
-    stats = get_statistics()
+    stats = get_statistics(
+        stat_meta_data_provider=StatisticsSchemaJsonMetaDataProvider()
+    )
     assert isinstance(stats, pd.DataFrame)
     assert list(stats.columns) == [
         "statistics",
@@ -411,11 +372,11 @@ def test_get_query_specific_stat_meta():
         ("year", "Int"),
         ("value", "Float"),
     ]
-    query_stat_meta = StatisticsGraphQlMetaDataProvider().get_query_stat_meta(
+    query_stat_meta = StatisticsSchemaJsonMetaDataProvider().get_query_stat_meta(
         field_type_list
     )
     # "Gültige Zweitstimmen" uninformative due to API changes
-    expected_stat_meta = {"WAHL09": "WAHL09"}
+    expected_stat_meta = {"WAHL09": "Gültige Zweitstimmen"}
     assert query_stat_meta == expected_stat_meta
 
 
@@ -428,7 +389,7 @@ def test_get_query_specific_enum_meta():
         ("year", "Int"),
         ("value", "Float"),
     ]
-    query_stat_meta = StatisticsGraphQlMetaDataProvider().get_query_enum_meta(
+    query_stat_meta = StatisticsSchemaJsonMetaDataProvider().get_query_enum_meta(
         field_type_list
     )
     expected_stat_meta = {
@@ -445,4 +406,5 @@ def test_get_query_specific_enum_meta():
             ]
         )
     }
+    print(query_stat_meta, expected_stat_meta)
     assert query_stat_meta == expected_stat_meta

@@ -1,0 +1,9 @@
+{"statistics": {"WAHL09": "WAHL09"},
+ "enums": {"PART04": {"AFD": "AfD",
+   "B90_GRUENE": "GRÜNE",
+   "CDU": "CDU/CSU",
+   "DIELINKE": "DIE LINKE",
+   "FDP": "FDP",
+   "SONSTIGE": "Sonstige Parteien",
+   "SPD": "SPD",
+   "GESAMT": "Gesamt"}}}

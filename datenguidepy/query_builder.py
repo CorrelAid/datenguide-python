@@ -3,7 +3,7 @@ from pandas import DataFrame
 from datenguidepy.query_execution import (
     QueryExecutioner,
     GraphQlSchemaMetaDataProvider,
-    StatisticsGraphQlMetaDataProvider,
+    DEFAULT_STATISTICS_META_DATA_PROVIDER,
     TypeMetaData,
     QueryResultsMeta,
 )
@@ -55,7 +55,7 @@ class Field:
 
         self.fields: Dict[str, "Field"] = {}
         if stat_meta_data_provider is None:
-            self._stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
+            self._stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
         else:
             self._stat_meta_data_provider = stat_meta_data_provider
 
@@ -308,12 +308,8 @@ class Field:
         meta = self._graphql_schema_meta_data_provider.get_type_info(self.return_type)
         return Field._no_none_values(self._enum_info_formatter, meta, "enum_values")
 
-    # inteface issue, in such that the private
-    # function for the meta_data_provider is used
     def _get_description(self, meta_fields) -> Optional[str]:
-        return self._stat_meta_data_provider._extract_main_description(
-            meta_fields[self.name]["description"]
-        )
+        return meta_fields[self.name].get("description")
 
     def description(self) -> Optional[str]:
         """Get description of field.
@@ -378,7 +374,7 @@ class Query:
         self.region_field = region_field
         self.result_meta_data: Optional[QueryResultsMeta] = None
         if stat_meta_data_provider is None:
-            self._stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
+            self._stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
         else:
             self._stat_meta_data_provider = stat_meta_data_provider
 
