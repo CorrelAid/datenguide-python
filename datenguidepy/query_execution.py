@@ -76,7 +76,7 @@ class FieldMetaDict(dict):
 def check_http200_body_error(body_json: Json_Dict) -> None:
     if "errors" in body_json:
         raise RuntimeError(
-            "Body continas the following error content\n" + str(body_json)
+            "Body contains the following error content\n" + str(body_json)
         )
 
 
