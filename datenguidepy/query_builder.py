@@ -3,6 +3,7 @@ from pandas import DataFrame
 from datenguidepy.query_execution import (
     QueryExecutioner,
     GraphQlSchemaMetaDataProvider,
+    StatisticsMetaDataProvider,
     DEFAULT_STATISTICS_META_DATA_PROVIDER,
     TypeMetaData,
     QueryResultsMeta,
@@ -45,7 +46,7 @@ class Field:
         parent_field: "Field" = None,
         default_fields: bool = True,
         return_type: str = None,
-        stat_meta_data_provider=None,
+        stat_meta_data_provider: StatisticsMetaDataProvider = None,
     ):
         self.name = name
         self.parent_field = parent_field
@@ -55,7 +56,9 @@ class Field:
 
         self.fields: Dict[str, "Field"] = {}
         if stat_meta_data_provider is None:
-            self._stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
+            self._stat_meta_data_provider: StatisticsMetaDataProvider = (
+                DEFAULT_STATISTICS_META_DATA_PROVIDER
+            )
         else:
             self._stat_meta_data_provider = stat_meta_data_provider
 
@@ -368,13 +371,15 @@ class Query:
         start_field: Field,
         region_field: Field = None,
         default_fields: bool = True,
-        stat_meta_data_provider=None,
+        stat_meta_data_provider: StatisticsMetaDataProvider = None,
     ):
         self.start_field = start_field
         self.region_field = region_field
         self.result_meta_data: Optional[QueryResultsMeta] = None
         if stat_meta_data_provider is None:
-            self._stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
+            self._stat_meta_data_provider: StatisticsMetaDataProvider = (
+                DEFAULT_STATISTICS_META_DATA_PROVIDER
+            )
         else:
             self._stat_meta_data_provider = stat_meta_data_provider
 

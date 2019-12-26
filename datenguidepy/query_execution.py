@@ -1,4 +1,5 @@
 from typing import Dict, Any, cast, Optional, NamedTuple, List, Tuple, Union
+from typing_extensions import Protocol
 import requests
 import re
 
@@ -198,6 +199,24 @@ class GraphQlSchemaMetaDataProvider(object):
                 + "\n"
                 + f"No result, got HTML status code {resp.status_code}"
             )
+
+
+class StatisticsMetaDataProvider(Protocol):
+    def get_query_stat_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> StatMeta:
+        ...
+
+    def get_query_enum_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> EnumMeta:
+        ...
+
+    def get_stat_descriptions(self) -> Dict[str, Tuple[str, str]]:
+        ...
+
+    def is_statistic(self, stat_candidate: str) -> bool:
+        ...
 
 
 class StatisticsGraphQlMetaDataProvider(object):
