@@ -1,0 +1,265 @@
+[
+{
+  "data": {
+    "region": {
+      "WAHL09": [
+        {
+          "PART04": null,
+          "year": 1994,
+          "value": 6693003
+        },
+        {
+          "PART04": "B90_GRUENE",
+          "year": 1994,
+          "value": 419763
+        },
+        {
+          "PART04": "CDU",
+          "year": 1994,
+          "value": 3427196
+        },
+        {
+          "PART04": "DIELINKE",
+          "year": 1994,
+          "value": 36575
+        },
+        {
+          "PART04": "FDP",
+          "year": 1994,
+          "value": 430125
+        },
+        {
+          "PART04": "SONSTIGE",
+          "year": 1994,
+          "value": 395365
+        },
+        {
+          "PART04": "SPD",
+          "year": 1994,
+          "value": 1983979
+        },
+        {
+          "PART04": null,
+          "year": 1998,
+          "value": 6974468
+        },
+        {
+          "PART04": "B90_GRUENE",
+          "year": 1998,
+          "value": 413909
+        },
+        {
+          "PART04": "CDU",
+          "year": 1998,
+          "value": 3324480
+        },
+        {
+          "PART04": "DIELINKE",
+          "year": 1998,
+          "value": 46301
+        },
+        {
+          "PART04": "FDP",
+          "year": 1998,
+          "value": 354620
+        },
+        {
+          "PART04": "SONSTIGE",
+          "year": 1998,
+          "value": 434137
+        },
+        {
+          "PART04": "SPD",
+          "year": 1998,
+          "value": 2401021
+        },
+        {
+          "PART04": null,
+          "year": 2002,
+          "value": 7362614
+        },
+        {
+          "PART04": "B90_GRUENE",
+          "year": 2002,
+          "value": 562483
+        },
+        {
+          "PART04": "CDU",
+          "year": 2002,
+          "value": 4315080
+        },
+        {
+          "PART04": "DIELINKE",
+          "year": 2002,
+          "value": 49515
+        },
+        {
+          "PART04": "FDP",
+          "year": 2002,
+          "value": 332675
+        },
+        {
+          "PART04": "SONSTIGE",
+          "year": 2002,
+          "value": 180310
+        },
+        {
+          "PART04": "SPD",
+          "year": 2002,
+          "value": 1922551
+        },
+        {
+          "PART04": null,
+          "year": 2005,
+          "value": 7095306
+        },
+        {
+          "PART04": "CDU",
+          "year": 2005,
+          "value": 3494309
+        },
+        {
+          "PART04": "DIELINKE",
+          "year": 2005,
+          "value": 244701
+        },
+        {
+          "PART04": "FDP",
+          "year": 2005,
+          "value": 673817
+        },
+        {
+          "PART04": "B90_GRUENE",
+          "year": 2005,
+          "value": 559941
+        },
+        {
+          "PART04": "SONSTIGE",
+          "year": 2005,
+          "value": 315990
+        },
+        {
+          "PART04": "SPD",
+          "year": 2005,
+          "value": 1806548
+        },
+        {
+          "PART04": null,
+          "year": 2009,
+          "value": 6652036
+        },
+        {
+          "PART04": "CDU",
+          "year": 2009,
+          "value": 2830238
+        },
+        {
+          "PART04": "DIELINKE",
+          "year": 2009,
+          "value": 429371
+        },
+        {
+          "PART04": "FDP",
+          "year": 2009,
+          "value": 976379
+        },
+        {
+          "PART04": "SONSTIGE",
+          "year": 2009,
+          "value": 576765
+        },
+        {
+          "PART04": "SPD",
+          "year": 2009,
+          "value": 1120018
+        },
+        {
+          "PART04": "B90_GRUENE",
+          "year": 2009,
+          "value": 719265
+        },
+        {
+          "PART04": null,
+          "year": 2013,
+          "value": 6580755
+        },
+        {
+          "PART04": "AFD",
+          "year": 2013,
+          "value": 283570
+        },
+        {
+          "PART04": "B90_GRUENE",
+          "year": 2013,
+          "value": 552818
+        },
+        {
+          "PART04": "DIELINKE",
+          "year": 2013,
+          "value": 248920
+        },
+        {
+          "PART04": "FDP",
+          "year": 2013,
+          "value": 334158
+        },
+        {
+          "PART04": "SONSTIGE",
+          "year": 2013,
+          "value": 603711
+        },
+        {
+          "PART04": "SPD",
+          "year": 2013,
+          "value": 1314009
+        },
+        {
+          "PART04": "CDU",
+          "year": 2013,
+          "value": 3243569
+        },
+        {
+          "PART04": null,
+          "year": 2017,
+          "value": 7393210
+        },
+        {
+          "PART04": "B90_GRUENE",
+          "year": 2017,
+          "value": 722116
+        },
+        {
+          "PART04": "SONSTIGE",
+          "year": 2017,
+          "value": 552124
+        },
+        {
+          "PART04": "SPD",
+          "year": 2017,
+          "value": 1130931
+        },
+        {
+          "PART04": "AFD",
+          "year": 2017,
+          "value": 916300
+        },
+        {
+          "PART04": "CDU",
+          "year": 2017,
+          "value": 2869688
+        },
+        {
+          "PART04": "DIELINKE",
+          "year": 2017,
+          "value": 450803
+        },
+        {
+          "PART04": "FDP",
+          "year": 2017,
+          "value": 751248
+        }
+      ]
+    }
+  }
+}
+]

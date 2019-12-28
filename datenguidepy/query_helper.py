@@ -1,5 +1,9 @@
 from datenguidepy.query_builder import Query
-from datenguidepy.query_execution import QueryExecutioner, ExecutionResults
+from datenguidepy.query_execution import (
+    QueryExecutioner,
+    ExecutionResults,
+    DEFAULT_STATISTICS_META_DATA_PROVIDER,
+)
 
 from typing import Dict, Any, cast, Optional, List
 import pandas as pd
@@ -132,7 +136,9 @@ federal_state_dictionary = {
 federal_states = ConfigMapping(federal_state_dictionary)
 
 
-def get_statistics(search: Optional[str] = None) -> pd.DataFrame:
+def get_statistics(
+    search: Optional[str] = None, stat_meta_data_provider=None
+) -> pd.DataFrame:
     """[summary]
 
     :param search: [description], defaults to None
@@ -140,7 +146,10 @@ def get_statistics(search: Optional[str] = None) -> pd.DataFrame:
     :return: [description]
     :rtype: pd.DataFrame
     """
-    stat_descr = QueryExecutioner().get_stat_descriptions()
+    if stat_meta_data_provider is None:
+        stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
+
+    stat_descr = stat_meta_data_provider.get_stat_descriptions()
     stat_frame = pd.DataFrame(
         [(stat, *stat_descr[stat]) for stat in stat_descr],
         columns=["statistics", "short_description", "long_description"],
