@@ -1,6 +1,7 @@
 import pytest
 import re
 from datenguidepy import Field, Query
+from datenguidepy.query_execution import FieldMetaDict
 
 
 @pytest.fixture
@@ -10,6 +11,90 @@ def patch_return_types(monkeypatch):
         return essential_types.get(fieldname, "NOT IN MONKEYPATCH")
 
     monkeypatch.setattr(Field, "_get_return_type", field_construction_return_types)
+
+
+@pytest.fixture
+def mocked_get_arguments(monkeypatch):
+    def mocked_enum_placeholder(self):
+        return "MOCKED ENUM VALUES"
+
+    def mock_get_arguments(self):
+        mocked_args = {
+            "year": ("LIST", None, "SCALAR", "Int"),
+            "statistics": ("LIST", None, "ENUM", "BEV001Statistics"),
+            "ALTMT1": ("LIST", None, "ENUM", "ALTMT1"),
+        }
+        return mocked_args
+
+    monkeypatch.setattr(FieldMetaDict, "get_arguments", mock_get_arguments)
+    monkeypatch.setattr(Field, "enum_info", mocked_enum_placeholder)
+
+
+@pytest.fixture
+def meta_fields():
+    field_meta = {
+        "id": {
+            "name": "id",
+            "type": {
+                "ofType": None,
+                "kind": "SCALAR",
+                "name": "String",
+                "description": "The `String` scalar...",
+            },
+            "description": "Interne eindeutige ID",
+            "args": [],
+        },
+        "year": {
+            "name": "year",
+            "type": {
+                "ofType": None,
+                "kind": "SCALAR",
+                "name": "Int",
+                "description": "The `Int`...",
+            },
+            "description": "Jahr des Stichtages",
+            "args": [],
+        },
+        "value": {
+            "name": "value",
+            "type": {
+                "ofType": None,
+                "kind": "SCALAR",
+                "name": "Float",
+                "description": "The `Float`...",
+            },
+            "description": "Wert",
+            "args": [],
+        },
+        "source": {
+            "name": "source",
+            "type": {
+                "ofType": None,
+                "kind": "OBJECT",
+                "name": "Source",
+                "description": "",
+            },
+            "description": "Quellenverweis zur GENESIS Regionaldatenbank",
+            "args": [],
+        },
+        "PART04": {
+            "name": "PART04",
+            "type": {
+                "ofType": None,
+                "kind": "ENUM",
+                "name": "PART04",
+                "description": "Parteien",
+            },
+            "description": "Parteien",
+            "args": [],
+        },
+    }
+    return field_meta
+
+
+@pytest.fixture
+def enum_input():
+    return {"NATA": "Ausländer(innen)", "NATD": "Deutsche", "GESAMT": "Gesamt"}
 
 
 @pytest.fixture
@@ -389,3 +474,39 @@ def test_drop_field_all_regions(all_regions_query):
         "itemsPerPage",
         "total",
     ]
+
+
+def test_arguments_info_formatting(mocked_get_arguments, field_default):
+    info = field_default._arguments_info_formatter({"WAHL09": FieldMetaDict()})
+    expected_info = """\x1b[4myear\x1b[0m: LIST of type SCALAR(Int)
+
+    \x1b[4mstatistics\x1b[0m: LIST of type ENUM(BEV001Statistics)
+    enum values:
+    MOCKED ENUM VALUES
+
+    \x1b[4mALTMT1\x1b[0m: LIST of type ENUM(ALTMT1)
+    enum values:
+    MOCKED ENUM VALUES"""
+
+    assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
+
+
+def test_fields_info_formatting(meta_fields, field_default):
+    info = field_default._fields_info_formatter(meta_fields)
+    expected_info = """id: Interne eindeutige ID
+    year: Jahr des Stichtages
+    value: Wert
+    source: Quellenverweis zur GENESIS Regionaldatenbank
+    PART04: Parteien"""
+
+    assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
+
+
+def test_enum_info_formatting(enum_input, query):
+    info = query.add_field("BEV001").add_field("NAT")._enum_info_formatter(enum_input)
+    expected_info = """
+    NATA: Ausländer(innen)
+    NATD: Deutsche
+    GESAMT: Gesamt"""
+
+    assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
