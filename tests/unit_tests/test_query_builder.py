@@ -14,20 +14,55 @@ def patch_return_types(monkeypatch):
 
 
 @pytest.fixture
-def mocked_get_arguments(monkeypatch):
+def mocked_enum_placeholder(monkeypatch):
     def mocked_enum_placeholder(self):
         return "MOCKED ENUM VALUES"
 
-    def mock_get_arguments(self):
-        mocked_args = {
-            "year": ("LIST", None, "SCALAR", "Int"),
-            "statistics": ("LIST", None, "ENUM", "BEV001Statistics"),
-            "ALTMT1": ("LIST", None, "ENUM", "ALTMT1"),
-        }
-        return mocked_args
-
-    monkeypatch.setattr(FieldMetaDict, "get_arguments", mock_get_arguments)
     monkeypatch.setattr(Field, "enum_info", mocked_enum_placeholder)
+
+
+@pytest.fixture
+def mocked_arguments():
+    return {
+        "WAHL09": FieldMetaDict(
+            {
+                "name": "WAHL09",
+                "type": {
+                    "ofType": {"name": "WAHL09"},
+                    "kind": "LIST",
+                    "name": None,
+                    "description": None,
+                },
+                "description": "Statistik der Geburten",
+                "args": [
+                    {
+                        "name": "year",
+                        "type": {
+                            "kind": "LIST",
+                            "name": None,
+                            "ofType": {
+                                "name": "Int",
+                                "description": "The `Int` scalar type ...",
+                                "kind": "SCALAR",
+                            },
+                        },
+                    },
+                    {
+                        "name": "NAT",
+                        "type": {
+                            "kind": "LIST",
+                            "name": None,
+                            "ofType": {
+                                "name": "NAT",
+                                "description": "Nationalität",
+                                "kind": "ENUM",
+                            },
+                        },
+                    },
+                ],
+            }
+        )
+    }
 
 
 @pytest.fixture
@@ -476,15 +511,13 @@ def test_drop_field_all_regions(all_regions_query):
     ]
 
 
-def test_arguments_info_formatting(mocked_get_arguments, field_default):
-    info = field_default._arguments_info_formatter({"WAHL09": FieldMetaDict()})
+def test_arguments_info_formatting(
+    mocked_arguments, mocked_enum_placeholder, field_default
+):
+    info = field_default._arguments_info_formatter(mocked_arguments)
     expected_info = """\x1b[4myear\x1b[0m: LIST of type SCALAR(Int)
 
-    \x1b[4mstatistics\x1b[0m: LIST of type ENUM(BEV001Statistics)
-    enum values:
-    MOCKED ENUM VALUES
-
-    \x1b[4mALTMT1\x1b[0m: LIST of type ENUM(ALTMT1)
+    \x1b[4mNAT\x1b[0m: LIST of type ENUM(NAT)
     enum values:
     MOCKED ENUM VALUES"""
 
