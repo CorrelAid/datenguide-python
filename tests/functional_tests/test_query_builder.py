@@ -261,7 +261,7 @@ def test_field_info_mocked(mock_graphqlschemaprovider, query):
 def test_description_mocked(mock_graphqlschemaprovider, query):
     stat = query.add_field("BEV001")
     descr = stat.description()
-    assert descr == "Statistik der Geburten"
+    assert descr == "Lebend Geborene"
 
 
 def test_enum_mocked(mock_graphqlschemaprovider, query):
@@ -285,7 +285,7 @@ def test_get_info_stat_mocked(mock_graphqlschemaprovider, query):
         OBJECT
 
         \x1b[1mdescription:\x1b[0m
-        Statistik der Geburten
+        Lebend Geborene
 
         \x1b[1marguments:\x1b[0m
         \x1b[4myear\x1b[0m: LIST of type SCALAR(Int)

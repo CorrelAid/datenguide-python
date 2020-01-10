@@ -311,24 +311,13 @@ class Field:
         meta = self._graphql_schema_meta_data_provider.get_type_info(self.return_type)
         return Field._no_none_values(self._enum_info_formatter, meta, "enum_values")
 
-    def _get_description(self, meta_fields) -> Optional[str]:
-        return meta_fields[self.name].get("description")
-
     def description(self) -> Optional[str]:
         """Get description of field.
 
         :return: Description of the field as string.
         :rtype: Optional[str]
         """
-
-        parent = self.parent_field
-        if parent is not None:
-            meta = self._graphql_schema_meta_data_provider.get_type_info(
-                parent.return_type
-            )
-            return Field._no_none_values(self._get_description, meta, "fields")
-        else:
-            return None
+        return self._stat_meta_data_provider.get_stat_descriptions()[self.name][0]
 
     @staticmethod
     def _get_fields_recursion(field: "Field") -> List[str]:
