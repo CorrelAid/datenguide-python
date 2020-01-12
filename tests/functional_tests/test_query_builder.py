@@ -4,6 +4,155 @@ import sys
 import io
 import pandas as pd
 from datenguidepy import Field, Query
+from datenguidepy.query_execution import (
+    FieldMetaDict,
+    TypeMetaData,
+    GraphQlSchemaMetaDataProvider,
+)
+
+
+@pytest.fixture
+def mock_graphqlschemaprovider(monkeypatch):
+    def mock_meta_data(self, return_type):
+        type_kind = "OBJECT"
+        enum_vals = None
+        if return_type == "Region":
+            field_meta = {
+                "id": FieldMetaDict(
+                    {
+                        "name": "id",
+                        "type": {
+                            "ofType": None,
+                            "kind": "SCALAR",
+                            "name": "String",
+                            "description": "The `String` scalar type ...",
+                        },
+                        "description": "Regionalschlüssel",
+                        "args": [],
+                    }
+                ),
+                "name": FieldMetaDict(
+                    {
+                        "args": [],
+                        "description": "Name",
+                        "name": "name",
+                        "type": {
+                            "description": "The `String` scalar...",
+                            "kind": "SCALAR",
+                            "name": "String",
+                            "ofType": None,
+                        },
+                    }
+                ),
+                "BEV001": FieldMetaDict(
+                    {
+                        "name": "BEV001",
+                        "type": {
+                            "ofType": {"name": "BEV001"},
+                            "kind": "LIST",
+                            "name": None,
+                            "description": None,
+                        },
+                        "description": "Statistik der Geburten",
+                        "args": [
+                            {
+                                "name": "year",
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": None,
+                                    "ofType": {
+                                        "name": "Int",
+                                        "description": "The `Int` scalar type ...",
+                                        "kind": "SCALAR",
+                                    },
+                                },
+                            },
+                            {
+                                "name": "NAT",
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": None,
+                                    "ofType": {
+                                        "name": "NAT",
+                                        "description": "Nationalität",
+                                        "kind": "ENUM",
+                                    },
+                                },
+                            },
+                        ],
+                    }
+                ),
+            }
+        elif return_type == "BEV001":
+            field_meta = {
+                "id": FieldMetaDict(
+                    {
+                        "name": "id",
+                        "type": {
+                            "ofType": None,
+                            "kind": "SCALAR",
+                            "name": "String",
+                            "description": "The `String` scalar...",
+                        },
+                        "description": "Interne eindeutige ID",
+                        "args": [],
+                    }
+                ),
+                "year": FieldMetaDict(
+                    {
+                        "args": [...],
+                        "description": "Jahr des Stichtages",
+                        "name": "year",
+                        "type": {
+                            "description": "The `Int` scalar...",
+                            "kind": "SCALAR",
+                            "name": "Int",
+                            "ofType": None,
+                        },
+                    }
+                ),
+                "value": FieldMetaDict(
+                    {
+                        "args": [...],
+                        "description": "Wert",
+                        "name": "value",
+                        "type": {
+                            "description": "The `Float` scalar ...",
+                            "kind": "SCALAR",
+                            "name": "Float",
+                            "ofType": None,
+                        },
+                    }
+                ),
+                "NAT": FieldMetaDict(
+                    {
+                        "args": [...],
+                        "description": "Nationalität",
+                        "name": "NAT",
+                        "type": {
+                            "description": "",
+                            "kind": "ENUM",
+                            "name": "NAT",
+                            "ofType": None,
+                        },
+                    }
+                ),
+            }
+        elif return_type == "NAT":
+            type_kind = "ENUM"
+            field_meta = None
+            enum_vals = {
+                "NAA": "Ausländer(innen)",
+                "NAD": "Deutsche",
+                "GESAMT": "Gesamt",
+            }
+
+        else:
+            raise RuntimeError("return type not in Monkeypatch")
+
+        return TypeMetaData(type_kind, field_meta, enum_vals)
+
+    monkeypatch.setattr(GraphQlSchemaMetaDataProvider, "get_type_info", mock_meta_data)
 
 
 @pytest.fixture
@@ -83,188 +232,80 @@ def test_process_query(query_default):
     assert isinstance(df, pd.DataFrame)
 
 
-# dependent on api details
-@pytest.mark.xfail
-def test_arguments_info(query_default):
-    stat = query_default.add_field("BEV001")
+def test_arguments_info_mocked(mock_graphqlschemaprovider, query):
+    stat = query.add_field("BEV001")
     info = stat.arguments_info()
     expected_info = """\x1b[4myear\x1b[0m: LIST of type SCALAR(Int)
 
-\x1b[4mstatistics\x1b[0m: LIST of type ENUM(BEV001Statistics)
-enum values:
-R12612: Statistik der Geburten
+    \x1b[4mNAT\x1b[0m: LIST of type ENUM(NAT)
+    enum values:
+    NAA: Ausländer(innen)
+    NAD: Deutsche
+    GESAMT: Gesamt"""
 
-\x1b[4mALTMT1\x1b[0m: LIST of type ENUM(ALTMT1)
-enum values:
-ALT000B20: unter 20 Jahre
-ALT020B25: 20 bis unter 25 Jahre
-ALT025B30: 25 bis unter 30 Jahre
-ALT030B35: 30 bis unter 35 Jahre
-ALT035B40: 35 bis unter 40 Jahre
-ALT040UM: 40 Jahre und mehr
-GESAMT: Gesamt
-
-\x1b[4mBEVM01\x1b[0m: LIST of type ENUM(BEVM01)
-enum values:
-MONAT01: Januar
-MONAT02: Februar
-MONAT03: März
-MONAT04: April
-MONAT05: Mai
-MONAT06: Juni
-MONAT07: Juli
-MONAT08: August
-MONAT09: September
-MONAT10: Oktober
-MONAT11: November
-MONAT12: Dezember
-GESAMT: Gesamt
-
-\x1b[4mGES\x1b[0m: LIST of type ENUM(GES)
-enum values:
-GESM: männlich
-GESW: weiblich
-GESAMT: Gesamt
-
-\x1b[4mLEGIT2\x1b[0m: LIST of type ENUM(LEGIT2)
-enum values:
-LEGIT01A: Eltern miteinander verheiratet
-LEGIT02A: Eltern nicht miteinander verheiratet
-GESAMT: Gesamt
-
-\x1b[4mNAT\x1b[0m: LIST of type ENUM(NAT)
-enum values:
-NATA: Ausländer(innen)
-NATD: Deutsche
-GESAMT: Gesamt
-
-\x1b[4mfilter\x1b[0m: INPUT_OBJECT(BEV001Filter)"""
-    assert info == expected_info
+    assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
 
 
-@pytest.mark.xfail
-def test_field_info(query_default):
-    stat = query_default.add_field("BEV001")
+def test_field_info_mocked(mock_graphqlschemaprovider, query):
+    stat = query.add_field("BEV001")
     info = stat.fields_info()
-    assert (
-        info
-        == """id: Interne eindeutige ID
-year: Jahr des Stichtages
-value: Wert
-source: Quellenverweis zur GENESIS Regionaldatenbank
-ALTMT1: Altersgruppen der Mutter (unter 20 bis 40 u.m.)
-BEVM01: Monat der Geburt
-GES: Geschlecht
-LEGIT2: Legitimität
-NAT: Nationalität"""
-    )
+    expected_info = """
+    id: Interne eindeutige ID
+    year: Jahr des Stichtages
+    value: Wert
+    NAT: Nationalität
+    """
+    assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
 
 
-# possibly a unittest as it it uses statistics json by default
-def test_enum_info(query_default):
-    stat = query_default.add_field("BEV001")
-    ges = stat.add_field("GES")
-    info = ges.enum_info()
-    expected_info = """GESM: männlich
-GESW: weiblich
-GESAMT: Gesamt"""
-    assert info == expected_info
-
-
-def test_description(query_default):
-    stat = query_default.add_field("BEV001")
+def test_description_mocked(mock_graphqlschemaprovider, query):
+    stat = query.add_field("BEV001")
     descr = stat.description()
-    # assert descr == "Lebend Geborene"
-    assert (
-        descr == '**BEV001**\n*aus GENESIS-Statistik "Statistik der Geburten" 12612)*'
-    )
+    assert descr == "Lebend Geborene"
 
 
-@pytest.mark.xfail
-def test_get_info_stat(query_default):
+def test_enum_mocked(mock_graphqlschemaprovider, query):
+    stat = query.add_field("BEV001").add_field("NAT")
+    info = stat.enum_info()
+    expected_info = """
+    NAA: Ausländer(innen)
+    NAD: Deutsche
+    GESAMT: Gesamt"""
+
+    assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
+
+
+def test_get_info_stat_mocked(mock_graphqlschemaprovider, query):
     stringio = io.StringIO()
     sys.stdout = stringio
-    stat = query_default.add_field("BEV001")
+    stat = query.add_field("BEV001")
     stat.get_info()
-    info = re.sub(r"\n", "", stringio.getvalue())
-    print(info)
-    expected_info = re.sub(
-        r"\n\s+",
-        "",
-        """\x1b[1mkind:\x1b[0m
+    info = stringio.getvalue()
+    expected_info = """\x1b[1mkind:\x1b[0m
         OBJECT
 
         \x1b[1mdescription:\x1b[0m
-        BEV001
+        Lebend Geborene
 
         \x1b[1marguments:\x1b[0m
         \x1b[4myear\x1b[0m: LIST of type SCALAR(Int)
 
-        \x1b[4mstatistics\x1b[0m: LIST of type ENUM(BEV001Statistics)
-        enum values:
-        R12612: Statistik der Geburten
-
-        \x1b[4mALTMT1\x1b[0m: LIST of type ENUM(ALTMT1)
-        enum values:
-        ALT000B20: unter 20 Jahre
-        ALT020B25: 20 bis unter 25 Jahre
-        ALT025B30: 25 bis unter 30 Jahre
-        ALT030B35: 30 bis unter 35 Jahre
-        ALT035B40: 35 bis unter 40 Jahre
-        ALT040UM: 40 Jahre und mehr
-        GESAMT: Gesamt
-
-        \x1b[4mBEVM01\x1b[0m: LIST of type ENUM(BEVM01)
-        enum values:
-        MONAT01: Januar
-        MONAT02: Februar
-        MONAT03: März
-        MONAT04: April
-        MONAT05: Mai
-        MONAT06: Juni
-        MONAT07: Juli
-        MONAT08: August
-        MONAT09: September
-        MONAT10: Oktober
-        MONAT11: November
-        MONAT12: Dezember
-        GESAMT: Gesamt
-
-        \x1b[4mGES\x1b[0m: LIST of type ENUM(GES)
-        enum values:
-        GESM: männlich
-        GESW: weiblich
-        GESAMT: Gesamt
-
-        \x1b[4mLEGIT2\x1b[0m: LIST of type ENUM(LEGIT2)
-        enum values:
-        LEGIT01A: Eltern miteinander verheiratet
-        LEGIT02A: Eltern nicht miteinander verheiratet
-        GESAMT: Gesamt
-
         \x1b[4mNAT\x1b[0m: LIST of type ENUM(NAT)
         enum values:
-        NATA: Ausländer(innen)
-        NATD: Deutsche
+        NAA: Ausländer(innen)
+        NAD: Deutsche
         GESAMT: Gesamt
-
-        \x1b[4mfilter\x1b[0m: INPUT_OBJECT(BEV001Filter)
 
         \x1b[1mfields:\x1b[0m
         id: Interne eindeutige ID
         year: Jahr des Stichtages
         value: Wert
-        source: Quellenverweis zur GENESIS Regionaldatenbank
-        ALTMT1: Altersgruppen der Mutter (unter 20 bis 40 u.m.)
-        BEVM01: Monat der Geburt
-        GES: Geschlecht
-        LEGIT2: Legitimität
         NAT: Nationalität
 
         \x1b[1menum values:\x1b[0m
-        None""",
-    )
-    assert info == expected_info
+        None"""
+
+    assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
 
 
 def test_get_fields_with_return_type(field, query_with_enum):
