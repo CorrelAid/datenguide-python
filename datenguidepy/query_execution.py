@@ -10,6 +10,7 @@ Json_List = List[Json_Dict]
 Json = Union[Json_Dict, Json_List]
 
 StatMeta = Dict[str, str]
+UnitMeta = Dict[str, str]
 EnumMeta = Dict[str, Dict[Optional[str], str]]
 QueryResultsMeta = Dict[str, Union[StatMeta, EnumMeta]]
 
@@ -212,6 +213,11 @@ class StatisticsMetaDataProvider(Protocol):
     ) -> EnumMeta:
         ...
 
+    def get_query_unit_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> UnitMeta:
+        ...
+
     def get_stat_descriptions(self) -> Dict[str, Tuple[str, str]]:
         ...
 
@@ -248,6 +254,15 @@ class StatisticsGraphQlMetaDataProvider(object):
             if stat in query_fields
         }
         return stat_meta
+
+    def get_query_unit_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> StatMeta:
+        return {
+            stat: "StatisticsGraphQlMetaDataProvider does not provide unit information."
+            for stat, ty in query_fields_with_types
+            if self.is_statistic(stat)
+        }
 
     def get_query_enum_meta(
         self, query_fields_with_types: List[Tuple[str, str]]
@@ -336,6 +351,16 @@ class StatisticsSchemaJsonMetaDataProvider(object):
         sd = self.get_stat_descriptions()
         return {stat: sd[stat][0] for stat in sd if stat in fields}
 
+    def get_query_unit_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> UnitMeta:
+
+        fields = [field for field, _ in query_fields_with_types]
+
+        units = self.get_stat_units()
+
+        return {stat: units[stat] for stat in units if stat in fields}
+
     def get_query_enum_meta(
         self, query_fields_with_types: List[Tuple[str, str]]
     ) -> EnumMeta:
@@ -354,6 +379,19 @@ class StatisticsSchemaJsonMetaDataProvider(object):
         return stat_candidate in get_json_path(
             self._full_data_json, ["..", "measures", "..", "name"]
         )
+
+    def get_stat_units(self) -> Dict[str, str]:
+        def get_unit_info(unit_json):
+            return unit_json[0]["measure_name_de"]
+
+        stat_names = get_json_path(
+            self._full_data_json, ["..", "measures", "..", "name"]
+        )
+        units = map(
+            get_unit_info,
+            get_json_path(self._full_data_json, ["..", "measures", "..", "units"]),
+        )
+        return dict(zip(stat_names, units))
 
     def get_stat_descriptions(self) -> Dict[str, Tuple[str, str]]:
         stat_names = get_json_path(
@@ -486,16 +524,19 @@ class QueryExecutioner(object):
 
         if results:
             meta: QueryResultsMeta = dict()
-            meta
             meta["statistics"] = self.stat_meta_data_provider.get_query_stat_meta(
                 query_fields_with_types
             )
             meta["enums"] = self.stat_meta_data_provider.get_query_enum_meta(
                 query_fields_with_types
             )
+            meta["units"] = self.stat_meta_data_provider.get_query_unit_meta(
+                query_fields_with_types
+            )
             return ExecutionResults(
                 query_results=cast(Json_List, results), meta_data=meta
             )
+            print(meta)
         else:
             return None
 
