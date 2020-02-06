@@ -1,5 +1,5 @@
 Welcome to Datenguide Python's documentation!
-=======================================================
+=============================================
 
 .. toctree::
    :maxdepth: 2
