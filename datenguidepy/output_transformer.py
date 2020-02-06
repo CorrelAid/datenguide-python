@@ -127,7 +127,7 @@ class QueryOutputTransformer:
 
     @staticmethod
     def _create_statistic_frame(statistic_sub_json: Dict[str, Any]) -> pd.DataFrame:
-        return pd.io.json.json_normalize(statistic_sub_json, sep="_", max_level=1)
+        return pd.json.json_normalize(statistic_sub_json, sep="_", max_level=1)
 
     @staticmethod
     def _determine_join_columns(statistic_results: List[pd.DataFrame]) -> Set[str]:
@@ -171,7 +171,7 @@ class QueryOutputTransformer:
     @staticmethod
     def _join_statistic_results(
         statistic_results: List[pd.DataFrame], statistic_names: List[str]
-    ) -> pd.DataFrame:
+    ) -> tuple:
         assert len(statistic_results) == len(statistic_names)
 
         join_columns = list(
