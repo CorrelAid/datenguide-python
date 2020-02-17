@@ -1,0 +1,17 @@
+name: datenguide
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - ipython
+  - jupyter
+  - matplotlib
+  - mkl
+  - numpy
+  - pandas>=0.25
+  - pip
+  - python
+  - requests
+  - seaborn
+  - pip:
+    - datenguidepy
