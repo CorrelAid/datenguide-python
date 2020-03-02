@@ -11,7 +11,8 @@ Datenguide Python
 .. image:: https://readthedocs.org/projects/datenguidepy/badge/?version=latest
         :target: https://datenguidepy.readthedocs.io/en/latest/readme/#quick-start
 
-
+.. image:: https://mybinder.org/badge_logo.svg
+ :target: https://mybinder.org/v2/gh/CorrelAid/datenguide-python/master?filepath=use_case
 
 The package provides easy access to German publicly available `regional statistics`_.
 It does so by providing a wrapper for the `GraphQL API of the Datenguide project`_.
