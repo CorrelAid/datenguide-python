@@ -45,3 +45,7 @@ ENV/
 
 # python interpreter chache files
 __pycache__
+
+## eggs
+.eggs
+*.egg-info
