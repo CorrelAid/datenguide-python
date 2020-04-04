@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Set, Container, cast
 
@@ -244,9 +245,39 @@ class QueryOutputTransformer:
                 for col, description_map in enum_mappings.items()
             }
         )
+    
+    @staticmethod
+    def _add_units(output: pd.DataFrame, meta= QueryResultsMeta
+    ) -> pd.DataFrame:
+        """Add units from meta_data to DataFrame.
+        
+        :param output: DataFrame with results
+        :dtype output: pandas.DataFrame
+        :param meta: Dictionary containing metadata for query.
+        :dtype meta: QueryResultsMeta
+        :return: Return DataFrame with results
+        :dtype: pandas.DataFrame
+
+        :raise NotImplementedError: More than one statistic in Query
+
+        """
+        _statistics = meta['statistics'].keys()
+        if len(_statistics) == 1:
+            [value] = _statistics
+        else:
+            raise NotImplementedError(
+                'More than one statistic is not supported. '
+                'Provided statisitcs: {}'.format(', '.join(_statistics)))
+        mask = output.columns.str.contains(value)
+        position = int(np.argmax(mask))
+        # ToDo: Uncertain if only one unit is possible per Statistic
+        output.insert(loc=position, column='unit', value=meta['units'][value])
+        return output
+
 
     def transform(
-        self, verbose_statistic_names=False, verbose_enum_values=False
+        self, verbose_statistic_names=False, verbose_enum_values=False,
+        add_units=False
     ) -> pd.DataFrame:
         """Transform the queries results into a Pandas DataFrame.
 
@@ -260,6 +291,10 @@ class QueryOutputTransformer:
             )
         if verbose_enum_values:
             output = self._make_verbose_enum_values(
+                output, self.query_response[0].meta_data
+            )
+        if add_units:
+            output = self._add_units(
                 output, self.query_response[0].meta_data
             )
         return output
