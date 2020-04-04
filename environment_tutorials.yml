@@ -1,0 +1,13 @@
+name: datenguidepy
+channels:
+  - base
+  - conda-forge
+dependencies:
+  - python=3.8 
+  - pandas=1.*
+  - numpy
+  - matplotlib
+  - ipykernel=5.1.*
+  # - pip
+  # - pip:
+  #   - flask
