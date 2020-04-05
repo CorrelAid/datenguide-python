@@ -12,7 +12,7 @@ def construct_execution_results(path):
         res = json.load(file)
     with open(meta_path, "r") as file:
         meta = json.load(file)
-    return [ExecutionResults(res, meta)]
+    return [ExecutionResults(r, meta) for r in res]
 
 
 def save_result_files_from_query(query, name, result_path):

@@ -238,12 +238,10 @@ class QueryOutputTransformer:
         enum_mappings = copy.deepcopy(cast(EnumMeta, meta["enums"]))
         for enum in enum_mappings:
             enum_mappings[enum][None] = "Gesamt"
-        return output.assign(
-            **{
-                col: lambda df: df[col].map(description_map)
-                for col, description_map in enum_mappings.items()
-            }
-        )
+        mapped_frame = output.copy()
+        for col, description_map in enum_mappings.items():
+            mapped_frame[col] = mapped_frame[col].map(description_map)
+        return mapped_frame
 
     def transform(
         self, verbose_statistic_names=False, verbose_enum_values=False
