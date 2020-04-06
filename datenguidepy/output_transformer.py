@@ -245,6 +245,11 @@ class QueryOutputTransformer:
                 for col, description_map in enum_mappings.items()
             }
         )
+        mapped_frame = output.copy()
+        for col, description_map in enum_mappings.items():
+            mapped_frame[col] = mapped_frame[col].map(description_map)
+        return mapped_frame
+
     
     @staticmethod
     def _add_units(output: pd.DataFrame, meta= QueryResultsMeta

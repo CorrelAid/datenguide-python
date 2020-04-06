@@ -22,6 +22,14 @@ def query_results_with_enum():
     return construct_execution_results(full_path)
 
 
+@pytest.fixture
+def query_results_with_mult_enum():
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    example_path = "examples/multiple_enums.json"
+    full_path = os.path.join(abs_path, example_path)
+    return construct_execution_results(full_path)
+
+
 def test_output_transformer_defaults(query_result):
 
     """ start test of output transformer """
@@ -92,3 +100,15 @@ def test_output_transformer_format_options(query_result, query_results_with_enum
     )
     # assert "Gültige Zweitstimmen (WAHL09)" in data_transformed
     assert "WAHL09 (WAHL09)" in data_transformed
+
+
+def test_output_transformer_format_options_multi_enum(query_results_with_mult_enum):
+    qOutTrans = QueryOutputTransformer(query_results_with_mult_enum)
+    data_transformed = qOutTrans.transform(verbose_enum_values=False)
+    assert data_transformed["ADVNW2"].iloc[0] == "ADVTN420"
+    assert data_transformed["ADVNW1"].iloc[0] is None
+
+    data_transformed = qOutTrans.transform(verbose_enum_values=True)
+    print(data_transformed.head())
+    assert data_transformed["ADVNW2"].iloc[0] == "Grünanlage"
+    assert data_transformed["ADVNW1"].iloc[0] == "Gesamt"
