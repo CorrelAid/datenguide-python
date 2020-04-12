@@ -266,17 +266,16 @@ class QueryOutputTransformer:
         :raise NotImplementedError: More than one statistic in Query
 
         """
-        _statistics = meta['statistics'].keys()
-        if len(_statistics) == 1:
-            [value] = _statistics
-        else:
-            raise NotImplementedError(
-                'More than one statistic is not supported. '
-                'Provided statisitcs: {}'.format(', '.join(_statistics)))
-        mask = output.columns.str.contains(value)
-        position = int(np.argmax(mask))
-        # ToDo: Uncertain if only one unit is possible per Statistic
-        output.insert(loc=position, column='unit', value=meta['units'][value])
+        def add_unit(statistic : str, unit : str):
+            if not isinstance(unit, str):
+                raise NotImplementedError("Unit is not a single string.")
+            mask = output.columns.str.contains(statistic)
+            position = int(np.argmax(mask))
+            output.insert(loc=position+1, column=f'{statistic}_unit', value=unit)
+
+        # # ToDo: Uncertain if only one unit is possible per Statistic
+        for statistic, unit in meta['units'].items():
+            add_unit(statistic, unit)
         return output
 
 
