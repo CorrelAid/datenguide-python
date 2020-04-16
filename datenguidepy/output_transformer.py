@@ -239,23 +239,15 @@ class QueryOutputTransformer:
         enum_mappings = copy.deepcopy(cast(EnumMeta, meta["enums"]))
         for enum in enum_mappings:
             enum_mappings[enum][None] = "Gesamt"
-        return output.assign(
-            **{
-                col: lambda df: df[col].map(description_map)
-                for col, description_map in enum_mappings.items()
-            }
-        )
         mapped_frame = output.copy()
         for col, description_map in enum_mappings.items():
             mapped_frame[col] = mapped_frame[col].map(description_map)
         return mapped_frame
 
-    
     @staticmethod
-    def _add_units(output: pd.DataFrame, meta= QueryResultsMeta
-    ) -> pd.DataFrame:
+    def _add_units(output: pd.DataFrame, meta=QueryResultsMeta) -> pd.DataFrame:
         """Add units from meta_data to DataFrame.
-        
+
         :param output: DataFrame with results
         :dtype output: pandas.DataFrame
         :param meta: Dictionary containing metadata for query.
@@ -266,22 +258,21 @@ class QueryOutputTransformer:
         :raise NotImplementedError: More than one statistic in Query
 
         """
-        def add_unit(statistic : str, unit : str):
+
+        def add_unit(statistic: str, unit: str):
             if not isinstance(unit, str):
                 raise NotImplementedError("Unit is not a single string.")
             mask = output.columns.str.contains(statistic)
             position = int(np.argmax(mask))
-            output.insert(loc=position+1, column=f'{statistic}_unit', value=unit)
+            output.insert(loc=position + 1, column=f"{statistic}_unit", value=unit)
 
         # # ToDo: Uncertain if only one unit is possible per Statistic
-        for statistic, unit in meta['units'].items():
+        for statistic, unit in meta["units"].items():
             add_unit(statistic, unit)
         return output
 
-
     def transform(
-        self, verbose_statistic_names=False, verbose_enum_values=False,
-        add_units=False
+        self, verbose_statistic_names=False, verbose_enum_values=False, add_units=False
     ) -> pd.DataFrame:
         """Transform the queries results into a Pandas DataFrame.
 
@@ -298,7 +289,5 @@ class QueryOutputTransformer:
                 output, self.query_response[0].meta_data
             )
         if add_units:
-            output = self._add_units(
-                output, self.query_response[0].meta_data
-            )
+            output = self._add_units(output, self.query_response[0].meta_data)
         return output
