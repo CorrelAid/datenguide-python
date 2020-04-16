@@ -451,9 +451,7 @@ class QueryExecutioner(object):
         )
 
         if statistics_meta_data_provider is None:
-            self.stat_meta_data_provider = StatisticsGraphQlMetaDataProvider(
-                self.endpoint
-            )
+            self.stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
         else:
             self.stat_meta_data_provider = statistics_meta_data_provider
 
