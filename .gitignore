@@ -1,3 +1,6 @@
+# tox
+.tox
+
 # pytest
 .pytest_cache
 
