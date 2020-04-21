@@ -4,14 +4,13 @@ channels:
   - defaults
 dependencies:
   - ipython
-  - jupyter
+  - jupyter 
   - matplotlib
+  - seaborn
   - mkl
   - numpy
   - pandas>=0.25
   - pip
-  - python
-  - requests
-  - seaborn
+  - python=3.7
   - pip:
-    - datenguidepy
+    - git+https://github.com/CorrelAid/datenguide-python.git
