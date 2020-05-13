@@ -13,3 +13,4 @@ pytest-runner==4.2
 pre-commit==1.17.0
 virtualenv==16.1.0
 typing_extensions>=3.7
+googletrans==2.4.0

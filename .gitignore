@@ -1,6 +1,9 @@
 # pytest
 .pytest_cache
 
+# PyCharm
+.idea
+
 # VS Code
 .vscode
 
@@ -43,5 +46,9 @@ ENV/
 # notebook checkpoints
 .ipynb_checkpoints
 
-# python interpreter chache files
+# python interpreter cache files
 __pycache__
+
+.tox
+.eggs
+datenguidepy.egg-info

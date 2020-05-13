@@ -146,6 +146,8 @@ For more information on "nuts" levels see Wikipedia_.
     from datenguidepy import get_statistics
 
     get_statistics()
+    # return statistical descriptions in English
+    get_statistics(target_language = 'en')
 
 **Get information on single fields**
 

@@ -4,6 +4,7 @@ from datenguidepy.query_execution import (
     ExecutionResults,
     DEFAULT_STATISTICS_META_DATA_PROVIDER,
 )
+from datenguidepy.translation import DEFAULT_TRANSLATION_PROVIDER, TranslationProvider
 
 from typing import Dict, Any, cast, Optional, List
 import pandas as pd
@@ -15,7 +16,6 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 ALL_REGIONS: pd.DataFrame = pd.read_csv(
     os.path.join(dir_path, "regions.csv"), index_col="id"
 )
-
 
 class ConfigMapping:
     """[summary]
@@ -137,23 +137,37 @@ federal_states = ConfigMapping(federal_state_dictionary)
 
 
 def get_statistics(
-    search: Optional[str] = None, stat_meta_data_provider=None
+    search: Optional[str] = None, stat_meta_data_provider=None, target_language: str = 'de', translation_provider: TranslationProvider = None
 ) -> pd.DataFrame:
     """[summary]
-
     :param search: [description], defaults to None
     :type search: Optional[str], optional
+    :param translation_provider: will use default translation provider if missing
+    :param target_language: language to translate statistic descriptions to, must be valid language or language code for specified translation provider
+    :param stat_meta_data_provider: meta data provider for statistic, default will be used if missing
     :return: [description]
     :rtype: pd.DataFrame
     """
     if stat_meta_data_provider is None:
         stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
 
+    if translation_provider is None:
+        translation_provider = DEFAULT_TRANSLATION_PROVIDER
+
+    if target_language != 'de' and not translation_provider.is_valid_language_code(target_language):
+        valid_language_codes = str(translation_provider.get_valid_language_codes())
+        raise ValueError('Target language {0} is invalid or not available for chosen translation provider, please use one of {1}'.format(target_language, valid_language_codes))
+
     stat_descr = stat_meta_data_provider.get_stat_descriptions()
+
     stat_frame = pd.DataFrame(
         [(stat, *stat_descr[stat]) for stat in stat_descr],
         columns=["statistics", "short_description", "long_description"],
     )
+
+    if target_language != 'de':
+        translation_provider.translate_data_frame_from_german(stat_frame, target_language)
+
     if search is not None:
         search_string = cast(str, search)  # noqa: F841
         return stat_frame.query(
@@ -195,7 +209,7 @@ def download_all_regions() -> pd.DataFrame:
     r_lau1 = qe.run_query(lau_query(1))
     print("lau")
     # currently no distinction between different laus
-    # on datehenguide side
+    # on datenguide side
     # r_lau2 = qe.run_query(lau_query(2))
 
     levels = {
