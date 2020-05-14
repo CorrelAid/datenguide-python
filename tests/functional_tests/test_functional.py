@@ -90,6 +90,8 @@ def test_query_executioner_workflow(query):
     assert (
         meta_query1["statistics"]["BEVMK3"] != "NO DESCRIPTION FOUND"
     ), "descrption was not obtained"
+    assert "BEVMK3" in meta_query1["units"], "units absend"
+    assert meta_query1["units"]["BEVMK3"] == "Anzahl", "correct unit was not obtained"
     assert (
         meta_query1 == meta_query1_alternative
     ), "meta_data_query_alternatives_should be equal"
@@ -276,5 +278,25 @@ def test_get_query_specific_enum_meta():
                 ("GESAMT", "Gesamt"),
             ]
         )
+    }
+    assert query_stat_meta == expected_stat_meta
+
+
+def test_get_query_specific_unit_meta():
+
+    field_type_list = [
+        ("id", "String"),
+        ("name", "String"),
+        ("WAHL09", "WAHL09"),
+        ("PART04", "PART04"),
+        ("year", "Int"),
+        ("value", "Float"),
+    ]
+    query_stat_meta = StatisticsGraphQlMetaDataProvider().get_query_unit_meta(
+        field_type_list
+    )
+
+    expected_stat_meta = {
+        "WAHL09": "StatisticsGraphQlMetaDataProvider does not provide unit information."
     }
     assert query_stat_meta == expected_stat_meta
