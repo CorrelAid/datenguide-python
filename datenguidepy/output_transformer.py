@@ -245,7 +245,7 @@ class QueryOutputTransformer:
         return mapped_frame
 
     @staticmethod
-    def _add_units(output: pd.DataFrame, meta=QueryResultsMeta) -> pd.DataFrame:
+    def _add_units(output: pd.DataFrame, meta: QueryResultsMeta) -> pd.DataFrame:
         """Add units from meta_data to DataFrame.
 
         :param output: DataFrame with results
