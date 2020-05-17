@@ -608,7 +608,8 @@ class Query:
         return self.start_field._get_fields_with_types()
 
     def results(
-        self, verbose_statistics: bool = False, verbose_enums: bool = False
+        self, verbose_statistics: bool = False, verbose_enums: bool = False,
+        add_units: bool = False
     ) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
            It also fills the instance variable result_meta_data with meta
@@ -636,6 +637,7 @@ class Query:
             return QueryOutputTransformer(result).transform(
                 verbose_statistic_names=verbose_statistics,
                 verbose_enum_values=verbose_enums,
+                add_units=add_units
             )
         else:
             raise RuntimeError("No results could be returned for this Query.")

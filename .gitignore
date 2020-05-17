@@ -1,3 +1,6 @@
+# tox
+.tox
+
 # pytest
 .pytest_cache
 
@@ -58,3 +61,7 @@ docs/_build
 
 # python interpreter chache files
 __pycache__
+
+## eggs
+.eggs
+*.egg-info
