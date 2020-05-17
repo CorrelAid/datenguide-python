@@ -1,4 +1,5 @@
 from typing import Dict, Any, cast, Optional, NamedTuple, List, Tuple, Union
+from typing_extensions import Protocol
 import requests
 import re
 
@@ -71,6 +72,13 @@ class FieldMetaDict(dict):
             )
             for arg in self["args"]
         }
+
+
+def check_http200_body_error(body_json: Json_Dict) -> None:
+    if "errors" in body_json:
+        raise RuntimeError(
+            "Body contains the following error content\n" + str(body_json)
+        )
 
 
 class GraphQlSchemaMetaDataProvider(object):
@@ -182,11 +190,33 @@ class GraphQlSchemaMetaDataProvider(object):
             self.endpoint, headers=self.REQUEST_HEADER, json=query_json
         )
         if resp.status_code == 200:
-            return resp.json()
+            body_json = resp.json()
+            check_http200_body_error(body_json)
+            return body_json
         else:
-            print(self.endpoint)
-            print(f"No result, got HTML status code {resp.status_code}")
-            return None
+            raise RuntimeError(
+                self.endpoint
+                + "\n"
+                + f"No result, got HTML status code {resp.status_code}"
+            )
+
+
+class StatisticsMetaDataProvider(Protocol):
+    def get_query_stat_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> StatMeta:
+        ...
+
+    def get_query_enum_meta(
+        self, query_fields_with_types: List[Tuple[str, str]]
+    ) -> EnumMeta:
+        ...
+
+    def get_stat_descriptions(self) -> Dict[str, Tuple[str, str]]:
+        ...
+
+    def is_statistic(self, stat_candidate: str) -> bool:
+        ...
 
 
 class StatisticsGraphQlMetaDataProvider(object):
@@ -316,7 +346,8 @@ class StatisticsSchemaJsonMetaDataProvider(object):
                 ["..", "measures", "..", "dimensions", field, "value_names"],
             )
             if len(enum_values) > 0:
-                enum_meta[field] = enum_values[0]
+                gesamt_update = {"GESAMT": "Gesamt"}
+                enum_meta[field] = dict(enum_values[0], **gesamt_update)
         return enum_meta
 
     def is_statistic(self, stat_candidate: str) -> bool:
@@ -328,24 +359,33 @@ class StatisticsSchemaJsonMetaDataProvider(object):
         stat_names = get_json_path(
             self._full_data_json, ["..", "measures", "..", "name"]
         )
+        stat_descriptions_short = get_json_path(
+            self._full_data_json, ["..", "measures", "..", "title_de"]
+        )
         stat_descriptions_long = get_json_path(
             self._full_data_json, ["..", "measures", "..", "definition_de"]
         )
         return {
-            name: (desc.split("\n", 1)[0], desc)
-            for name, desc in zip(stat_names, stat_descriptions_long)
+            name: (short, long)
+            for name, short, long in zip(
+                stat_names, stat_descriptions_short, stat_descriptions_long
+            )
         }
 
     def get_enum_values(self) -> Dict[str, Dict[str, str]]:
-        names = (
-            self._full_data_json,
-            ["..", "measures", "..", "dimensions", "..", "name"],
+        names = get_json_path(
+            self._full_data_json, ["..", "measures", "..", "dimensions", "..", "name"]
         )
-        values = (
+        values = get_json_path(
             self._full_data_json,
             ["..", "measures", "..", "dimensions", "..", "value_names"],
         )
-        return {name: vs for name, vs in zip(names, values)}
+        gesamt_update = {"GESAMT": "Gesamt"}
+
+        return {name: dict(vs, **gesamt_update) for name, vs in zip(names, values)}
+
+
+DEFAULT_STATISTICS_META_DATA_PROVIDER = StatisticsSchemaJsonMetaDataProvider()
 
 
 class QueryExecutioner(object):
@@ -473,8 +513,12 @@ class QueryExecutioner(object):
             self.endpoint, headers=self.REQUEST_HEADER, json=query_json
         )
         if resp.status_code == 200:
-            return resp.json()
+            body_json = resp.json()
+            check_http200_body_error(body_json)
+            return body_json
         else:
-            print(self.endpoint)
-            print(f"No result, got HTML status code {resp.status_code}")
-            return None
+            raise RuntimeError(
+                self.endpoint
+                + "\n"
+                + f"No result, got HTML status code {resp.status_code}"
+            )

@@ -19,7 +19,7 @@ def get_simple_json_path(json, path_list):
         return get_simple_json_path(json.get(path_list[0]), path_list[1:])
 
 
-def get_json_path(json, path_list):
+def get_json_path(json, path_list, default="Missing"):
     if json == [] or len(path_list) == 0:
         return json
     else:
@@ -31,6 +31,8 @@ def get_json_path(json, path_list):
                 for v in sub_j.values()
                 for elem in get_json_path([v], path_list[1:])
             ]
+        elif len(path_list) == 1:
+            return [sub_j.get(next_val, default) for sub_j in json]
         else:
             sub_jsons = [sub_j for sub_j in json if sub_j.get(next_val) is not None]
             return [

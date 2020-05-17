@@ -2,7 +2,7 @@ from datenguidepy.query_builder import Query
 from datenguidepy.query_execution import (
     QueryExecutioner,
     ExecutionResults,
-    StatisticsGraphQlMetaDataProvider,
+    DEFAULT_STATISTICS_META_DATA_PROVIDER,
 )
 
 from typing import Dict, Any, cast, Optional, List
@@ -147,7 +147,7 @@ def get_statistics(
     :rtype: pd.DataFrame
     """
     if stat_meta_data_provider is None:
-        stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
+        stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
 
     stat_descr = stat_meta_data_provider.get_stat_descriptions()
     stat_frame = pd.DataFrame(

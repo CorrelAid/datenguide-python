@@ -3,7 +3,8 @@ from pandas import DataFrame
 from datenguidepy.query_execution import (
     QueryExecutioner,
     GraphQlSchemaMetaDataProvider,
-    StatisticsGraphQlMetaDataProvider,
+    StatisticsMetaDataProvider,
+    DEFAULT_STATISTICS_META_DATA_PROVIDER,
     TypeMetaData,
     QueryResultsMeta,
 )
@@ -45,7 +46,7 @@ class Field:
         parent_field: "Field" = None,
         default_fields: bool = True,
         return_type: str = None,
-        stat_meta_data_provider=None,
+        stat_meta_data_provider: StatisticsMetaDataProvider = None,
     ):
         self.name = name
         self.parent_field = parent_field
@@ -55,7 +56,9 @@ class Field:
 
         self.fields: Dict[str, "Field"] = {}
         if stat_meta_data_provider is None:
-            self._stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
+            self._stat_meta_data_provider: StatisticsMetaDataProvider = (
+                DEFAULT_STATISTICS_META_DATA_PROVIDER
+            )
         else:
             self._stat_meta_data_provider = stat_meta_data_provider
 
@@ -308,28 +311,13 @@ class Field:
         meta = self._graphql_schema_meta_data_provider.get_type_info(self.return_type)
         return Field._no_none_values(self._enum_info_formatter, meta, "enum_values")
 
-    # inteface issue, in such that the private
-    # function for the meta_data_provider is used
-    def _get_description(self, meta_fields) -> Optional[str]:
-        return self._stat_meta_data_provider._extract_main_description(
-            meta_fields[self.name]["description"]
-        )
-
     def description(self) -> Optional[str]:
         """Get description of field.
 
         :return: Description of the field as string.
         :rtype: Optional[str]
         """
-
-        parent = self.parent_field
-        if parent is not None:
-            meta = self._graphql_schema_meta_data_provider.get_type_info(
-                parent.return_type
-            )
-            return Field._no_none_values(self._get_description, meta, "fields")
-        else:
-            return None
+        return self._stat_meta_data_provider.get_stat_descriptions()[self.name][0]
 
     @staticmethod
     def _get_fields_recursion(field: "Field") -> List[str]:
@@ -372,13 +360,15 @@ class Query:
         start_field: Field,
         region_field: Field = None,
         default_fields: bool = True,
-        stat_meta_data_provider=None,
+        stat_meta_data_provider: StatisticsMetaDataProvider = None,
     ):
         self.start_field = start_field
         self.region_field = region_field
         self.result_meta_data: Optional[QueryResultsMeta] = None
         if stat_meta_data_provider is None:
-            self._stat_meta_data_provider = StatisticsGraphQlMetaDataProvider()
+            self._stat_meta_data_provider: StatisticsMetaDataProvider = (
+                DEFAULT_STATISTICS_META_DATA_PROVIDER
+            )
         else:
             self._stat_meta_data_provider = stat_meta_data_provider
 

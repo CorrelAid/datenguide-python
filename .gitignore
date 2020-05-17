@@ -4,6 +4,18 @@
 # VS Code
 .vscode
 
+# pycharm
+.idea
+
+# tox
+.tox
+
+# egg
+.eggs
+build
+datenguidepy.egg-info
+dist
+
 # pyenv
 .python-version
 
@@ -30,6 +42,7 @@ ENV/
 
 # mkdocs documentation
 /site
+docs/_build
 
 # mypy
 .mypy_cache/

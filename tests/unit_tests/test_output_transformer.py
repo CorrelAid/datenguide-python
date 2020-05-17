@@ -1,27 +1,25 @@
 import pandas as pd
 import pytest
+import os
 
 from datenguidepy.output_transformer import QueryOutputTransformer
-from datenguidepy.query_execution import QueryExecutioner
-from datenguidepy.query_builder import Field, Query
+from tests.case_construction import construct_execution_results
 
 
 @pytest.fixture
 def query_result():
-    field = Field(name="BEVMK3", fields=["value", "year"])
-    query = Query.region(region="05911", fields=["id", "name", field])
-    return QueryExecutioner().run_query(query)
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    example_path = "examples/transformer_example1.json"
+    full_path = os.path.join(abs_path, example_path)
+    return construct_execution_results(full_path)
 
 
 @pytest.fixture
 def query_results_with_enum():
-    q = Query.region("09", default_fields=False)
-    stat = q.add_field("WAHL09")
-    stat.add_args({"PART04": "ALL"})
-    stat.add_field("PART04")
-    stat.add_field("year")
-    stat.add_field("value")
-    return QueryExecutioner().run_query(q)
+    abs_path = os.path.abspath(os.path.dirname(__file__))
+    example_path = "examples/transformer_example2.json"
+    full_path = os.path.join(abs_path, example_path)
+    return construct_execution_results(full_path)
 
 
 def test_output_transformer_defaults(query_result):

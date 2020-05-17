@@ -1,0 +1,89 @@
+[
+{
+  "data": {
+    "region": {
+      "id": "05911",
+      "name": "Bochum, Kreisfreie Stadt",
+      "BEVMK3": [
+        {
+          "value": 662,
+          "year": 2011,
+          "source": {
+            "title_de": "Statistik rechtskräftiger Urteile in Ehesachen",
+            "valid_from": "1980-01-01T00:00:00",
+            "periodicity": "JAEHRLICH",
+            "name": "12631",
+            "url": null
+          }
+        },
+        {
+          "value": 634,
+          "year": 2012,
+          "source": {
+            "title_de": "Statistik rechtskräftiger Urteile in Ehesachen",
+            "valid_from": "1980-01-01T00:00:00",
+            "periodicity": "JAEHRLICH",
+            "name": "12631",
+            "url": null
+          }
+        },
+        {
+          "value": 583,
+          "year": 2013,
+          "source": {
+            "title_de": "Statistik rechtskräftiger Urteile in Ehesachen",
+            "valid_from": "1980-01-01T00:00:00",
+            "periodicity": "JAEHRLICH",
+            "name": "12631",
+            "url": null
+          }
+        },
+        {
+          "value": 632,
+          "year": 2014,
+          "source": {
+            "title_de": "Statistik rechtskräftiger Urteile in Ehesachen",
+            "valid_from": "1980-01-01T00:00:00",
+            "periodicity": "JAEHRLICH",
+            "name": "12631",
+            "url": null
+          }
+        },
+        {
+          "value": 625,
+          "year": 2015,
+          "source": {
+            "title_de": "Statistik rechtskräftiger Urteile in Ehesachen",
+            "valid_from": "1980-01-01T00:00:00",
+            "periodicity": "JAEHRLICH",
+            "name": "12631",
+            "url": null
+          }
+        },
+        {
+          "value": 556,
+          "year": 2016,
+          "source": {
+            "title_de": "Statistik rechtskräftiger Urteile in Ehesachen",
+            "valid_from": "1980-01-01T00:00:00",
+            "periodicity": "JAEHRLICH",
+            "name": "12631",
+            "url": null
+          }
+        },
+        {
+          "value": 550,
+          "year": 2017,
+          "source": {
+            "title_de": "Statistik rechtskräftiger Urteile in Ehesachen",
+            "valid_from": "1980-01-01T00:00:00",
+            "periodicity": "JAEHRLICH",
+            "name": "12631",
+            "url": null
+          }
+        }
+      ]
+    }
+  }
+}
+]

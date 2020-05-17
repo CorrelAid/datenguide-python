@@ -1,0 +1,1 @@
+{region (id: "09"){WAHL09 (filter:{ PART04: { nin: []}}){PART04 year value }}}
