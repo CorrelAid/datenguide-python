@@ -17,4 +17,4 @@ History
 
 * Added functionality to use meta data for displaying descriptive statistics names and enum values
 * Added functionality to display the units of a statistic along with the numerical value.
-* Internally split the meta data extraction into technichal meta data and meta data about the statistics. Implmented new defaults for the statistics meta data in order to account for changes in the datenguide API.
+* Internally split the meta data extraction into technical meta data and meta data about the statistics. Implemented new defaults for the statistics meta data in order to account for changes in the datenguide API.
