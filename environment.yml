@@ -1,0 +1,16 @@
+name: datenguide
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - ipython
+  - jupyter 
+  - matplotlib
+  - seaborn
+  - mkl
+  - numpy
+  - pandas>=0.25
+  - pip
+  - python=3.7
+  - pip:
+    - git+https://github.com/CorrelAid/datenguide-python.git
