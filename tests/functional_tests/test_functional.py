@@ -3,7 +3,10 @@ import pandas as pd
 import sys
 import io
 import re
-from datenguidepy.query_execution import QueryExecutioner
+from datenguidepy.query_execution import (
+    QueryExecutioner,
+    StatisticsGraphQlMetaDataProvider,
+)
 from datenguidepy.query_builder import Query, Field
 from datenguidepy.query_helper import (
     federal_states,
@@ -35,7 +38,7 @@ def query_all_regions():
     return query
 
 
-def test_QueryExecutionerWorkflow(query):
+def test_query_executioner_workflow(query):
     """Functional test for the query executioner"""
 
     # Ira (W. Cotton, probably the first person to use the term API) want to
@@ -70,7 +73,7 @@ def test_QueryExecutionerWorkflow(query):
         type(res_query1) is pd.DataFrame
     ), "query results are not a python json representation"
 
-    stats = Query.get_info()
+    stats = query.get_info()
 
     # Ira remembers that he read about the executioners functionality to
     # return metadata along with the query results. So he wants to check
@@ -96,8 +99,11 @@ def test_QueryExecutionerWorkflow(query):
     # is used directly to get more verbose query results.
 
     res_query1_verbose_cols = query.results(verbose_statistics=True)
+    print(res_query1_verbose_cols.columns)
     assert (
-        "Von der Scheidung betroffene Kinder (BEVMK3)" in res_query1_verbose_cols
+        # "Von der Scheidung betroffene Kinder (BEVMK3)" in res_query1_verbose_cols
+        "Von der Scheidung betroffene Kinder (BEVMK3)"
+        in res_query1_verbose_cols
     ), "verbose statistic name is not present"
 
     # Being satisfied with the results he obtained for his simple query
@@ -117,7 +123,7 @@ def test_QueryExecutionerWorkflow(query):
     # one of the arguments is an ENUM and he would like to know
     # the possible values that he can use for it.
 
-    enum_vals = Query.get_info("BEVMK3Statistics").enum_values
+    enum_vals = query.get_info("BEVMK3Statistics").enum_values
     assert type(enum_vals) == dict, "Enum values should be dict"
     assert len(enum_vals) > 0, "Enums should have values"
 
@@ -138,7 +144,9 @@ def test_QueryExecutionerWorkflow(query):
     assert "OBJECT" in stats_info, "BEV001 should be an object"
 
 
-def test_queryHelper():
+# does not require internet in this for and does not use the graphql API
+# this could be changed by explicitly using the graphql statistics meta data provider
+def test_query_helper():
     # Ira is happy with the functionality so far but is worried a bit
     # about the difficuilty of finding the right technichal ids for regions
     # and statistics.
@@ -154,19 +162,6 @@ def test_queryHelper():
     reg_locally_stored = get_all_regions()
     assert isinstance(reg_locally_stored, pd.DataFrame)
 
-    # Ira reads in the help that this is a stored list of regions and
-    # not obtained live from datenguide.
-    # He knows that region definitions and ids don't change very
-    # often, but he would like the ability to obtain the most up to date
-    # regions anyways. He therefore tries the function download_all_regions
-    # that is designed for this purpouse
-
-    reg = download_all_regions()
-    assert isinstance(reg, pd.DataFrame)
-    assert list(reg.columns) == ["name", "level", "parent"]
-    assert reg.index.name == "id"
-    assert reg.shape[0] > 10000
-
     # Being satisfied with the regions, Ira now wants to have a
     # look at an equivalent overview of statistics.
 
@@ -181,6 +176,23 @@ def test_queryHelper():
     filtered_statistics = get_statistics("scheidung")
     assert isinstance(filtered_statistics, pd.DataFrame)
     assert filtered_statistics.shape[0] < 50
+
+
+@pytest.mark.skip(reason="currently takes very long")
+def downloade_all_regions():
+    # Ira reads in the help that the regions dataframe
+    # is a stored in a local file and
+    # not obtained live from datenguide.
+    # He knows that region definitions and ids don't change very
+    # often, but he would like the ability to obtain the most up to date
+    # regions anyways. He therefore tries the function download_all_regions
+    # that is designed for this purpouse
+
+    reg = download_all_regions()
+    assert isinstance(reg, pd.DataFrame)
+    assert list(reg.columns) == ["name", "level", "parent"]
+    assert reg.index.name == "id"
+    assert reg.shape[0] > 10000
 
 
 def test_build_execute_transform_integration(query):
@@ -220,3 +232,49 @@ def test_build_execute_transform_integration_all_regions(query_all_regions):
 
     output_transf = QueryOutputTransformer(res)
     output_transf.transform()
+
+
+def test_get_query_specific_stat_meta():
+    field_type_list = [
+        ("id", "String"),
+        ("name", "String"),
+        ("WAHL09", "WAHL09"),
+        ("PART04", "PART04"),
+        ("year", "Int"),
+        ("value", "Float"),
+    ]
+    query_stat_meta = StatisticsGraphQlMetaDataProvider().get_query_stat_meta(
+        field_type_list
+    )
+    # "Gültige Zweitstimmen" uninformative due to API changes
+    expected_stat_meta = {"WAHL09": "WAHL09"}
+    assert query_stat_meta == expected_stat_meta
+
+
+def test_get_query_specific_enum_meta():
+    field_type_list = [
+        ("id", "String"),
+        ("name", "String"),
+        ("WAHL09", "WAHL09"),
+        ("PART04", "PART04"),
+        ("year", "Int"),
+        ("value", "Float"),
+    ]
+    query_stat_meta = StatisticsGraphQlMetaDataProvider().get_query_enum_meta(
+        field_type_list
+    )
+    expected_stat_meta = {
+        "PART04": dict(
+            [
+                ("AFD", "AfD"),
+                ("B90_GRUENE", "GRÜNE"),
+                ("CDU", "CDU/CSU"),
+                ("DIELINKE", "DIE LINKE"),
+                ("FDP", "FDP"),
+                ("SONSTIGE", "Sonstige Parteien"),
+                ("SPD", "SPD"),
+                ("GESAMT", "Gesamt"),
+            ]
+        )
+    }
+    assert query_stat_meta == expected_stat_meta
