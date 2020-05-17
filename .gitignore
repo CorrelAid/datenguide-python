@@ -1,3 +1,6 @@
+# tox
+.tox
+
 # pytest
 .pytest_cache
 
@@ -6,6 +9,18 @@
 
 # VS Code
 .vscode
+
+# pycharm
+.idea
+
+# tox
+.tox
+
+# egg
+.eggs
+build
+datenguidepy.egg-info
+dist
 
 # pyenv
 .python-version
@@ -33,6 +48,7 @@ ENV/
 
 # mkdocs documentation
 /site
+docs/_build
 
 # mypy
 .mypy_cache/
@@ -49,6 +65,6 @@ ENV/
 # python interpreter cache files
 __pycache__
 
-.tox
+## eggs
 .eggs
-datenguidepy.egg-info
+*.egg-info
