@@ -6,6 +6,7 @@ from datenguidepy.query_execution import (
     ExecutionResults,
     StatMeta,
     EnumMeta,
+    UnitMeta,
     QueryResultsMeta,
 )
 import copy
@@ -23,14 +24,22 @@ class QueryOutputTransformer:
         :type query_response: List[ExecutionResults]
         """
 
-    def __init__(
-        self, query_response: List[ExecutionResults]
-    ):  # query_response_json: Dict[str, Any]):
+    def __init__(self, query_response: List[ExecutionResults]) -> None:
 
         self.query_response = query_response
 
     @staticmethod
-    def _convert_results_to_frame(executioner_result) -> pd.DataFrame:
+    def _convert_results_to_frame(
+        executioner_result: List[ExecutionResults]
+    ) -> pd.DataFrame:
+        """Converst raw query results to a DataFrame.
+
+        This function converst thre return values from
+        query_execution functinoality into a pandas DataFrame.
+
+        :param executioner_result: Raw query results including meta data.
+        :return: DataFrame with query results.
+        """
         result_frames = []
         for single_query_response in executioner_result:
             for page in single_query_response.query_results:
@@ -83,12 +92,11 @@ class QueryOutputTransformer:
             )
         statistic_frames = [
             QueryOutputTransformer._create_statistic_frame(region_json[stat])
-            for stat in cast(Dict[str, str], cast(StatMeta, meta["statistics"])).keys()
+            for stat in cast(StatMeta, meta["statistics"]).keys()
         ]
 
         joined_results, join_cols = QueryOutputTransformer._join_statistic_results(
-            statistic_frames,
-            list(cast(Dict[str, str], cast(StatMeta, meta["statistics"])).keys()),
+            statistic_frames, list(cast(StatMeta, meta["statistics"]).keys())
         )
         column_order = QueryOutputTransformer._determine_column_order(
             joined_results, join_cols
@@ -120,8 +128,17 @@ class QueryOutputTransformer:
     def _rename_statistic_fields(
         statistic_result: pd.DataFrame, stat_meta: Dict[str, str]
     ) -> pd.DataFrame:
-        """
-        Renames STATISTIC_value columns into STATISTIC columns
+        """Renames fields containing the statistic values.
+
+        By default all statistic related fields are prefixed
+        with the statistic name. As such the reported statistic
+        itself has a column name STATISTIC_value. As the value
+        is the most central column it is renamed into
+        the the simple name STATISTIC.
+
+        :param statistic_result: Results of a query.
+        :param stat_meta: Meta data related to the query.
+        :return: Results with renamed statistic column.
         """
         rename_mapping = {f"{stat}_value": stat for stat in stat_meta}
         return statistic_result.rename(columns=rename_mapping)
@@ -199,9 +216,12 @@ class QueryOutputTransformer:
     def _determine_column_order(
         joined_frame: pd.DataFrame, join_columns: Set[str]
     ) -> List[str]:
-        """Determines a rearrangement of the DataFrames column list
-        grouping all source columns to the right and other information
-        particularly the statistics values to the left.
+        """Determines column order for joined dataframe.
+
+        This function determines a rearrangement of the DataFrame's
+        column list, grouping all source columns to the right
+        and other information particularly the
+        statistics values to the left.
 
         :param joined_frame: DataFrame with columns for all the
             statistics from the executed query
@@ -267,7 +287,7 @@ class QueryOutputTransformer:
             output.insert(loc=position + 1, column=f"{statistic}_unit", value=unit)
 
         # # ToDo: Uncertain if only one unit is possible per Statistic
-        for statistic, unit in meta["units"].items():
+        for statistic, unit in cast(UnitMeta, meta["units"].items()):
             add_unit(statistic, unit)
         return output
 
