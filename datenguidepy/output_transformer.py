@@ -54,6 +54,21 @@ class QueryOutputTransformer:
     def _convert_regions_to_frame(
         query_page: Dict[str, Any], meta_data: QueryResultsMeta
     ) -> pd.DataFrame:
+        """Converts and combines raw results for one or more regions.
+
+        This result converts region output from the API. The
+        Graphql API has two distinct enpoints, one called "region"
+        returning results for a single region and one called "allRegions"
+        which returns results for multiple regions. This function identifies
+        the endpoint that was used and then converts the results for the one
+        or more regions that it finds. If multiple regions are found,
+        their results are concatenated.
+
+        :param query_page: Single page of API query results as a python dict
+            representation of a json.
+        :meta_data: Query relevant meta data.
+        :return: Converted results possible combined across multiple regions.
+        """
         if "region" in query_page["data"]:
             return QueryOutputTransformer._convert_single_results_to_frame(
                 query_page["data"]["region"], meta_data
@@ -76,15 +91,23 @@ class QueryOutputTransformer:
     def _convert_single_results_to_frame(
         region_json: Dict[str, Any], meta: QueryResultsMeta
     ) -> pd.DataFrame:
-        """[summary]
+        """Converts a region sub directory of raw output to a dataframe.
+
+        This is the main internal method for converting raw API output
+        to dataframes as results are composed of regions. This converts
+        a single regions with the idea that results across regions
+        can be concatenated. This function contains logic for joining
+        data for several statistics in case more than one was queries.
+        Furthermore the columns are conveniently sorted to put the most
+        important information to the left.
+
 
         :param region_json: [description]
-        :type region_json: Dict[str, Any]
         :param meta: [description]
-        :type meta: Dict[str, str]
-        :raises RuntimeError: [description]
-        :return: [description]
-        :rtype: pd.DataFrame
+        :raises RuntimeError: The raised error is meant to cover the case
+            where quert results were obtained but meta data wasn't possibly
+            due to connection problems.
+        :return: DataFrame with query results for a single region.
         """
         if "error" in meta["statistics"]:
             raise RuntimeError(
@@ -118,6 +141,16 @@ class QueryOutputTransformer:
     def _get_general_fields(
         region_json: Dict[str, Any], stat_meta: Dict[str, str]
     ) -> List[str]:
+        """Extract non statistic specific fields.
+
+        For the purpouse of arranging dataframe columns this
+        fuction extracts all dicionary fields that do not
+        contain a statistic in their name.
+
+        :param region_json: Dictionary for a specific region.
+        :param stat_meta: Dictionary containg query meta data.
+        :return: List of fields without statistics.
+        """
         return [
             field
             for field in region_json
@@ -145,12 +178,27 @@ class QueryOutputTransformer:
 
     @staticmethod
     def _create_statistic_frame(statistic_sub_json: Dict[str, Any]) -> pd.DataFrame:
+        """Converst a json to a dataframe.
+
+        This function converts the dictionary representation of a json
+        to a pandas dataframe. Currenly this uses pandas directly.
+        But it might be sensible to implement custom functionality as
+        this function is the main reason for the pandas 1.0 requirement.
+
+        :param statistic_sub_json: Python dictionary json representation.
+        :return: Dataframe conversion of the dictionary.
+        """
         return pd.json_normalize(statistic_sub_json, sep="_", max_level=1)
 
     @staticmethod
     def _determine_join_columns(statistic_results: List[pd.DataFrame]) -> Set[str]:
-        """Dertermines the columns over which to join
-        multiple statistics data frames.
+        """Dertermines join columns.
+
+        When several statistics are queried this functino
+        determines the columns over which to join
+        multiple statistics data frames. This will typically
+        lead to joining over the year column and enums
+        that the statistics have in common.
         Currently has hardcoded exclusion criteria
         to never join across columns containing "value"
         and "source". This is not expected to be a severe
@@ -158,10 +206,8 @@ class QueryOutputTransformer:
         and can be achieved by post-join filters should
         the need arise.
 
-        :param statistic_results: [description]
-        :type statistic_results: List[pd.DataFrame]
-        :return: [description]
-        :rtype: Set[str]
+        :param statistic_results: Dataframes for individual statistics
+        :return: Columns over which to join.
         """
         candidates = {
             column
@@ -179,6 +225,17 @@ class QueryOutputTransformer:
     def _prefix_frame_cols(
         frame: pd.DataFrame, prefix: str, exceptions: Container[str]
     ) -> pd.DataFrame:
+        """Prefixes dataframe column names.
+
+        This function prefixes dataframe column names with
+        a given prefix but allows for exceptions to
+        to be specified, i.e. columns that will not be prefixed.
+
+        :param frame: Dataframe to be prefixed.
+        :param prefix: Prefix to be used.
+        :param exceptions: Columns that will not be prefixed.
+        :return: Dataframe with prefixed columns.
+        """
         result_frame = frame.copy()
         result_frame.columns = [
             prefix + "_" + col if col not in exceptions else col
@@ -190,6 +247,16 @@ class QueryOutputTransformer:
     def _join_statistic_results(
         statistic_results: List[pd.DataFrame], statistic_names: List[str]
     ) -> tuple:
+        """Joins dataframes containing different statistics.
+
+        When joining the frames, columns are first prefixed
+        with statistic names.
+
+        :param statistic_results: Dataframes with the statistics to be joined.
+        :param statistic_names: Names of the statistics expected to be
+            in the same order as the list of statistic results.
+        :return: Joined frame and the columns over which was joined.
+        """
         assert len(statistic_results) == len(statistic_names)
 
         join_columns = list(
@@ -245,6 +312,17 @@ class QueryOutputTransformer:
     def _make_verbose_statistic_names(
         output: pd.DataFrame, meta: QueryResultsMeta
     ) -> pd.DataFrame:
+        """Exchanges statistic column names for short descriptions.
+
+        By default statistic columns display the statistic code.
+        This function converts the code to the short description,
+        while keeping the code afterward. The aim is to make
+        the dataframe more readable.
+
+        :param output: Query results results after conversion to a dataframe.
+        :param meta: Query meta data.
+        :return: Dataframe with converted column names.
+        """
         descriptions = cast(StatMeta, meta["statistics"])
         name_changes = {
             statistic: f"{descriptions[statistic]} ({statistic})"
@@ -256,6 +334,17 @@ class QueryOutputTransformer:
     def _make_verbose_enum_values(
         output: pd.DataFrame, meta: QueryResultsMeta
     ) -> pd.DataFrame:
+        """Exchanges enum codes for short descriptions.
+
+        By default enum codes are displayed in enum columns.
+        This function converts the codes to short descriptions.
+        The aim is to make
+        the dataframe more readable.
+
+        :param output: Query results results after conversion to a dataframe.
+        :param meta: Query meta data.
+        :return: Dataframe with converted column names.
+        """
         enum_mappings = copy.deepcopy(cast(EnumMeta, meta["enums"]))
         for enum in enum_mappings:
             enum_mappings[enum][None] = "Gesamt"
@@ -276,7 +365,6 @@ class QueryOutputTransformer:
         :dtype: pandas.DataFrame
 
         :raise NotImplementedError: More than one statistic in Query
-
         """
 
         def add_unit(statistic: str, unit: str):
@@ -292,12 +380,25 @@ class QueryOutputTransformer:
         return output
 
     def transform(
-        self, verbose_statistic_names=False, verbose_enum_values=False, add_units=False
+        self,
+        verbose_statistic_names: bool = False,
+        verbose_enum_values: bool = False,
+        add_units: bool = False,
     ) -> pd.DataFrame:
         """Transform the queries results into a Pandas DataFrame.
 
+        This function allows for different flags that make
+        the results more readable by using meta information
+        about the query. By default the dataframe is not enrichted by meta
+        information assuming an experienced user familiar with a particular statistic.
+        For data exploration it is recommended to turn on one or more flags.
+
+        :param verbose_statistic_names: Toggles statistic codes to short descriptions.
+        :param verbose_enum_values: Toggles enum codes to descriptions if enum columns
+            are present.
+        :param add_units: Toggles the addition of a unit column for each statistic to
+            make it easier to interpret the numbers.
         :return: Returns a pandas DataFrame of the queries results.
-        :rtype: pd.DataFrame
         """
         output = self._convert_results_to_frame(self.query_response)
         if verbose_statistic_names:
