@@ -1,6 +1,7 @@
 include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
+include VERSION
 include README.rst
 include datenguidepy/regions.csv
 
