@@ -12,7 +12,7 @@ Json = Union[Json_Dict, Json_List]
 StatMeta = Dict[str, str]
 UnitMeta = Dict[str, str]
 EnumMeta = Dict[str, Dict[Optional[str], str]]
-QueryResultsMeta = Dict[str, Union[StatMeta, EnumMeta]]
+QueryResultsMeta = Dict[str, Union[StatMeta, EnumMeta, UnitMeta]]
 
 
 class ExecutionResults(NamedTuple):
