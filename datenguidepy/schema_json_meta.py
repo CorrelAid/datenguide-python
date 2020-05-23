@@ -4,7 +4,7 @@ import json
 
 def get_schema_json():
     curr_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(curr_dir, "../package_data")
+    data_dir = os.path.join(curr_dir, "package_data")
     schema_json_path = os.path.join(data_dir, "schema.json")
     with open(schema_json_path, "r") as schema_file:
         full_json = json.load(schema_file)

@@ -8,7 +8,7 @@ import os.path
 
 """Top-level package for Datenguide Python."""
 
-version_fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../VERSION")
+version_fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
 with open(version_fp) as version_file:
     version = version_file.readline()
 
