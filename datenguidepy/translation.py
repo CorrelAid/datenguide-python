@@ -31,7 +31,7 @@ class SchemaTranslationProvider(TranslationProvider):
     @staticmethod
     def get_translated_schema_from_file():
         curr_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(curr_dir, "../package_data")
+        data_dir = os.path.join(curr_dir, "package_data")
         translation_json_path = os.path.join(data_dir, "translated_schema.json")
         with open(translation_json_path) as translation_file:
             translation_schema = json.loads(translation_file.read())

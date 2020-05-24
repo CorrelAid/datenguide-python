@@ -62,7 +62,7 @@ def translate_schema_to_target_language(target_language: str, translation_provid
 
 def save_translated_schema(schema):
     curr_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(curr_dir, "../package_data")
+    data_dir = os.path.join(curr_dir, "package_data")
     translation_json_path = os.path.join(data_dir, "translated_schema.json")
     with open(translation_json_path, "w") as translation_file:
         translation_file.write(json.dumps(schema))
