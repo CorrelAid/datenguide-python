@@ -306,8 +306,8 @@ def test_translated_statistic_overview_table():
     )
     translated_statistics = get_statistics(
         stat_meta_data_provider=StatisticsSchemaJsonMetaDataProvider(),
-        target_language='en',
-        translation_provider=SchemaTranslationProvider()
+        target_language="en",
+        translation_provider=SchemaTranslationProvider(),
     )
     assert untranslated_statistics.shape == translated_statistics.shape
     assert not untranslated_statistics.equals(translated_statistics)

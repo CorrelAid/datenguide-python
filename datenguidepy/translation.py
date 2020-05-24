@@ -8,7 +8,9 @@ import os
 
 class TranslationProvider(ABC):
     @abstractmethod
-    def translate_data_frame_from_german(self, data_frame: DataFrame, target_language: str):
+    def translate_data_frame_from_german(
+        self, data_frame: DataFrame, target_language: str
+    ):
         pass
 
     @abstractmethod
@@ -37,7 +39,9 @@ class SchemaTranslationProvider(TranslationProvider):
             translation_schema = json.loads(translation_file.read())
         return translation_schema
 
-    def translate_data_frame_from_german(self, data_frame: DataFrame, target_language: str):
+    def translate_data_frame_from_german(
+        self, data_frame: DataFrame, target_language: str
+    ):
         data_frame.replace(self.translated_schema[target_language], inplace=True)
 
     def translate_from_german(self, source_text: str, target_language: str):

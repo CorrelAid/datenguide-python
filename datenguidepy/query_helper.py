@@ -17,6 +17,7 @@ ALL_REGIONS: pd.DataFrame = pd.read_csv(
     os.path.join(dir_path, "regions.csv"), index_col="id"
 )
 
+
 class ConfigMapping:
     """[summary]
 
@@ -137,14 +138,19 @@ federal_states = ConfigMapping(federal_state_dictionary)
 
 
 def get_statistics(
-    search: Optional[str] = None, stat_meta_data_provider=None, target_language: str = 'de', translation_provider: TranslationProvider = None
+    search: Optional[str] = None,
+    stat_meta_data_provider=None,
+    target_language: str = "de",
+    translation_provider: TranslationProvider = None,
 ) -> pd.DataFrame:
     """[summary]
     :param search: [description], defaults to None
     :type search: Optional[str], optional
     :param translation_provider: will use default translation provider if missing
-    :param target_language: language to translate statistic descriptions to, must be valid language or language code for specified translation provider
-    :param stat_meta_data_provider: meta data provider for statistic, default will be used if missing
+    :param target_language: language to translate statistic descriptions to,
+    must be valid language or language code for specified translation provider
+    :param stat_meta_data_provider: meta data provider for statistic,
+    default will be used if missing
     :return: [description]
     :rtype: pd.DataFrame
     """
@@ -154,9 +160,14 @@ def get_statistics(
     if translation_provider is None:
         translation_provider = DEFAULT_TRANSLATION_PROVIDER
 
-    if target_language != 'de' and not translation_provider.is_valid_language_code(target_language):
+    if target_language != "de" and not translation_provider.is_valid_language_code(
+        target_language
+    ):
         valid_language_codes = str(translation_provider.get_valid_language_codes())
-        raise ValueError('Target language {0} is invalid or not available for chosen translation provider, please use one of {1}'.format(target_language, valid_language_codes))
+        raise ValueError(
+            "Target language {0} is invalid or not available for translation provider, "
+            "please use one of {1}".format(target_language, valid_language_codes)
+        )
 
     stat_descr = stat_meta_data_provider.get_stat_descriptions()
 
@@ -165,8 +176,10 @@ def get_statistics(
         columns=["statistics", "short_description", "long_description"],
     )
 
-    if target_language != 'de':
-        translation_provider.translate_data_frame_from_german(stat_frame, target_language)
+    if target_language != "de":
+        translation_provider.translate_data_frame_from_german(
+            stat_frame, target_language
+        )
 
     if search is not None:
         search_string = cast(str, search)  # noqa: F841

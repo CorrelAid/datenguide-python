@@ -29,23 +29,29 @@ def query_results_with_mult_enum():
     full_path = os.path.join(abs_path, example_path)
     return construct_execution_results(full_path)
 
+
 def get_abs_path(fname):
     abs_path = os.path.abspath(os.path.dirname(__file__))
     full_path = os.path.join(abs_path, fname)
     return os.path.normpath(full_path)
+
 
 @pytest.fixture
 def query_results_one_statistic_with_units():
     full_path = get_abs_path("examples/one_statistic_with_units.json")
     return construct_execution_results(full_path)
 
-def test_output_transformer_with_one_statistic_and_units(query_results_one_statistic_with_units):
+
+def test_output_transformer_with_one_statistic_and_units(
+    query_results_one_statistic_with_units
+):
     """check if units were added correctly"""
     qOutTrans = QueryOutputTransformer(query_results_one_statistic_with_units)
     data_transformed = qOutTrans.transform(add_units=True)
 
-    assert data_transformed.loc[0, 'TIE003_unit'] == 'Anzahl'
-    assert data_transformed.columns[5] == 'TIE003_unit'
+    assert data_transformed.loc[0, "TIE003_unit"] == "Anzahl"
+    assert data_transformed.columns[5] == "TIE003_unit"
+
 
 @pytest.fixture
 def query_results_multiple_statistics_with_units():
@@ -53,16 +59,30 @@ def query_results_multiple_statistics_with_units():
     return construct_execution_results(full_path)
 
 
-def test_output_transformer_with_multiple_statistics_and_units(query_results_multiple_statistics_with_units):
+def test_output_transformer_with_multiple_statistics_and_units(
+    query_results_multiple_statistics_with_units
+):
     """check if units were added correctly"""
     qOutTrans = QueryOutputTransformer(query_results_multiple_statistics_with_units)
     data_transformed = qOutTrans.transform(add_units=True)
 
-    assert data_transformed.iloc[1, range(4, 15, 2)].to_list(
-    ) == ['Prozent', 'Prozent', 'Prozent', 'Prozent', 'Prozent', 'kg']
-    assert data_transformed.columns[range(4, 15, 2)].to_list(
-    ) == ['AI0203_unit', 'AI0204_unit', 'AI0205_unit', 
-          'AI0206_unit', 'AI0207_unit', 'AI1902_unit']
+    assert data_transformed.iloc[1, range(4, 15, 2)].to_list() == [
+        "Prozent",
+        "Prozent",
+        "Prozent",
+        "Prozent",
+        "Prozent",
+        "kg",
+    ]
+    assert data_transformed.columns[range(4, 15, 2)].to_list() == [
+        "AI0203_unit",
+        "AI0204_unit",
+        "AI0205_unit",
+        "AI0206_unit",
+        "AI0207_unit",
+        "AI1902_unit",
+    ]
+
 
 def test_output_transformer_defaults(query_result):
     """ start test of output transformer """

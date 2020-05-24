@@ -7,6 +7,7 @@ import re
 import os
 import time
 import json
+
 sleep_duration_between_requests_in_seconds = 2
 
 
@@ -14,8 +15,8 @@ class _GoogleTranslationProvider(TranslationProvider):
     def __init__(self):
         self.translation_client: Translator = Translator()
         self.translation_cache: Dict[str, Dict[str, str]] = dict()
-        self.hyphenated_linebreak_regex = re.compile(r'\s*-\n\s*')
-        self.linebreak_in_the_midst_of_text_regex = re.compile(r'\n[ ]*(\S+)')
+        self.hyphenated_linebreak_regex = re.compile(r"\s*-\n\s*")
+        self.linebreak_in_the_midst_of_text_regex = re.compile(r"\n[ ]*(\S+)")
         self.valid_languages = list(LANGCODES.keys()) + list(LANGUAGES.keys())
 
     def translate_from_german(self, source_text, target_language):
@@ -23,8 +24,12 @@ class _GoogleTranslationProvider(TranslationProvider):
             self.translation_cache[target_language] = dict()
         if source_text not in self.translation_cache[target_language]:
             normalized_source_text = self.normalize_source_text(source_text)
-            translation_result = self.translation_client.translate(normalized_source_text, src='de', dest=target_language)
-            self.translation_cache[target_language][source_text] = translation_result.text
+            translation_result = self.translation_client.translate(
+                normalized_source_text, src="de", dest=target_language
+            )
+            self.translation_cache[target_language][
+                source_text
+            ] = translation_result.text
 
         return self.translation_cache[target_language][source_text]
 
@@ -42,18 +47,26 @@ class _GoogleTranslationProvider(TranslationProvider):
 
     def normalize_source_text(self, source_text):
         substitution_string = re.sub(self.hyphenated_linebreak_regex, "", source_text)
-        return re.sub(self.linebreak_in_the_midst_of_text_regex, " \g<1>", substitution_string)
+        return re.sub(
+            self.linebreak_in_the_midst_of_text_regex,
+            " \g<1>",  # noqa: W605
+            substitution_string,
+        )
 
 
-def translate_schema_to_target_language(target_language: str, translation_provider: TranslationProvider):
+def translate_schema_to_target_language(
+    target_language: str, translation_provider: TranslationProvider
+):
     metadata_provider = StatisticsSchemaJsonMetaDataProvider()
     statistic_descriptions = metadata_provider.get_stat_descriptions()
-    translation_dictionary = dict()
+    translation_dictionary: Dict = dict()
 
     for source_texts in statistic_descriptions.values():
         for source_text in source_texts:
             if source_text not in translation_dictionary:
-                translated_text = translation_provider.translate_from_german(source_text, target_language)
+                translated_text = translation_provider.translate_from_german(
+                    source_text, target_language
+                )
                 translation_dictionary[source_text] = translated_text
                 time.sleep(sleep_duration_between_requests_in_seconds)
 
@@ -68,6 +81,8 @@ def save_translated_schema(schema):
         translation_file.write(json.dumps(schema))
 
 
-if __name__ == '__main__':
-    english_schema = translate_schema_to_target_language('en', _GoogleTranslationProvider())
+if __name__ == "__main__":
+    english_schema = translate_schema_to_target_language(
+        "en", _GoogleTranslationProvider()
+    )
     save_translated_schema(english_schema)
