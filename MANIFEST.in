@@ -2,11 +2,13 @@ include CONTRIBUTING.rst
 include HISTORY.rst
 include LICENSE
 include README.rst
+include datenguidepy/VERSION
 include datenguidepy/regions.csv
-
-recursive-include tests *
-recursive-exclude * __pycache__
-recursive-exclude * .ipynb_checkpoints 
-recursive-exclude * *.py[co]
-
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+
+graft tests
+graft datenguidepy/package_data
+global-exclude */__pycache__/*
+global-exclude */.ipynb_checkpoints/*
+global-exclude *.py[co]
+
