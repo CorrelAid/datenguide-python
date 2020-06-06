@@ -8,6 +8,7 @@ coverage==5.0.3
 Sphinx
 sphinx-autodoc-typehints
 twine==3.1.1
+googletrans==2.4.0
 
 pre-commit==2.2.0
 virtualenv==16.7.9
@@ -38,4 +39,3 @@ zipp==3.0.0
 
 jupyter==1.0.0
 matplotlib==3.2.1
-

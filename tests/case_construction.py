@@ -8,9 +8,9 @@ def construct_execution_results(path):
     directory, file = os.path.split(path)
     meta_file = file.split(".", 1)[0] + "_meta.json"
     meta_path = os.path.join(directory, meta_file)
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         res = json.load(file)
-    with open(meta_path, "r") as file:
+    with open(meta_path, "r", encoding="utf-8") as file:
         meta = json.load(file)
     return [ExecutionResults(r, meta) for r in res]
 

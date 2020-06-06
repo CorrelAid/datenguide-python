@@ -8,6 +8,7 @@ from datenguidepy.query_execution import (
 )
 from datenguidepy.output_transformer import QueryOutputTransformer
 from datenguidepy.query_helper import get_statistics, get_all_regions, federal_states
+from datenguidepy.translation import SchemaTranslationProvider
 
 import pytest
 from unittest.mock import Mock
@@ -297,6 +298,19 @@ def test_statistic_overview_table():
         "long_description",
     ]
     assert stats.shape[0] > 400
+
+
+def test_translated_statistic_overview_table():
+    untranslated_statistics = get_statistics(
+        stat_meta_data_provider=StatisticsSchemaJsonMetaDataProvider()
+    )
+    translated_statistics = get_statistics(
+        stat_meta_data_provider=StatisticsSchemaJsonMetaDataProvider(),
+        target_language="en",
+        translation_provider=SchemaTranslationProvider(),
+    )
+    assert untranslated_statistics.shape == translated_statistics.shape
+    assert not untranslated_statistics.equals(translated_statistics)
 
 
 def test_determine_column_order():
