@@ -329,6 +329,14 @@ class StatisticsSchemaJsonMetaDataProvider(object):
     def __init__(self):
         self._full_data_json = [get_schema_json()]
 
+    @property
+    def stat_names(self):
+        return [
+            k
+            for stat in get_json_path(self._full_data_json, ["..", "measures"])
+            for k in stat.keys()
+        ]
+
     def get_query_stat_meta(
         self, query_fields_with_types: List[Tuple[str, str]]
     ) -> StatMeta:
@@ -351,14 +359,10 @@ class StatisticsSchemaJsonMetaDataProvider(object):
         return enum_meta
 
     def is_statistic(self, stat_candidate: str) -> bool:
-        return stat_candidate in get_json_path(
-            self._full_data_json, ["..", "measures", "..", "name"]
-        )
+        return stat_candidate in self.stat_names
 
     def get_stat_descriptions(self) -> Dict[str, Tuple[str, str]]:
-        stat_names = get_json_path(
-            self._full_data_json, ["..", "measures", "..", "name"]
-        )
+
         stat_descriptions_short = get_json_path(
             self._full_data_json, ["..", "measures", "..", "title_de"]
         )
@@ -368,7 +372,7 @@ class StatisticsSchemaJsonMetaDataProvider(object):
         return {
             name: (short, long)
             for name, short, long in zip(
-                stat_names, stat_descriptions_short, stat_descriptions_long
+                self.stat_names, stat_descriptions_short, stat_descriptions_long
             )
         }
 
