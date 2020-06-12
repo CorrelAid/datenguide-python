@@ -163,6 +163,15 @@ def get_statistics(
         return stat_frame
 
 
+def get_available_data_summary() -> pd.DataFrame:
+    path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "../package_data/overview.csv"
+    )
+    return pd.read_csv(path, converters={"region_id": lambda x: str(x)}).set_index(
+        ["region_id", "statistic"]
+    )
+
+
 def download_all_regions() -> pd.DataFrame:
     """[summary]
 
