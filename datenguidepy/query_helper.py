@@ -120,14 +120,22 @@ def siblings(
 
 
 def get_regions() -> pd.DataFrame:
-    """This function returns a DataFrame of all the regions.
-        For performance reasons this is simply read from disk.
-        The regions are not expected to change significantly over time.
-        Nonetheless an up to date DataFrame can be obtained with
-        download_all_regions
+    """List of all the regions and their hierachy structure.
 
-    :return: DataFrame with all regions
-    :rtype: pd.DataFrame
+    This function returns a DataFrame of all the regions.
+    It contains the name of the region and the its id.
+    The latter is required to build queries. Additionally
+    information is provided regarding the hierachy structure by
+    listing the parent region for each region. Furthermore
+    the regions statistical classification (nuts/lau) is provided.
+    To allow for more filter options.
+
+    For performance reasons this is simply read from disk.
+    The regions are not expected to change significantly over time.
+    Nonetheless an up to date DataFrame can be obtained with
+    download_all_regions
+
+    :return: DataFrame with all regions.
     """
     return ALL_REGIONS.copy()
 
@@ -146,16 +154,28 @@ def get_statistics(
     target_language: str = "de",
     translation_provider: TranslationProvider = None,
 ) -> pd.DataFrame:
-    """[summary]
-    :param search: [description], defaults to None
-    :type search: Optional[str], optional
-    :param translation_provider: will use default translation provider if missing
+    """List of all the currently available statistics.
+
+    This frunction returns a DataFrame of all available statistics.
+    It contains the statistic code, which is required by the queries.
+    It also contains a short and a long description of each statistic.
+    By default it returns all available statistics, but it also
+    has to option to provide a search keyword in advance.
+
+    The original statistic description are in Germna, but the function
+    also allows to get a machine translated version for english of these
+    descritpions.
+
+    :param search: Search term used for non-case-sensitive
+        search in the long description
+    :param translation_provider: Object used for translating the statistics.
+        Defaults to  default translation provider if None
     :param target_language: language to translate statistic descriptions to,
-    must be valid language or language code for specified translation provider
-    :param stat_meta_data_provider: meta data provider for statistic,
-    default will be used if missing
-    :return: [description]
-    :rtype: pd.DataFrame
+        Possible values are currently 'de', 'en' for the default translation
+        provider.
+    :param stat_meta_data_provider: Source object used to obtain the
+        statistic descriptions. Uses global default if missing.
+    :return: Table with available statistics.
     """
     if stat_meta_data_provider is None:
         stat_meta_data_provider = DEFAULT_STATISTICS_META_DATA_PROVIDER
@@ -194,6 +214,32 @@ def get_statistics(
 
 
 def get_availability_summary() -> pd.DataFrame:
+    """Summary of available data for region/statistic combinations.
+
+    There are many regions and statistics available within the
+    datenguide API/at the original sources. Nonetheless data is not
+    available for all combinations of statistics and regions.
+    Furthermore some statistics might have been discontinued after
+    a certain point in time.
+
+    To help with the search for available statistics the function
+    proved results from and availablility analysis for all
+    statistics and all regions for nuts1, nuts2 and nuts3.
+    This function returns the results of this analysis and contains
+    for each analyzed region/statistic pair the corresponding
+    id/code, the number of entries in the database and if applicable
+    the first and last year when this statistic appeared.
+
+    The function does not contain an overview of the lau regions
+    and it does not contain an overview of possible drilldowns
+    in statstics. For instance is the statstic available for men
+    and women individually on top of its availability for the
+    combined population.
+
+
+    :return: Table with available statistics.
+    """
+
     path = os.path.join(PACKAGE_DATA_PATH, "overview.csv")
     return pd.read_csv(path, converters={"region_id": lambda x: str(x)}).set_index(
         ["region_id", "statistic"]
@@ -201,7 +247,7 @@ def get_availability_summary() -> pd.DataFrame:
 
 
 def download_all_regions() -> pd.DataFrame:
-    """[summary]
+    """Downloads all current regions and their hierarchy structure.
 
     :raises RuntimeError: [description]
     :raises RuntimeError: [description]
