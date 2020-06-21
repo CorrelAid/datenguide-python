@@ -9,9 +9,9 @@ from datenguidepy.query_execution import (
 from datenguidepy.output_transformer import QueryOutputTransformer
 from datenguidepy.query_helper import (
     get_statistics,
-    get_all_regions,
+    get_regions,
     federal_states,
-    get_available_data_summary,
+    get_availability_summary,
 )
 from datenguidepy.translation import SchemaTranslationProvider
 
@@ -285,10 +285,10 @@ def test_federal_states():
 
 
 def test_regions_overview_table():
-    reg = get_all_regions()
+    reg = get_regions()
     assert isinstance(reg, pd.DataFrame)
     assert list(reg.columns) == ["name", "level", "parent"]
-    assert reg.index.name == "id"
+    assert reg.index.name == "region_id"
     assert reg.shape[0] > 10000
 
 
@@ -297,16 +297,13 @@ def test_statistic_overview_table():
         stat_meta_data_provider=StatisticsSchemaJsonMetaDataProvider()
     )
     assert isinstance(stats, pd.DataFrame)
-    assert list(stats.columns) == [
-        "statistics",
-        "short_description",
-        "long_description",
-    ]
+    assert stats.index.name == "statistic"
+    assert list(stats.columns) == ["short_description", "long_description"]
     assert stats.shape[0] > 400
 
 
 def test_region_statistic_summary_table():
-    summary = get_available_data_summary()
+    summary = get_availability_summary()
 
     assert isinstance(summary, pd.DataFrame)
     assert {"region_id", "statistic", "entries", "start_year", "end_year"}.issubset(

@@ -1,4 +1,4 @@
-id,name,level,parent
+region_id,name,level,parent
 10,Saarland,nuts1,DG
 11,Berlin,nuts1,DG
 12,Brandenburg,nuts1,DG

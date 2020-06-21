@@ -17,7 +17,7 @@ PACKAGE_DATA_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), PACKAGE_DATA_DIR
 )
 ALL_REGIONS: pd.DataFrame = pd.read_csv(
-    os.path.join(PACKAGE_DATA_PATH, "regions.csv"), index_col="id"
+    os.path.join(PACKAGE_DATA_PATH, "regions.csv"), index_col="region_id"
 )
 
 
@@ -119,7 +119,7 @@ def siblings(
     return hirachy_frame.query("parent == @parent")
 
 
-def get_all_regions() -> pd.DataFrame:
+def get_regions() -> pd.DataFrame:
     """This function returns a DataFrame of all the regions.
         For performance reasons this is simply read from disk.
         The regions are not expected to change significantly over time.
@@ -132,7 +132,7 @@ def get_all_regions() -> pd.DataFrame:
     return ALL_REGIONS.copy()
 
 
-state_regions: pd.DataFrame = get_all_regions().query('level == "nuts1"')
+state_regions: pd.DataFrame = get_regions().query('level == "nuts1"')
 federal_state_dictionary = {
     region.name.replace("-", "_"): region.Index for region in state_regions.itertuples()
 }
@@ -176,8 +176,8 @@ def get_statistics(
 
     stat_frame = pd.DataFrame(
         [(stat, *stat_descr[stat]) for stat in stat_descr],
-        columns=["statistics", "short_description", "long_description"],
-    )
+        columns=["statistic", "short_description", "long_description"],
+    ).set_index("statistic")
 
     if target_language != "de":
         translation_provider.translate_data_frame_from_german(
@@ -193,7 +193,7 @@ def get_statistics(
         return stat_frame
 
 
-def get_available_data_summary() -> pd.DataFrame:
+def get_availability_summary() -> pd.DataFrame:
     path = os.path.join(PACKAGE_DATA_PATH, "overview.csv")
     return pd.read_csv(path, converters={"region_id": lambda x: str(x)}).set_index(
         ["region_id", "statistic"]
