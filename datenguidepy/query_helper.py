@@ -12,9 +12,12 @@ from functools import partial
 
 import os
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
+PACKAGE_DATA_DIR = "package_data"
+PACKAGE_DATA_PATH = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), PACKAGE_DATA_DIR
+)
 ALL_REGIONS: pd.DataFrame = pd.read_csv(
-    os.path.join(dir_path, "regions.csv"), index_col="id"
+    os.path.join(PACKAGE_DATA_PATH, "regions.csv"), index_col="id"
 )
 
 
@@ -191,9 +194,7 @@ def get_statistics(
 
 
 def get_available_data_summary() -> pd.DataFrame:
-    path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "../package_data/overview.csv"
-    )
+    path = os.path.join(PACKAGE_DATA_PATH, "overview.csv")
     return pd.read_csv(path, converters={"region_id": lambda x: str(x)}).set_index(
         ["region_id", "statistic"]
     )
