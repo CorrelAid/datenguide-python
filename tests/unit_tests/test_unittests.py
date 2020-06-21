@@ -7,7 +7,12 @@ from datenguidepy.query_execution import (
     StatisticsSchemaJsonMetaDataProvider,
 )
 from datenguidepy.output_transformer import QueryOutputTransformer
-from datenguidepy.query_helper import get_statistics, get_all_regions, federal_states
+from datenguidepy.query_helper import (
+    get_statistics,
+    get_all_regions,
+    federal_states,
+    get_available_data_summary,
+)
 from datenguidepy.translation import SchemaTranslationProvider
 
 import pytest
@@ -263,7 +268,7 @@ def test_federal_states():
         ("Nordrhein_Westfalen", "05"),
         ("Hessen", "06"),
         ("Rheinland_Pfalz", "07"),
-        ("Baden_Württemberg", "08"),
+        ("Baden_Württemberg, Land", "08"),
         ("Bayern", "09"),
         ("Saarland", "10"),
         ("Berlin", "11"),
@@ -298,6 +303,15 @@ def test_statistic_overview_table():
         "long_description",
     ]
     assert stats.shape[0] > 400
+
+
+def test_region_statistic_summary_table():
+    summary = get_available_data_summary()
+
+    assert isinstance(summary, pd.DataFrame)
+    assert {"region_id", "statistic", "entries", "start_year", "end_year"}.issubset(
+        set(summary.reset_index().columns)
+    )
 
 
 def test_translated_statistic_overview_table():
