@@ -11,7 +11,7 @@ import os.path
 
 version_fp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
 with open(version_fp) as version_file:
-    version = version_file.readline()
+    version = version_file.readline().strip()
 
 __author__ = """CorrelAid"""
 __email__ = "packages@correlaid.org"
