@@ -46,6 +46,20 @@ To use the package install the package (command line):
 .. code-block:: python
 
    pip install datenguidepy
+   
+============
+Minimal example
+============
+To see the package work and obtain a DataFrame containing
+some statistics, the followin constitutes a minimal example.
+
+.. code-block:: python
+
+    from datenguidepy import Query
+    
+    q = Query.region('01')
+    q.add_field('BEV001')
+    result_df = q.results()
 
 ============
 Setup query
@@ -57,7 +71,7 @@ Within your python file or notebook:
 .. code-block:: python
 
     from datenguidepy import Query
-    from datenguidepy import get_all_regions
+    from datenguidepy import get_regions
     from datenguidepy import get_statistics
 
 **2. Creating a query**
@@ -79,14 +93,14 @@ or for all subregions within a region (e.g. all Kommunen in a Bundesland)
 .. code-block:: python
 
     # Overview of region IDs
-    get_all_regions()
+    get_regions()
 
 Use pandas *query()* functionality to filter according to level, e.g. for Bundesländer *"nuts1"*
 
 .. code-block:: python
 
     # Filtered for Bundesländer (federal states)
-    get_all_regions().query("level == 'nuts1'")
+    get_regions().query("level == 'nuts1'")
 
 See below "Get information on fields and meta data" for more options on regions.
 
@@ -178,16 +192,16 @@ Get information on fields and meta data
 
 .. code-block:: python
 
-   # from datenguidepy import get_all_regions
+   # from datenguidepy import get_regions
 
-    get_all_regions()
+    get_regions()
 
 Use pandas *query()* functionality to get specific regions. E.g., if you want to get all IDs on "Bundeländer" use.
 For more information on "nuts" levels see Wikipedia_.
 
 .. code-block:: python
 
-    get_all_regions().query("level == 'nuts1'")
+    get_regions().query("level == 'nuts1'")
 
 
 

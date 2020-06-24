@@ -26,3 +26,11 @@ History
 ------------------
 * Fixed a critical bug in the package data perventing the pypi version to essentially stop working completely.
 * Fixed a bug related to incorrectly displayed version number of the package.
+
+0.3.0 (2020-06-24)
+------------------
+* renamed get_all_regions to get_regions in accordance with get_statistics 
+* changed the index column name of the DataFrame returnd by all_regions from id to region_id
+* made the statstics column name the index in the DataFrame returned by get_statistics and renamed it to statistic
+* added functionality to obtain a stored auto-translated version of the get_statistics descriptions (default is German, now machine translation is available in English)
+* introduced a new helper function get_availability_summary containing a (pre-calculated) summary of available data for region_id, statistic pairs down to nut3 level.
