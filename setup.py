@@ -12,7 +12,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 with open("datenguidepy/VERSION") as version_file:
-    version = version_file.readline()
+    version = version_file.readline().strip()
 
 requirements = ["pandas>=1.0.0", "requests", "typing_extensions"]
 
