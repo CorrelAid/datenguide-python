@@ -11,7 +11,7 @@ from datenguidepy.query_builder import Query, Field
 from datenguidepy.query_helper import (
     federal_states,
     get_statistics,
-    get_all_regions,
+    get_regions,
     download_all_regions,
 )
 from datenguidepy.output_transformer import QueryOutputTransformer
@@ -161,7 +161,7 @@ def test_query_helper():
     # That already worked nicely but in general there are many regions.
     # Ira would like to easily search through all of them and realizes
     # that he can obtain a DataFrame for this.
-    reg_locally_stored = get_all_regions()
+    reg_locally_stored = get_regions()
     assert isinstance(reg_locally_stored, pd.DataFrame)
 
     # Being satisfied with the regions, Ira now wants to have a
