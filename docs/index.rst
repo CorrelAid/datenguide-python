@@ -8,6 +8,7 @@ Welcome to Datenguide Python's documentation!
    readme
    installation
    usage
+   pitfalls
    modules
    contributing
    history
