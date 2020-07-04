@@ -543,3 +543,9 @@ def test_enum_info_formatting(enum_input, query):
     GESAMT: Gesamt"""
 
     assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
+
+
+def test_missing_statistic_field_raises_exception():
+    q = Query.region("09162000")
+    with pytest.raises(Exception, match=r"add .* field"):
+        q.results()
