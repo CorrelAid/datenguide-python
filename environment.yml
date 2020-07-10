@@ -14,5 +14,7 @@ dependencies:
   - pip
   - python=3.7
   - plotly
+  - geopandas
+  - geoviews
   - pip:
     - git+https://github.com/CorrelAid/datenguide-python.git
