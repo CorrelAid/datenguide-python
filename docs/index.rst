@@ -7,7 +7,10 @@ Welcome to Datenguide Python's documentation!
 
    readme
    installation
-   usage
+   step_by_step_intro 
+   helper_functions
+   enums
+   output_modification
    pitfalls
    modules
    contributing
