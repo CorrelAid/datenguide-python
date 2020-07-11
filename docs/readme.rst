@@ -1,1 +1,1 @@
-.. include:: ../README_CORE.rst
+.. include:: ../README.rst
