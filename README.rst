@@ -1,7 +1,6 @@
 Datenguide Python
 =================
 
-
 .. image:: https://img.shields.io/pypi/v/datenguidepy.svg
         :target: https://pypi.python.org/pypi/datenguidepy
 
@@ -13,13 +12,12 @@ Datenguide Python
 
 .. image:: https://mybinder.org/badge_logo.svg
  :target: https://mybinder.org/v2/gh/CorrelAid/datenguide-python/master?filepath=use_case
+ 
+* Free software: MIT license
+* Documentation:  https://datenguidepy.readthedocs.io/
 
 The package provides easy access to German publicly available `regional statistics`_.
 It does so by providing a wrapper for the `GraphQL API of the Datenguide project`_.
-
-
-* Free software: MIT license
-* Documentation:  https://datenguidepy.readthedocs.io/
 
 
 Features
@@ -34,6 +32,17 @@ Features
   The package provides the user an object oriented interface to build queries that
   fetch certain statistics and return the results as a pandas DataFrame for
   further analysis.
+  
+**Automatic inclusion of relevant meta data**
+  Queries automatically retrieve some meta data along with the actual data
+  to give the user more convenient access to the statistics without having to worry
+  about too many technichal details
+  
+**Full fidelity data**
+  The package provides full fidelity data access to the datenguide API.
+  This allows all use cases to use precicely the data that they need
+  if it is available. It also means that most data cleaning has to be done
+  by the user.
 
 Quick Start
 -----------
@@ -46,128 +55,79 @@ To use the package install the package (command line):
 .. code-block:: python
 
    pip install datenguidepy
-
+   
 ============
-Setup query
+Minimal example
 ============
-Within your python file or notebook:
-
-**1. Import the package**
+To see the package work and obtain a DataFrame containing
+some statistics, the followin constitutes a minimal example.
 
 .. code-block:: python
 
     from datenguidepy import Query
-    from datenguidepy import get_all_regions
-    from datenguidepy import get_statistics
-
-**2. Creating a query**
-
-Start with querying either for single regions:
-
-.. code-block:: python
-
+    
     q = Query.region('01')
+    q.add_field('BEV001')
+    result_df = q.results()
+    
+    
+================
+Complex examples
+================
 
-or for all subregions within a region (e.g. all Kommunen in a Bundesland)
-
-.. code-block:: python
-
-   query_allregions = Query.all_regions(parent='01')
-
-- How to get IDs for regions?
-
-.. code-block:: python
-
-    # Overview of region IDs
-    get_all_regions()
-
-Use pandas *query()* functionality to filter according to level, e.g. for Bundesländer *"nuts1"*
+These examples is intendend to illustrate many
+of the package's features at the same time. The
+idea is to give an impression of some of the possibilities.
+A more detailed explanation of the functionality can be found
+in the the rest of the documentation.
 
 .. code-block:: python
 
-    # Filtered for Bundesländer (federal states)
-    get_all_regions().query("level == 'nuts1'")
-
-See below "Get information on fields and meta data" for more options on regions.
-
-**3. Add statistics (fields)**
-
-Add statistics to your query for which you want to get data
-
-.. code-block:: python
-
-    stats = q.add_field('BEV001')
-
-- How do I find the short name of the statistics?
-
-.. code-block:: python
-
-    # Some examples
-    TOPIC: Economy
-     - Bruttoinlandsprodukt (BIP802)
-     - Verarbeitendes Gewerbe Betriebe (BETR01)
-     - Verarbeitendes Gewerbe Umsatz (UMS002)
-     - Bevölkerungsstand (BEVSTD)
-     - Beschäftigte (ERW012)
-     - Arbeitslose (ERWP06)
-
-     TOPIC: Demographic Development
-     - Bevölkerungsstand (BEVSTD)
-     - Lebendgeborene (BEV001)
-     - Gestorbene (BEV002)
-     - Eheschließungen (BEV003)
-     - Ehescheidungen (BEV004)
-     - Zuzüge, Wanderungen über die Kreisgrenzen (BEV085)
-     - Fortzüge, Wanderungen über die Kreisgrenzen (BEV086)
-
-See below "Get information on fields and meta data" for more options on statistics.
-
-**4. Get results**
-
-Get the results as a Pandas DataFrame
+    q = Query.region(['02','11'])
+    stat = q.add_field('BEVSTD')
+    stat.add_args({'year' : [2011,2012]})
+    stat2 = q.add_field('AI1601')
+    stat2.add_args({'year' : [2011,2012]})
+    q.results(
+        verbose_statistics = True,
+        add_units = True,
+    ).iloc[:,:7]
+    
+====  ====  =======  ======  =============================================  =============  ============================  =============
+  ..    id  name       year    Verfügbares Einkommen je Einwohner (AI1601)  AI1601_unit      Bevölkerungsstand (BEVSTD)  BEVSTD_unit
+====  ====  =======  ======  =============================================  =============  ============================  =============
+   0    02  Hamburg    2011                                          22695  EUR                                 1718187  Anzahl
+   1    02  Hamburg    2012                                          22971  EUR                                 1734272  Anzahl
+   0    11  Berlin     2011                                          18183  EUR                                 3326002  Anzahl
+   1    11  Berlin     2012                                          18380  EUR                                 3375222  Anzahl
+====  ====  =======  ======  =============================================  =============  ============================  =============
 
 .. code-block:: python
+ 
+    q = Query.region('11')
+    stat = q.add_field('BEVSTD')
+    stat.add_args({
+        'GES' : 'GESW',
+        'statistics' : 'R12411',
+        'NAT' : 'ALL',
+        'year' : [1995,1996]
+    })
+    stat.add_field('GES')
+    stat.add_field('NAT')
+    q.results(verbose_enums = True).iloc[:,:6]
+    
+====  ====  ======  ========  ================  ======  ========
+  ..    id  name    GES       NAT                 year    BEVSTD
+====  ====  ======  ========  ================  ======  ========
+   0    11  Berlin  weiblich  Ausländer(innen)    1995    191378
+   1    11  Berlin  weiblich  Deutsche            1995   1605762
+   2    11  Berlin  weiblich  Gesamt              1995   1797140
+   3    11  Berlin  weiblich  Deutsche            1996   1590407
+   4    11  Berlin  weiblich  Ausländer(innen)    1996    195301
+   5    11  Berlin  weiblich  Gesamt              1996   1785708
+====  ====  ======  ========  ================  ======  ========
 
-    df = q.results()
 
-===================
-Additional Features
-===================
-
-**5. Add filters and subfields**
-
-Filters can be added to statistics (fields) to select data only from specific years.
-
-.. code-block:: python
-
-    stats.add_args({'year': [2014, 2015]})
-
-**5.1. Add subfield**
-A set of default subfields (year, value, source) are defined for all statistics. 
-If additional fields (columns in the results table) shall be returned, they can be specified as a field argument.
-
-.. code-block:: python
-
-    stats.add_field('GES') # Geschlecht
-
-    # by default the summed value for a field is returned. 
-    # E.g. if the field "Geschlecht" is added, the results table will show "None" in each row, 
-    # which means total value for women and man.
-    # To get disaggregated values, they speficically need to be passed as args. 
-    # If e.g. only values for women shall be returned, use:
-
-    stats.add_args({'GES': 'GESW'})
-
-    # if all possible enum values shall be returned disaggregated, pass 'ALL':
-
-    stats.add_args({'GES': 'ALL'})
-
-**6. Get results**
-Again, results can be returned as a Pandas DataFrame
-
-.. code-block:: python
-
-    df2 = q.results()
 
 
 =======================================
@@ -178,16 +138,16 @@ Get information on fields and meta data
 
 .. code-block:: python
 
-   # from datenguidepy import get_all_regions
+   # from datenguidepy import get_regions
 
-    get_all_regions()
+    get_regions()
 
 Use pandas *query()* functionality to get specific regions. E.g., if you want to get all IDs on "Bundeländer" use.
 For more information on "nuts" levels see Wikipedia_.
 
 .. code-block:: python
 
-    get_all_regions().query("level == 'nuts1'")
+    get_regions().query("level == 'nuts1'")
 
 
 
