@@ -72,10 +72,10 @@ some statistics, the followin constitutes a minimal example.
     
     
 ================
-Complex example
+Complex examples
 ================
 
-This example is intendend to illustrate many
+These examples is intendend to illustrate many
 of the package's features at the same time. The
 idea is to give an impression of some of the possibilities.
 A more detailed explanation of the functionality can be found
@@ -83,24 +83,51 @@ in the the rest of the documentation.
 
 .. code-block:: python
 
-    q = Query.region(['01','02'])
+    q = Query.region(['02','11'])
     stat = q.add_field('BEVSTD')
     stat.add_args({'year' : [2011,2012]})
     stat2 = q.add_field('AI1601')
     stat2.add_args({'year' : [2011,2012]})
-    r = q.results(
+    q.results(
         verbose_statistics = True,
         add_units = True,
     ).iloc[:,:7]
     
-====  ====  ==================  ======  =============================================  =============  ============================  =============
-  ..    id  name                  year    Verfügbares Einkommen je Einwohner (AI1601)  AI1601_unit      Bevölkerungsstand (BEVSTD)  BEVSTD_unit
-====  ====  ==================  ======  =============================================  =============  ============================  =============
-   0    01  Schleswig-Holstein    2011                                          20122  EUR                                 2802266  Anzahl
-   1    01  Schleswig-Holstein    2012                                          20746  EUR                                 2806531  Anzahl
-   0    02  Hamburg               2011                                          22695  EUR                                 1718187  Anzahl
-   1    02  Hamburg               2012                                          22971  EUR                                 1734272  Anzahl
-====  ====  ==================  ======  =============================================  =============  ============================  =============
+====  ====  =======  ======  =============================================  =============  ============================  =============
+  ..    id  name       year    Verfügbares Einkommen je Einwohner (AI1601)  AI1601_unit      Bevölkerungsstand (BEVSTD)  BEVSTD_unit
+====  ====  =======  ======  =============================================  =============  ============================  =============
+   0    02  Hamburg    2011                                          22695  EUR                                 1718187  Anzahl
+   1    02  Hamburg    2012                                          22971  EUR                                 1734272  Anzahl
+   0    11  Berlin     2011                                          18183  EUR                                 3326002  Anzahl
+   1    11  Berlin     2012                                          18380  EUR                                 3375222  Anzahl
+====  ====  =======  ======  =============================================  =============  ============================  =============
+
+.. code-block:: python
+ 
+    q = Query.region('11')
+    stat = q.add_field('BEVSTD')
+    stat.add_args({
+        'GES' : 'GESW',
+        'statistics' : 'R12411',
+        'NAT' : 'ALL',
+        'year' : [1995,1996]
+    })
+    stat.add_field('GES')
+    stat.add_field('NAT')
+    q.results(verbose_enums = True).iloc[:,:6]
+    
+====  ====  ======  ========  ================  ======  ========
+  ..    id  name    GES       NAT                 year    BEVSTD
+====  ====  ======  ========  ================  ======  ========
+   0    11  Berlin  weiblich  Ausländer(innen)    1995    191378
+   1    11  Berlin  weiblich  Deutsche            1995   1605762
+   2    11  Berlin  weiblich  Gesamt              1995   1797140
+   3    11  Berlin  weiblich  Deutsche            1996   1590407
+   4    11  Berlin  weiblich  Ausländer(innen)    1996    195301
+   5    11  Berlin  weiblich  Gesamt              1996   1785708
+====  ====  ======  ========  ================  ======  ========
+
+
 
 
 =======================================
