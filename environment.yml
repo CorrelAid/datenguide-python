@@ -2,15 +2,19 @@ name: datenguide
 channels:
   - conda-forge
   - defaults
+  - plotly
 dependencies:
-  - ipython
-  - jupyter 
+  # - ipython
+  # - jupyter 
   - matplotlib
   - seaborn
-  - mkl
+  # - mkl
   - numpy
   - pandas>=0.25
   - pip
   - python=3.7
+  - plotly
+  - geopandas
+  - geoviews
   - pip:
     - git+https://github.com/CorrelAid/datenguide-python.git
