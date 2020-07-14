@@ -56,9 +56,9 @@ To use the package install the package (command line):
 
    pip install datenguidepy
    
-============
+===============
 Minimal example
-============
+===============
 To see the package work and obtain a DataFrame containing
 some statistics, the followin constitutes a minimal example.
 
