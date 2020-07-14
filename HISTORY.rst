@@ -34,3 +34,8 @@ History
 * made the statstics column name the index in the DataFrame returned by get_statistics and renamed it to statistic
 * added functionality to obtain a stored auto-translated version of the get_statistics descriptions (default is German, now machine translation is available in English)
 * introduced a new helper function get_availability_summary containing a (pre-calculated) summary of available data for region_id, statistic pairs down to nut3 level.
+
+0.3.1 (2020-07-14)
+------------------
+* Introduced a better error messages for queries that are run without a statistic
+* Bug fixes related to enums and auto join functionality
