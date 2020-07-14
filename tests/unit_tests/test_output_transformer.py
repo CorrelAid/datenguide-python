@@ -37,6 +37,12 @@ def get_abs_path(fname):
 
 
 @pytest.fixture
+def query_result_with_autojoin_and_one_enum():
+    full_path = get_abs_path("examples/auto_join_one_sided_enum.json")
+    return construct_execution_results(full_path)
+
+
+@pytest.fixture
 def query_results_one_statistic_with_units():
     full_path = get_abs_path("examples/one_statistic_with_units.json")
     return construct_execution_results(full_path)
@@ -165,3 +171,15 @@ def test_output_transformer_format_options_multi_enum(query_results_with_mult_en
     print(data_transformed.head())
     assert data_transformed["ADVNW2"].iloc[0] == "Grünanlage"
     assert data_transformed["ADVNW1"].iloc[0] == "Gesamt"
+
+
+def test_output_transformer_auto_join_enum(query_result_with_autojoin_and_one_enum):
+    qOutTrans = QueryOutputTransformer(query_result_with_autojoin_and_one_enum)
+    data_transformed = qOutTrans.transform(verbose_enum_values=False)
+    assert "BEVSTD_GES" in data_transformed
+    assert data_transformed.columns.get_loc("BEVSTD_GES") <= 8
+    assert list(data_transformed.BEVSTD_GES.unique()) == [None]
+
+    data_transformed = qOutTrans.transform(verbose_enum_values=True)
+    assert "BEVSTD_GES" in data_transformed
+    assert list(data_transformed.BEVSTD_GES.unique()) == ["Gesamt"]
