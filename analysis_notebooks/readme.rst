@@ -1,6 +1,6 @@
-######
+##################
 Analysis Notebooks
-######
+##################
 
 This folder contains notebooks containing various analyses around the package.
 These may retain to meta data, package structure or actual content, but in either case
