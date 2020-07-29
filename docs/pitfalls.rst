@@ -30,13 +30,44 @@ Consider the followin query without source information.
 
 As can be seen in the results the value for 1998 appears twice.
 The reason is that the values come from different sources. This
-is the reason why sources are part of the results by default.
+is the reason why sources are part of the results by default. 
+(In this example they are cut off by the ``.iloc`` command).
 When one encounters unexpected values it is a good idea to check
 sources for uniqueness.
 
 It is also important to not that different sources may actually
 report different values for the same year, unlike the example
 above.
+
+To some extend sources are similar to enums discussed in a different
+section. One can actually pick a particular source by specifying an
+argument for the statistic. In the above example we would solve the
+issue by specifying the query as
+
+.. code-block:: python
+
+    from datenguidepy import Query
+    
+    q = Query.region('01')
+    stat = q.add_field('BEVSTD')
+    stat.add_args({'statistics':'R12411'})
+    
+This will solve the problem and only display one of the sources. In
+order to know what to specify one can look at the ``.get_info`` method
+of a statistics field, i.e. ``stat.get_info()`` in our case.
+Among many other information it will display
+
+.. epigraph::
+    | statistics: LIST of type ENUM(BEVSTDStatistics)
+    | enum values:
+    | R12411: Fortschreibung des Bevölkerungsstandes
+    | R32211: Erhebung der öffentlichen Wasserversorgung
+
+This way a user knows which sources are available and what to specify
+in order to only select one of them. The important difference wrt. other
+enums is that by default all sources are selected from the API side.
+For that reasons the source fields are displayed as a default
+on the package side.
 
 
 

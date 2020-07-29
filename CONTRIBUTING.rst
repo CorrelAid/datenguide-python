@@ -92,6 +92,44 @@ Ready to contribute? Here's how to set up `datenguide-python` for local developm
 
 7. Submit a pull request through the GitHub website.
 
+Quality Assurance Guidelines
+----------------------------
+
+In order to contribute code, it has to pass certain automatic checks.
+When a pull request is submitted these checks will run with travis-ci.
+To ensure in advance that the that these are likely to pass developers
+are highly encouraged to use following tools. tox and pre-commit.
+Both are described in the next sections.
+
+tox
+~~~
+
+tox sets up envrionments and runs quality checks for them. These include
+tests and other tools for quality insurance. The configuration
+is given in the ``tox.ini`` and by default the package is checked agains
+python 3.6, 3.7 and 3.8 environments. To execute the checks simply run
+>>> tox
+
+
+pre-commit
+~~~~~~~~~~
+
+pre-commit is a python package that helps with the setup of git pre-commit hooks.
+The git pre-commit hooks will run quality assurance checks whenever a commit is made.
+
+
+The project comes with a pre-commit configuration file. In order to set it up locally
+run
+>>> pre-commit install
+>>> pre-commit run --all-files
+
+This will setup the hooks and install the dependencies. Subsequent runs will therefore
+be faster.
+
+
+
+
+
 Pull Request Guidelines
 -----------------------
 
