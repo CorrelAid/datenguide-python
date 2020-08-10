@@ -301,12 +301,15 @@ class QueryOutputTransformer:
         """
         join_col_list = list(join_columns)
         value_columns = [col for col in joined_frame if "value" in col]
+        source_cols = [col for col in joined_frame if "source" in col]
         remaining_cols = [
             col
             for col in joined_frame
-            if col not in join_columns and col not in value_columns
+            if col not in join_columns
+            and col not in value_columns
+            and col not in source_cols
         ]
-        return join_col_list + value_columns + remaining_cols
+        return join_col_list + value_columns + remaining_cols + source_cols
 
     @staticmethod
     def _make_verbose_statistic_names(
@@ -350,7 +353,11 @@ class QueryOutputTransformer:
             enum_mappings[enum][None] = "Gesamt"
         mapped_frame = output.copy()
         for col, description_map in enum_mappings.items():
-            mapped_frame[col] = mapped_frame[col].map(description_map)
+            if col in mapped_frame:
+                mapped_frame[col] = mapped_frame[col].map(description_map)
+            else:
+                col_name = next(c for c in mapped_frame if c.endswith(col))
+                mapped_frame[col_name] = mapped_frame[col_name].map(description_map)
         return mapped_frame
 
     @staticmethod

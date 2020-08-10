@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict, Any, Tuple
+from typing import Optional, Union, List, Dict, Any, Tuple, Set
 from pandas import DataFrame
 from datenguidepy.query_execution import (
     QueryExecutioner,
@@ -627,6 +627,11 @@ class Query:
         :return: A DataFrame with the queried data.
         :rtype: DataFrame
         """
+        if not self._contains_statistic_field():
+            raise Exception(
+                "No statistic field is defined in query, please add statistic field "
+                "via method add_field."
+            )
 
         result = QueryExecutioner(
             statistics_meta_data_provider=self._stat_meta_data_provider
@@ -643,6 +648,22 @@ class Query:
             )
         else:
             raise RuntimeError("No results could be returned for this Query.")
+
+    def _contains_statistic_field(self) -> bool:
+        fields = self._get_all_field_names()
+        contains_statistic = any(
+            [self._stat_meta_data_provider.is_statistic(field) for field in fields]
+        )
+        return contains_statistic
+
+    def _get_all_field_names(self) -> Set[str]:
+        start_field_subfields = (
+            set() if self.start_field is None else set(self.start_field.fields.keys())
+        )
+        region_field_subfields = (
+            set() if self.region_field is None else set(self.region_field.fields.keys())
+        )
+        return start_field_subfields.union(region_field_subfields)
 
     def meta_data(self) -> QueryResultsMeta:
         """Runs the query and returns a Dict with the meta data of the queries results.
