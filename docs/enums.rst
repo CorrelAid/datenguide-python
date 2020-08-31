@@ -3,7 +3,7 @@ Dimension/Enums
 ===========
 
 Some statistics are available on a more granular level. This is sometimes
-referred to as curring the data among additional dimensions or as **splitting
+referred to as slicing the data (cube) across dimensions or as **splitting
 it according to enums**. This package sticks to the latter.
 
 An enumeration, or enum, "is a a set of symbolic names (members) bound to unique,
