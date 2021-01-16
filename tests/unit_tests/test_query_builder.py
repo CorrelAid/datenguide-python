@@ -549,3 +549,9 @@ def test_invalid_region_name_raises_exception():
     q = Query.region("jodelverein")
     with pytest.raises(ValueError, match=r"*region is invalid."):
         q.results()
+
+
+def test_missing_statistic_field_raises_exception():
+    q = Query.region("09162000")
+    with pytest.raises(Exception, match=r"add .* field"):
+        q.results()
