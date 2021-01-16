@@ -543,3 +543,9 @@ def test_enum_info_formatting(enum_input, query):
     GESAMT: Gesamt"""
 
     assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
+
+
+def test_invalid_region_name_raises_exception():
+    q = Query.region("jodelverein")
+    with pytest.raises(ValueError, match=r"*region is invalid."):
+        q.results()
