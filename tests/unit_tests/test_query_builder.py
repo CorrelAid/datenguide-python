@@ -547,7 +547,8 @@ def test_enum_info_formatting(enum_input, query):
 
 def test_invalid_region_name_raises_exception():
     q = Query.region("jodelverein")
-    with pytest.raises(ValueError, match=r"*region is invalid."):
+    q.add_field("BEV001")
+    with pytest.raises(ValueError, match=r"region is invalid."):
         q.results()
 
 
