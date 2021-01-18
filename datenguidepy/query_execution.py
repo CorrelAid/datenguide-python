@@ -22,6 +22,15 @@ class ExecutionResults(NamedTuple):
     query_results: Json_List
     meta_data: QueryResultsMeta
 
+    def contains_undefined_region_result(self):
+        query_results_with_empty_region = list(
+            filter(
+                lambda query_result: query_result["data"]["region"] is None,
+                self.query_results,
+            )
+        )
+        return len(query_results_with_empty_region) > 0
+
 
 class TypeMetaData(NamedTuple):
     """The meta data of a field, which consist of the kind, fields and enum values.

@@ -640,6 +640,8 @@ class Query:
             # It is currently assumed that all graphql queries
             # that are generated internally for the Query instance
             # at hand yield the same meta data.
+            if self._query_result_contains_undefined_region(result):
+                raise ValueError("Queried region is invalid.")
             self.result_meta_data = result[0].meta_data
             return QueryOutputTransformer(result).transform(
                 verbose_statistic_names=verbose_statistics,
@@ -648,6 +650,14 @@ class Query:
             )
         else:
             raise RuntimeError("No results could be returned for this Query.")
+
+    def _query_result_contains_undefined_region(self, result):
+        return (
+            len(
+                list(filter(lambda res: res.contains_undefined_region_result(), result))
+            )
+            > 0
+        )
 
     def _contains_statistic_field(self) -> bool:
         fields = self._get_all_field_names()

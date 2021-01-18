@@ -545,6 +545,13 @@ def test_enum_info_formatting(enum_input, query):
     assert re.sub(r"\s+", "", info) == re.sub(r"\s+", "", expected_info)
 
 
+def test_invalid_region_name_raises_exception():
+    q = Query.region("jodelverein")
+    q.add_field("BEV001")
+    with pytest.raises(ValueError, match=r"region is invalid."):
+        q.results()
+
+
 def test_missing_statistic_field_raises_exception():
     q = Query.region("09162000")
     with pytest.raises(Exception, match=r"add .* field"):
