@@ -30,7 +30,7 @@ class QueryOutputTransformer:
 
     @staticmethod
     def _convert_results_to_frame(
-        executioner_result: List[ExecutionResults]
+        executioner_result: List[ExecutionResults], remove_duplicates: bool = False
     ) -> pd.DataFrame:
         """Converst raw query results to a DataFrame.
 
@@ -45,14 +45,16 @@ class QueryOutputTransformer:
             for page in single_query_response.query_results:
                 result_frames.append(
                     QueryOutputTransformer._convert_regions_to_frame(
-                        page, single_query_response.meta_data
+                        page, single_query_response.meta_data, remove_duplicates
                     )
                 )
         return pd.concat(result_frames)
 
     @staticmethod
     def _convert_regions_to_frame(
-        query_page: Dict[str, Any], meta_data: QueryResultsMeta
+        query_page: Dict[str, Any],
+        meta_data: QueryResultsMeta,
+        remove_duplicates: bool = True,
     ) -> pd.DataFrame:
         """Converts and combines raw results for one or more regions.
 
@@ -71,14 +73,14 @@ class QueryOutputTransformer:
         """
         if "region" in query_page["data"]:
             return QueryOutputTransformer._convert_single_results_to_frame(
-                query_page["data"]["region"], meta_data
+                query_page["data"]["region"], meta_data, remove_duplicates
             )
         elif "allRegions" in query_page["data"]:
             allRegions = []
             for region in query_page["data"]["allRegions"]["regions"]:
                 allRegions.append(
                     QueryOutputTransformer._convert_single_results_to_frame(
-                        region, meta_data
+                        region, meta_data, remove_duplicates
                     )
                 )
             return pd.concat(allRegions)
@@ -89,7 +91,9 @@ class QueryOutputTransformer:
 
     @staticmethod
     def _convert_single_results_to_frame(
-        region_json: Dict[str, Any], meta: QueryResultsMeta
+        region_json: Dict[str, Any],
+        meta: QueryResultsMeta,
+        remove_duplicates: bool = False,
     ) -> pd.DataFrame:
         """Converts a region sub directory of raw output to a dataframe.
 
@@ -117,6 +121,8 @@ class QueryOutputTransformer:
             QueryOutputTransformer._create_statistic_frame(region_json[stat])
             for stat in cast(StatMeta, meta["statistics"]).keys()
         ]
+        if remove_duplicates:
+            statistic_frames = [frame.drop_duplicates() for frame in statistic_frames]
 
         joined_results, join_cols = QueryOutputTransformer._join_statistic_results(
             statistic_frames, list(cast(StatMeta, meta["statistics"]).keys())
@@ -391,6 +397,7 @@ class QueryOutputTransformer:
         verbose_statistic_names: bool = False,
         verbose_enum_values: bool = False,
         add_units: bool = False,
+        remove_duplicates: bool = False,
     ) -> pd.DataFrame:
         """Transform the queries results into a Pandas DataFrame.
 
@@ -405,9 +412,14 @@ class QueryOutputTransformer:
             are present.
         :param add_units: Toggles the addition of a unit column for each statistic to
             make it easier to interpret the numbers.
+        :param remove_duplicates: Removes duplicates from query results, i.e. if the
+            exact same number has been reported for the same statistic, year, region
+            etc. from the same source it gets removed. Such duplications are sometimes
+            caused on the API side and this is convenience functionality to remove them.
+            The removal happens before potentially joining several different statistics.
         :return: Returns a pandas DataFrame of the queries results.
         """
-        output = self._convert_results_to_frame(self.query_response)
+        output = self._convert_results_to_frame(self.query_response, remove_duplicates)
         if verbose_statistic_names:
             output = self._make_verbose_statistic_names(
                 output, self.query_response[0].meta_data
