@@ -39,3 +39,12 @@ History
 ------------------
 * Introduced a better error messages for queries that are run without a statistic
 * Bug fixes related to enums and auto join functionality
+
+0.4.0 (2021-01-23)
+------------------
+* Introduced better error messages in case of invalid regions
+* Introduced duplicate removal as an option for standard query results
+  * New default is to remove duplicates but can be turned of with an argument
+  * Auto-joining of multiple statistics should work better now as duplicates are removed before the joining.
+  * Purpouse is only to remove duplicates that that may exist for technichal API reasons. The Purpouse is not to filter the data for content.
+  * Rows are only counted as duplaces if everything, including the data source is identical
