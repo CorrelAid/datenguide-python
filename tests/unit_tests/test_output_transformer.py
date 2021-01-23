@@ -48,6 +48,18 @@ def query_results_one_statistic_with_units():
     return construct_execution_results(full_path)
 
 
+@pytest.fixture
+def query_duplicates_for_states_single_stat():
+    full_path = get_abs_path("examples/duplicates_for_states_single_stat.json")
+    return construct_execution_results(full_path)
+
+
+@pytest.fixture
+def query_duplicates_for_states_multi_stat():
+    full_path = get_abs_path("examples/duplicates_for_states_multi_stat.json")
+    return construct_execution_results(full_path)
+
+
 def test_output_transformer_with_one_statistic_and_units(
     query_results_one_statistic_with_units
 ):
@@ -183,3 +195,21 @@ def test_output_transformer_auto_join_enum(query_result_with_autojoin_and_one_en
     data_transformed = qOutTrans.transform(verbose_enum_values=True)
     assert "BEVSTD_GES" in data_transformed
     assert list(data_transformed.BEVSTD_GES.unique()) == ["Gesamt"]
+
+
+def test_dumplicate_removal_single(query_duplicates_for_states_single_stat):
+    qOutTrans = QueryOutputTransformer(query_duplicates_for_states_single_stat)
+    data_transformed = qOutTrans.transform(remove_duplicates=False)
+    assert all(data_transformed.name.value_counts() == 2)
+
+    data_transformed = qOutTrans.transform(remove_duplicates=True)
+    assert all(data_transformed.name.value_counts() == 1)
+
+
+def test_dumplicate_removal_multi(query_duplicates_for_states_multi_stat):
+    qOutTrans = QueryOutputTransformer(query_duplicates_for_states_multi_stat)
+    data_transformed = qOutTrans.transform(remove_duplicates=False)
+    assert all(data_transformed.name.value_counts() == 4)
+
+    data_transformed = qOutTrans.transform(remove_duplicates=True)
+    assert all(data_transformed.name.value_counts() == 1)

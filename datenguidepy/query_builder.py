@@ -612,16 +612,27 @@ class Query:
         verbose_statistics: bool = False,
         verbose_enums: bool = False,
         add_units: bool = False,
+        remove_duplicates: bool = True,
     ) -> DataFrame:
         """Runs the query and returns a Pandas DataFrame with the results.
            It also fills the instance variable result_meta_data with meta
            data specific to the query instance.
 
-        Arguments:
-            verbose_statistics -- Toggles whether statistic column names
+        :param verbose_statistics: Toggles whether statistic column names
             displayed with their short description in the result data frame
-            verbose_enums -- Toggles whether enum values are displayed
+        :param verbose_enums: Toggles whether enum values are displayed
             with their short description in the result data frame
+        :param add_units: Adds units available in the metadata to the
+            result dataframe. Care should be taken, because not every
+            statistic specifies these corretly. When in doubt one should
+            refer to the statistic description.
+        :param remove_duplicates: Removes duplicates from query results, i.e. if the
+            exact same number has been reported for the same statistic, year, region
+            etc. from the same source it gets removed. Such duplications are sometimes
+            caused on the API side and this is convenience functionality to remove them.
+            The removal happens before potentially joining several different statistics.
+            Unless diagnosing the API the default (True) is generally in the users
+            interest.
 
         :raises RuntimeError: If the query fails raise RuntimeError.
         :return: A DataFrame with the queried data.
@@ -647,6 +658,7 @@ class Query:
                 verbose_statistic_names=verbose_statistics,
                 verbose_enum_values=verbose_enums,
                 add_units=add_units,
+                remove_duplicates=remove_duplicates,
             )
         else:
             raise RuntimeError("No results could be returned for this Query.")
