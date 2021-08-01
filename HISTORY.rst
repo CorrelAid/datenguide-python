@@ -48,3 +48,8 @@ History
   * Auto-joining of multiple statistics should work better now as duplicates are removed before the joining.
   * Purpouse is only to remove duplicates that that may exist for technichal API reasons. The Purpouse is not to filter the data for content.
   * Rows are only counted as duplaces if everything, including the data source is identical
+
+0.4.1 (2021-08-01)
+------------------
+* Bugfixe
+
