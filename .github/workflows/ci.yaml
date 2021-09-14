@@ -1,0 +1,28 @@
+name: Run tests
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6.11
+
+    - name: Install package and install library
+      run: |
+        package_version=$(cat datenguidepy/VERSION)
+        python setup.py sdist
+        pip install "dist/datenguidepy-$package_version.tar.gz"
+        pip install pytest
+
+    - name: Run Tests on installed package
+      run: pytest --rootdir=$HOME --pyargs datenguidepy -k unit_test
