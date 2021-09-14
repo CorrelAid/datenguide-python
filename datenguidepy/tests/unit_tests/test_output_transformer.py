@@ -3,7 +3,7 @@ import pytest
 import os
 
 from datenguidepy.output_transformer import QueryOutputTransformer
-from tests.case_construction import construct_execution_results
+from datenguidepy.tests.case_construction import construct_execution_results
 
 
 @pytest.fixture

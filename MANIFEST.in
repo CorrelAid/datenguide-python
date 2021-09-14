@@ -4,6 +4,7 @@ include LICENSE
 include README.rst
 include datenguidepy/VERSION
 include datenguidepy/regions.csv
+recursive-include datenguidepy/tests *
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
 
 graft tests
